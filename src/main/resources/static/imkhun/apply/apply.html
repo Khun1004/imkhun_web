@@ -1,0 +1,77 @@
+<p class="section-eyebrow">Join a class</p>
+<h2>강의 신청</h2>
+
+<p class="apply-intro">
+    원하시는 방식으로 편하게 배워보세요. 신청하시면 확인 후 연락드릴게요.
+</p>
+
+<form class="apply-form" id="applyForm" novalidate>
+
+    <div class="apply-section reveal">
+        <p class="apply-section-label">학습 방식</p>
+        <div class="apply-type-grid">
+            <label class="apply-type-card">
+                <input type="radio" name="studyType" value="TOGETHER" class="apply-type-input">
+                <span class="apply-type-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c1-3.2 3-5 5.5-5s4.5 1.8 5.5 5M12.5 20c1-3.2 3-5 5.5-5s4 1.6 5 4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+                <span class="apply-type-title">실시간으로 함께 배우기</span>
+                <span class="apply-type-desc">Zoom으로 실시간 1:1 또는 그룹 수업. 바로 질문하고 바로 답 들을 수 있어요.</span>
+            </label>
+
+            <label class="apply-type-card">
+                <input type="radio" name="studyType" value="VIDEO" class="apply-type-input">
+                <span class="apply-type-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M17 10l4.5-3v10L17 14" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+                <span class="apply-type-title">언제든 영상으로 배우기</span>
+                <span class="apply-type-desc">녹화된 강의 자료를 내 시간에 맞춰 자유롭게 시청해요.</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="apply-section reveal">
+        <p class="apply-section-label">과목 선택</p>
+        <select class="apply-select" id="applyCourseSelect">
+            <option value="" disabled selected>과목을 선택해주세요</option>
+            <optgroup label="한국어">
+                <option value="한국어 기초">한국어 기초</option>
+                <option value="한국어 1급">한국어 1급</option>
+                <option value="한국어 2급">한국어 2급</option>
+                <option value="한국어 3급">한국어 3급</option>
+                <option value="한국어 4급">한국어 4급</option>
+            </optgroup>
+            <optgroup label="컴퓨터">
+                <option value="컴퓨터 기초">컴퓨터 기초</option>
+                <option value="컴퓨터 Word">Word</option>
+                <option value="컴퓨터 Excel">Excel</option>
+                <option value="컴퓨터 PowerPoint">PowerPoint</option>
+                <option value="컴퓨터 페이지메이커">페이지메이커</option>
+                <option value="컴퓨터 포토샵">포토샵</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <div class="apply-section reveal">
+        <p class="apply-section-label">연락처</p>
+        <input type="text" class="apply-input" id="applyContactInput" placeholder="전화번호 또는 카카오톡 ID">
+    </div>
+
+    <div class="apply-section reveal">
+        <p class="apply-section-label">희망사항 <span class="apply-optional">(선택)</span></p>
+        <textarea class="apply-input apply-textarea" id="applyMemoInput" rows="3" placeholder="희망 시간대, 궁금한 점 등 자유롭게 적어주세요"></textarea>
+    </div>
+
+    <p class="apply-form-error" id="applyFormError" hidden></p>
+
+    <button type="submit" class="apply-submit-btn">신청하기</button>
+</form>
+
+<div class="apply-success reveal" id="applySuccess" hidden>
+    <div class="apply-success-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h3>신청이 완료됐어요!</h3>
+    <p>확인 후 남겨주신 연락처로 연락드릴게요. 마이페이지의 "강의 신청 내역"에서도 확인하실 수 있어요.</p>
+    <button type="button" class="apply-again-btn" id="applyAgainBtn">완료</button>
+</div>

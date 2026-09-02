@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KWZM Computer Training &amp; Language Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../imkhun/auth/auth.css">
+    <link rel="stylesheet" href="kwzmcenter.css">
+    <link rel="stylesheet" href="home/home.css">
+    <link rel="stylesheet" href="language/language.css">
+    <link rel="stylesheet" href="mypage/mypage.css">
+</head>
+<body class="kwzm-standalone-body">
+
+<!-- ===================== 로그인 화면 (팝업 아님, 페이지 자체) ===================== -->
+<div class="student-login-page" id="studentLoginPage">
+    <div class="student-login-page-blob student-login-page-blob--a" aria-hidden="true"></div>
+    <div class="student-login-page-blob student-login-page-blob--b" aria-hidden="true"></div>
+
+    <div class="student-login-panel" role="dialog" aria-label="KWZM Center 로그인">
+        <div class="student-login-banner">
+            <span class="student-header-blob student-header-blob--a" aria-hidden="true"></span>
+            <span class="student-header-blob student-header-blob--b" aria-hidden="true"></span>
+            <span class="student-login-word">KWZM Computer Training &amp; Language Center</span>
+        </div>
+
+        <div class="student-login-body">
+            <h3>KWZM Computer Training &amp; Language Center</h3>
+            <p class="auth-modal-desc">승인받은 학생만 들어올 수 있어요. 학생번호, 아이디, 비밀번호, 이메일을 모두 입력해주세요.</p>
+
+            <div class="auth-form-field">
+                <label for="studentLoginNumber">학생번호</label>
+                <input type="text" id="studentLoginNumber" placeholder="예: 2026_Japanese_Level1_01" autocomplete="off">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="studentLoginUsername">아이디</label>
+                <input type="text" id="studentLoginUsername" placeholder="아이디 입력" autocomplete="username">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="studentLoginPassword">비밀번호</label>
+                <div class="auth-input-row">
+                    <input type="password" id="studentLoginPassword" placeholder="비밀번호 입력" autocomplete="current-password">
+                    <button type="button" class="auth-eye-btn" id="toggleStudentLoginPwBtn" aria-label="비밀번호 표시">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="studentLoginEmail">이메일</label>
+                <input type="email" id="studentLoginEmail" placeholder="example@email.com" autocomplete="email">
+            </div>
+
+            <p class="auth-form-error" id="studentLoginError" hidden></p>
+
+            <button type="button" class="auth-form-submit" id="studentLoginSubmitBtn">들어가기</button>
+            <p class="student-login-hint">학생번호는 강의 신청이 승인되면 마이페이지 &gt; 강의 신청 내역에서 확인할 수 있어요.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== KWZM Center 화면 (승인된 학생 전용) ===================== -->
+<div class="student-screen" id="studentScreen" hidden>
+    <header class="student-masthead">
+        <span class="student-masthead-blob student-masthead-blob--a" aria-hidden="true"></span>
+        <span class="student-masthead-blob student-masthead-blob--b" aria-hidden="true"></span>
+        <div class="student-masthead-inner">
+            <div class="student-masthead-left">
+                <span class="student-masthead-logo">KWZM <em>Computer Training &amp; Language Center</em></span>
+            </div>
+
+            <div class="student-masthead-right">
+                <button type="button" class="student-masthead-name" id="studentTopheaderName" data-student-main-tab="mypage"></button>
+                <button type="button" class="student-back-btn" id="studentBackBtn">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M9 21V13.6c0-.6.4-1 1-1h4c.6 0 1 .4 1 1V21M4.5 10.5 12 4l7.5 6.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    로그아웃
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="student-subnav" role="tablist" aria-label="KWZM Center 메뉴">
+        <div class="student-subnav-inner">
+            <button type="button" class="student-subnav-link active" data-student-main-tab="home" role="tab" aria-selected="true">홈</button>
+            <button type="button" class="student-subnav-link" data-student-main-tab="language" role="tab" aria-selected="false">언어</button>
+            <button type="button" class="student-subnav-link" data-student-main-tab="video" role="tab" aria-selected="false">영상</button>
+            <button type="button" class="student-subnav-link" data-student-main-tab="post" role="tab" aria-selected="false">Post</button>
+            <button type="button" class="student-subnav-link" data-student-main-tab="community" role="tab" aria-selected="false">커뮤니티</button>
+        </div>
+    </nav>
+
+    <main class="student-main">
+        <section class="student-main-panel active" data-student-panel="home" data-src="home/home.html"></section>
+        <section class="student-main-panel" data-student-panel="language" data-src="language/language.html" hidden></section>
+        <section class="student-main-panel" data-student-panel="video" data-src="video/video.html" hidden></section>
+        <section class="student-main-panel" data-student-panel="post" data-src="post/post.html" hidden></section>
+        <section class="student-main-panel" data-student-panel="community" data-src="community/community.html" hidden></section>
+        <section class="student-main-panel" data-student-panel="mypage" data-src="mypage/mypage.html" hidden></section>
+    </main>
+
+    <footer class="student-footer">
+        <div class="student-footer-marquee">
+            <p class="student-footer-marquee-track">
+                <span>⚠ 이 화면의 자료는 KWZM Center 승인 학생 전용입니다. 무단 캡처·배포·재판매를 금지합니다.</span>
+                <span>⚠ 이 화면의 자료는 KWZM Center 승인 학생 전용입니다. 무단 캡처·배포·재판매를 금지합니다.</span>
+            </p>
+        </div>
+    </footer>
+</div>
+
+<!-- ===================== 자료 갤러리로 보기 ===================== -->
+<div class="student-lightbox" id="studentLightbox" aria-hidden="true">
+    <div class="student-lightbox-backdrop" data-student-lightbox-close></div>
+    <button type="button" class="student-lightbox-close" data-student-lightbox-close aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+
+    <button type="button" class="student-lightbox-nav student-lightbox-nav--prev" id="studentLightboxPrev" aria-label="이전">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <div class="student-lightbox-content">
+        <img class="student-lightbox-img" id="studentLightboxImg" src="" alt="">
+        <p class="student-lightbox-count" id="studentLightboxCount"></p>
+    </div>
+
+    <button type="button" class="student-lightbox-nav student-lightbox-nav--next" id="studentLightboxNext" aria-label="다음">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

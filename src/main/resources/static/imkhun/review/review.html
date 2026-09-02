@@ -1,0 +1,129 @@
+<p class="section-eyebrow">What students say</p>
+<h2>리뷰</h2>
+
+<div class="review-toolbar">
+    <p class="review-example-tag">예시 후기입니다. 실제 수강생 후기로 바꿔주세요.</p>
+    <button class="review-write-btn" id="reviewWriteBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        리뷰 작성
+    </button>
+</div>
+
+<div class="review-summary reveal">
+    <div class="review-summary-score">
+        <span class="review-score-num">4.9</span>
+        <div class="review-stars" aria-hidden="true">★★★★★</div>
+    </div>
+    <div class="review-summary-text">
+        <p class="review-summary-count">32개의 후기</p>
+        <p class="review-summary-desc">한국어와 컴퓨터 수업을 들은 학생들의 솔직한 후기예요.</p>
+    </div>
+</div>
+
+<div class="review-grid reveal">
+    <div class="review-card">
+        <div class="review-card-head">
+            <span class="review-avatar">이</span>
+            <div>
+                <p class="review-name">이** 님</p>
+                <div class="review-stars review-stars--sm" aria-hidden="true">★★★★★</div>
+            </div>
+            <span class="review-tag review-tag--korean">한국어 2급</span>
+        </div>
+        <p class="review-text">발음 교정을 꼼꼼하게 봐주셔서 실력이 확실히 늘었어요. 매 수업마다 그날 배운 걸 바로 써먹을 수 있게 알려주셔서 좋았습니다.</p>
+        <p class="review-date">2026.08.12</p>
+    </div>
+
+    <div class="review-card">
+        <div class="review-card-head">
+            <span class="review-avatar">박</span>
+            <div>
+                <p class="review-name">박** 님</p>
+                <div class="review-stars review-stars--sm" aria-hidden="true">★★★★★</div>
+            </div>
+            <span class="review-tag review-tag--computer">엑셀</span>
+        </div>
+        <p class="review-text">엑셀 함수를 하나도 몰랐는데 실무에서 바로 쓸 수 있는 수준까지 배웠어요. 눈높이에 맞춰 천천히 설명해주셔서 이해가 빨랐습니다.</p>
+        <p class="review-date">2026.08.05</p>
+    </div>
+
+    <div class="review-card">
+        <div class="review-card-head">
+            <span class="review-avatar">최</span>
+            <div>
+                <p class="review-name">최** 님</p>
+                <div class="review-stars review-stars--sm" aria-hidden="true">★★★★★</div>
+            </div>
+            <span class="review-tag review-tag--korean">한국어 기초</span>
+        </div>
+        <p class="review-text">한국어를 처음 배우는데도 부담 없이 시작할 수 있었어요. 외국인 입장에서 어려운 부분을 잘 이해해주셔서 편하게 질문할 수 있었습니다.</p>
+        <p class="review-date">2026.07.28</p>
+    </div>
+
+    <div class="review-card">
+        <div class="review-card-head">
+            <span class="review-avatar">정</span>
+            <div>
+                <p class="review-name">정** 님</p>
+                <div class="review-stars review-stars--sm" aria-hidden="true">★★★★☆</div>
+            </div>
+            <span class="review-tag review-tag--computer">포토샵</span>
+        </div>
+        <p class="review-text">기초부터 차근차근 알려주셔서 좋았어요. 다음엔 좀 더 심화 과정도 열어주시면 좋겠습니다!</p>
+        <p class="review-date">2026.07.19</p>
+    </div>
+</div>
+
+<div class="review-modal" id="reviewModal" aria-hidden="true">
+    <div class="review-modal-backdrop" data-review-close></div>
+    <div class="review-modal-panel" role="dialog" aria-modal="true">
+        <div class="review-modal-banner">
+            <span class="review-banner-blob review-banner-blob--a" aria-hidden="true"></span>
+            <span class="review-banner-blob review-banner-blob--b" aria-hidden="true"></span>
+            <span class="review-banner-word">I'm Khun</span>
+            <button type="button" class="review-modal-close" data-review-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <svg class="review-banner-wave" viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0,8 C8,0 17,0 25,8 C33,16 42,16 50,8 C58,0 67,0 75,8 C83,16 92,16 100,8 L100,16 L0,16 Z" fill="var(--paper-3)"/>
+            </svg>
+        </div>
+
+        <div class="review-modal-body">
+            <h3>리뷰 작성</h3>
+            <p class="review-modal-writer" id="reviewWriterName"></p>
+
+            <form class="review-form" id="reviewForm" novalidate>
+                <div class="review-form-field">
+                    <label>별점</label>
+                    <div class="review-star-picker" id="reviewStarPicker">
+                        <button type="button" class="review-star-btn" data-star="1" aria-label="1점">★</button>
+                        <button type="button" class="review-star-btn" data-star="2" aria-label="2점">★</button>
+                        <button type="button" class="review-star-btn" data-star="3" aria-label="3점">★</button>
+                        <button type="button" class="review-star-btn" data-star="4" aria-label="4점">★</button>
+                        <button type="button" class="review-star-btn" data-star="5" aria-label="5점">★</button>
+                    </div>
+                </div>
+
+                <div class="review-form-field">
+                    <label for="reviewCourseInput">수강한 과목</label>
+                    <input type="text" id="reviewCourseInput" placeholder="예: 한국어 2급, 엑셀">
+                </div>
+
+                <div class="review-form-field">
+                    <label for="reviewTextInput">후기 내용</label>
+                    <textarea id="reviewTextInput" rows="4" placeholder="수업은 어떠셨나요?"></textarea>
+                </div>
+
+                <p class="review-form-error" id="reviewFormError" hidden>필수 항목을 모두 입력해주세요.</p>
+
+                <button type="submit" class="review-form-submit">리뷰 남기기</button>
+            </form>
+
+            <div class="review-form-success" id="reviewFormSuccess" hidden>
+                <p>소중한 후기 감사합니다! 확인 후 목록에 반영할게요.</p>
+                <button type="button" class="review-form-submit" data-review-close>닫기</button>
+            </div>
+        </div>
+    </div>
+</div>

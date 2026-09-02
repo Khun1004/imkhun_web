@@ -1,0 +1,610 @@
+/* KWZM Center — 홈 (대시보드) */
+
+.student-home-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 44px 40px;
+    margin: -8px -40px 40px;
+    border-radius: 20px;
+    background: var(--kwzm-gradient);
+    box-shadow: 0 20px 44px -20px rgba(23, 20, 15, 0.4);
+}
+
+.student-home-hero-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(34px);
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.student-home-hero-blob--a {
+    width: 180px;
+    height: 180px;
+    background: #fff;
+    top: -90px;
+    right: 10%;
+}
+
+.student-home-hero-blob--b {
+    width: 150px;
+    height: 150px;
+    background: #0f2547;
+    bottom: -90px;
+    left: 8%;
+}
+
+.student-home-eyebrow {
+    position: relative;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.student-home-title {
+    position: relative;
+    font-family: "Noto Serif KR", serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.student-home-sub {
+    position: relative;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.student-home-section {
+    margin-bottom: 40px;
+}
+
+.student-home-heading {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 16px;
+}
+
+.student-home-courses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.student-home-course-card {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+    padding: 20px 22px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px -10px rgba(23, 20, 15, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.student-home-course-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px -14px rgba(22, 56, 107, 0.32);
+    border-color: rgba(22, 56, 107, 0.35);
+}
+
+.student-home-course-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--kwzm-gradient);
+}
+
+.student-home-course-name {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 8px;
+}
+
+.student-home-course-number {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(22, 56, 107, 0.12);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--kwzm-accent-2);
+    font-family: "EB Garamond", monospace;
+}
+
+.student-home-shortcuts {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.student-home-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 200px;
+    padding: 20px 22px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
+    background: var(--kwzm-bg-3);
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--kwzm-ink);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.student-home-shortcut:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px -14px rgba(22, 56, 107, 0.35);
+    border-color: rgba(22, 56, 107, 0.35);
+}
+
+.student-home-shortcut-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, rgba(22, 56, 107, 0.16), rgba(47, 154, 160, 0.12));
+    color: var(--kwzm-accent-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+@media (max-width: 720px) {
+    .student-home-hero {
+        margin: -8px -20px 32px;
+        padding: 32px 24px;
+        border-radius: 0;
+    }
+}
+
+/* ===================== 홈 화면 — 큰 사진 히어로 캐러셀 ===================== */
+
+.student-hero-carousel {
+    position: relative;
+    overflow: hidden;
+    height: 380px;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    margin-top: -40px;
+    margin-bottom: 40px;
+    background: #17140f;
+}
+
+.student-hero-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+.student-hero-slide.active {
+    opacity: 1;
+}
+
+.student-hero-slide::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(23, 20, 15, 0.05) 0%, rgba(23, 20, 15, 0.65) 100%);
+}
+
+.student-hero-slide-caption {
+    position: absolute;
+    left: 48px;
+    bottom: 48px;
+    z-index: 2;
+}
+
+.student-hero-eyebrow {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.student-hero-slide-caption h2 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.student-hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.student-hero-nav:hover {
+    background: rgba(255, 255, 255, 0.32);
+}
+
+.student-hero-nav svg {
+    width: 20px;
+    height: 20px;
+}
+
+.student-hero-nav--prev {
+    left: 24px;
+}
+
+.student-hero-nav--next {
+    right: 24px;
+}
+
+.student-hero-dots {
+    position: absolute;
+    right: 48px;
+    bottom: 26px;
+    z-index: 3;
+    display: flex;
+    gap: 8px;
+}
+
+.student-hero-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.student-hero-dot.active {
+    background: #fff;
+    transform: scale(1.3);
+}
+
+/* ===================== 색깔 있는 안내 카드 3개 ===================== */
+
+.student-info-panels {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: -56px;
+}
+
+.student-info-panel {
+    min-width: 0;
+    padding: 26px 26px 20px;
+    border-radius: 4px;
+    color: #fff;
+    box-shadow: 0 16px 36px -20px rgba(23, 20, 15, 0.4);
+}
+
+.student-info-panel--navy {
+    background: #16386b;
+}
+
+.student-info-panel--teal {
+    background: #4a9aa8;
+}
+
+.student-info-panel--gray {
+    background: #7d7d7d;
+}
+
+.student-info-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 2px solid rgba(255, 255, 255, 0.85);
+    margin-bottom: 20px;
+}
+
+.student-info-panel-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16.5px;
+    font-weight: 700;
+}
+
+.student-info-panel-plus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.student-info-panel-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.student-info-panel-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 12.5px;
+    overflow: hidden;
+}
+
+.student-info-panel-list li span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-info-panel-date {
+    flex-shrink: 0;
+    width: 44px;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.student-info-panel-list .admin-empty-text {
+    color: rgba(255, 255, 255, 0.75);
+    padding: 12px 0;
+}
+
+@container (max-width: 760px) {
+    .student-info-panels {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container (max-width: 460px) {
+    .student-info-panels {
+        grid-template-columns: minmax(0, 1fr);
+        margin-top: -30px;
+    }
+}
+
+@media (max-width: 720px) {
+    .student-hero-carousel {
+        height: 300px;
+        margin-top: -40px;
+        margin-bottom: 32px;
+    }
+
+    .student-hero-slide-caption {
+        left: 24px;
+        bottom: 24px;
+    }
+
+    .student-hero-slide-caption h2 {
+        font-size: 22px;
+    }
+
+    .student-hero-dots {
+        right: 24px;
+    }
+}
+
+/* 오늘의 표현 + 빠른 문의 */
+
+.student-home-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    margin: 44px 0;
+}
+
+.student-tip-eyebrow {
+    color: var(--kwzm-accent) !important;
+}
+
+.student-tip-card {
+    padding: 28px 30px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px -10px rgba(23, 20, 15, 0.1);
+}
+
+.student-tip-text {
+    font-family: "Noto Serif KR", serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    line-height: 1.5;
+    margin-bottom: 6px;
+}
+
+.student-tip-sub {
+    font-size: 12.5px;
+    color: var(--kwzm-ink-faint);
+}
+
+.student-contact-card {
+    padding: 28px 30px;
+    background: var(--kwzm-gradient);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px -10px rgba(23, 20, 15, 0.2);
+}
+
+.student-contact-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 14px;
+}
+
+.student-contact-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.student-contact-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.student-contact-btn:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+.student-contact-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* 선생님 소개 */
+
+.student-teacher-card {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 24px 28px;
+    margin-bottom: 44px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px -10px rgba(23, 20, 15, 0.1);
+}
+
+.student-teacher-photo {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 6px 16px -6px rgba(23, 20, 15, 0.35);
+}
+
+.student-teacher-name {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 6px;
+}
+
+.student-teacher-desc {
+    font-size: 12.5px;
+    color: var(--kwzm-ink-soft);
+    line-height: 1.6;
+}
+
+/* 최근 등록된 자료 */
+
+.student-recent-materials {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.student-recent-item {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--kwzm-bg-3);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.student-recent-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px -14px rgba(22, 56, 107, 0.35);
+}
+
+.student-recent-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: linear-gradient(160deg, var(--kwzm-bg-2) 0%, #dce6ee 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--kwzm-accent-2);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.student-recent-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.student-recent-main {
+    padding: 12px 14px 14px;
+}
+
+.student-recent-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-recent-meta {
+    font-size: 10.5px;
+    color: var(--kwzm-ink-faint);
+}
+
+@media (max-width: 720px) {
+    .student-home-row {
+        grid-template-columns: 1fr;
+    }
+
+    .student-teacher-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .student-recent-materials {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

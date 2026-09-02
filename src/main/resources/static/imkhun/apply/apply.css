@@ -1,0 +1,218 @@
+/* '강의 신청' 화면 전용 스타일 */
+
+.apply-intro {
+    margin-bottom: 36px;
+}
+
+.apply-form {
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+.apply-section {
+    margin-bottom: 30px;
+}
+
+.apply-section-label {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink);
+    margin-bottom: 12px;
+}
+
+.apply-optional {
+    font-family: "Noto Sans KR", sans-serif;
+    font-style: normal;
+    font-size: 12px;
+    color: var(--ink-faint);
+}
+
+/* 학습 방식 카드 */
+
+.apply-type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.apply-type-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 18px;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper-3);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.apply-type-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.apply-type-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--accent-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.apply-type-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.apply-type-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+
+.apply-type-desc {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+}
+
+.apply-type-input:checked + .apply-type-icon {
+    background: var(--gradient-main);
+    color: #fff;
+}
+
+.apply-type-card:has(.apply-type-input:checked) {
+    border-color: var(--accent);
+    box-shadow: 0 8px 20px -12px rgba(168, 124, 34, 0.4);
+}
+
+.apply-type-input:focus-visible ~ * {
+    outline: 2px solid var(--accent);
+}
+
+/* 입력 필드 */
+
+.apply-input,
+.apply-select {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    font-family: "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    background: var(--paper-3);
+}
+
+.apply-input:focus,
+.apply-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.apply-textarea {
+    resize: vertical;
+}
+
+.apply-form-error {
+    font-size: 12.5px;
+    color: #a33;
+    margin-bottom: 16px;
+}
+
+.apply-submit-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gradient-main);
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.apply-submit-btn:hover {
+    opacity: 0.9;
+}
+
+.apply-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 신청 완료 화면 */
+
+.apply-success {
+    max-width: 480px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 48px 24px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--paper-3);
+}
+
+.apply-success-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: var(--gradient-main);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.apply-success-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.apply-success h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+}
+
+.apply-success p {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.apply-again-btn {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 9px 20px;
+    background: var(--paper-3);
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.apply-again-btn:hover {
+    border-color: var(--accent);
+}
+
+@media (max-width: 560px) {
+    .apply-type-grid {
+        grid-template-columns: 1fr;
+    }
+}

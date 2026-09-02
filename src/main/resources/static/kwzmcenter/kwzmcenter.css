@@ -1,0 +1,784 @@
+/* KWZM Computer Training & Language Center — imkhun/관리자 화면과 완전히 다른 전용 색상 */
+
+.kwzm-standalone-body {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    background: var(--kwzm-bg);
+}
+
+.admin-empty-text {
+    font-size: 13px;
+    color: var(--kwzm-ink-faint);
+    text-align: center;
+    padding: 30px 0;
+}
+
+.eyebrow {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--kwzm-accent);
+    margin-bottom: 8px;
+}
+
+:root {
+    --kwzm-primary: #16386b;
+    --kwzm-primary-2: #0f2547;
+    --kwzm-accent: #2f9aa0;
+    --kwzm-accent-2: #1c6b70;
+    --kwzm-gradient: linear-gradient(120deg, #16386b 0%, #1f5b7a 50%, #2f9aa0 100%);
+    --kwzm-bg: #f2f5f8;
+    --kwzm-bg-2: #e6ecf1;
+    --kwzm-bg-3: #ffffff;
+    --kwzm-ink: #16233a;
+    --kwzm-ink-soft: #4d5c73;
+    --kwzm-ink-faint: #8393a8;
+    --kwzm-line: #dbe3ea;
+}
+
+/* 전용 로그인 모달 (관리자 로그인 모달과 같은 구조) */
+
+.student-header-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(26px);
+    opacity: 0.5;
+}
+
+.student-header-blob--a {
+    width: 120px;
+    height: 120px;
+    background: #fff;
+    top: -55px;
+    left: -25px;
+}
+
+.student-header-blob--b {
+    width: 100px;
+    height: 100px;
+    background: #0f2547;
+    bottom: -50px;
+    right: -15px;
+}
+
+.student-login-page {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    overflow: hidden;
+    background: var(--kwzm-gradient);
+}
+
+.student-login-page[hidden] {
+    display: none;
+}
+
+.student-login-page-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.student-login-page-blob--a {
+    width: 320px;
+    height: 320px;
+    background: #fff;
+    top: -140px;
+    left: 8%;
+}
+
+.student-login-page-blob--b {
+    width: 260px;
+    height: 260px;
+    background: var(--kwzm-primary-2);
+    bottom: -120px;
+    right: 8%;
+}
+
+.student-login-panel {
+    position: relative;
+    width: min(400px, 100%);
+    background: var(--kwzm-bg-3);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 50px 90px -30px rgba(15, 37, 71, 0.55);
+}
+
+.student-login-banner {
+    position: relative;
+    height: 76px;
+    background: var(--kwzm-gradient);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+}
+
+.student-login-word {
+    position: relative;
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.3;
+    color: #fff;
+    text-align: center;
+}
+
+.student-login-body {
+    padding: 20px 24px 24px;
+}
+
+.student-login-body h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.student-login-body .auth-modal-desc {
+    margin-bottom: 18px;
+}
+
+.student-login-hint {
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* ===================== 학생 화면 (imkhun 사이트와 같은 톤) ===================== */
+
+.student-screen {
+    display: flex;
+    flex-direction: column;
+    background: var(--kwzm-bg);
+    min-height: 100vh;
+}
+
+.student-screen[hidden] {
+    display: none;
+}
+
+/* 상단 로고 바 — 그라데이션 배경 + 블롭 장식으로 고급스럽게 */
+
+.student-masthead {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    width: 100%;
+    padding: 0 48px;
+    background: var(--kwzm-gradient);
+    overflow: hidden;
+    box-shadow: 0 8px 24px -12px rgba(23, 20, 15, 0.35);
+}
+
+.student-masthead-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 22px 0;
+}
+
+.student-masthead-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(32px);
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.student-masthead-blob--a {
+    width: 160px;
+    height: 160px;
+    background: #fff;
+    top: -80px;
+    left: 15%;
+}
+
+.student-masthead-blob--b {
+    width: 130px;
+    height: 130px;
+    background: #0f2547;
+    bottom: -80px;
+    right: 10%;
+}
+
+.student-masthead-logo {
+    position: relative;
+    flex-shrink: 0;
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 17px;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.student-masthead-logo em {
+    color: rgba(255, 255, 255, 0.75);
+    font-style: italic;
+}
+
+.student-masthead-right {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.student-masthead-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    padding: 7px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.student-masthead-name:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.student-masthead-name::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-right: 1.6px solid rgba(255, 255, 255, 0.85);
+    border-top: 1.6px solid rgba(255, 255, 255, 0.85);
+    transform: rotate(45deg);
+}
+
+.student-back-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    padding: 7px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.student-back-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.student-back-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 서브내비 (사이트 서브메뉴와 동일한 스타일) */
+
+.student-masthead-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.student-subnav {
+    position: fixed;
+    top: var(--kwzm-masthead-h, 90px);
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: var(--kwzm-bg-3);
+    border-bottom: 1px solid var(--kwzm-line);
+}
+
+.student-subnav-inner {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 10px 32px 18px;
+    flex-wrap: wrap;
+}
+
+.student-subnav-link {
+    border: none;
+    background: none;
+    color: var(--kwzm-ink-faint);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding-bottom: 6px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.student-subnav-link:hover {
+    color: var(--kwzm-ink);
+}
+
+.student-subnav-link.active {
+    color: var(--kwzm-ink);
+    border-bottom-color: var(--kwzm-accent);
+}
+
+/* 본문 영역 */
+
+.student-main {
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    padding: calc(var(--kwzm-masthead-h, 90px) + var(--kwzm-subnav-h, 54px) + 40px) 48px calc(var(--kwzm-footer-h, 38px) + 40px);
+    flex: 1;
+    container-type: inline-size;
+}
+
+.student-main-panel[hidden] {
+    display: none;
+}
+
+.student-section-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 28px;
+}
+
+/* 각 탭 상단 큰 배너 (언어/영상/Post/커뮤니티 공통) */
+
+.student-page-banner {
+    position: relative;
+    overflow: hidden;
+    padding: 56px 44px;
+    margin: -8px -48px 40px;
+    background: var(--kwzm-gradient);
+    box-shadow: 0 24px 50px -22px rgba(23, 20, 15, 0.45);
+    animation: student-banner-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.student-page-banner--forest {
+    background: linear-gradient(120deg, #0f2547 0%, #16386b 55%, #2f9aa0 100%);
+}
+
+.student-page-banner-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(36px);
+    opacity: 0.4;
+    pointer-events: none;
+    animation: student-blob-float 9s ease-in-out infinite;
+}
+
+.student-page-banner-blob--a {
+    width: 200px;
+    height: 200px;
+    background: #fff;
+    top: -100px;
+    right: 8%;
+}
+
+.student-page-banner-blob--b {
+    width: 160px;
+    height: 160px;
+    background: #0f2547;
+    bottom: -90px;
+    left: 6%;
+    animation-delay: -4s;
+}
+
+.student-page-banner--forest .student-page-banner-blob--b {
+    background: #2f9aa0;
+}
+
+@keyframes student-blob-float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(14px, -10px); }
+}
+
+.student-page-banner-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    margin-bottom: 20px;
+    animation: student-icon-float 3.2s ease-in-out infinite;
+}
+
+.student-page-banner-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+@keyframes student-icon-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.student-page-banner-eyebrow {
+    position: relative;
+    color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.student-page-banner-title {
+    position: relative;
+    font-family: "Noto Serif KR", serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.student-page-banner-desc {
+    position: relative;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.88);
+    max-width: 460px;
+    line-height: 1.7;
+}
+
+@keyframes student-banner-in {
+    from {
+        opacity: 0;
+        transform: translateY(-14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .student-page-banner,
+    .student-page-banner-blob,
+    .student-page-banner-icon,
+    .student-coming-soon-icon {
+        animation: none;
+    }
+}
+
+@media (max-width: 1024px) {
+    .student-masthead,
+    .student-main {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+
+    .student-page-banner {
+        margin-left: -32px;
+        margin-right: -32px;
+        padding: 48px 36px;
+    }
+}
+
+@media (max-width: 860px) {
+    .student-masthead {
+        padding: 0 20px;
+    }
+
+    .student-masthead-inner {
+        flex-wrap: wrap;
+        padding: 16px 0;
+        row-gap: 10px;
+    }
+
+    .student-masthead-logo em {
+        display: none;
+    }
+
+    .student-subnav-inner {
+        justify-content: flex-start;
+        overflow-x: auto;
+        gap: 18px;
+        padding: 10px 20px 16px;
+        flex-wrap: nowrap;
+    }
+
+    .student-main {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .student-page-banner {
+        margin: -8px -20px 32px;
+        padding: 40px 24px;
+    }
+
+    .student-page-banner-title {
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 480px) {
+    .student-masthead-logo {
+        font-size: 14px;
+    }
+
+    .student-subnav-link {
+        font-size: 12.5px;
+    }
+
+    .student-page-banner {
+        padding: 32px 20px;
+    }
+
+    .student-page-banner-icon {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 14px;
+    }
+
+    .student-page-banner-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .student-page-banner-title {
+        font-size: 22px;
+    }
+
+    .student-page-banner-desc {
+        font-size: 12.5px;
+    }
+
+    .student-footer-marquee-track span {
+        font-size: 10.5px;
+    }
+}
+
+/* 준비중 (영상/Post/커뮤니티 공통) */
+
+.student-coming-soon {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    padding: 76px 20px;
+    background:
+            radial-gradient(circle at 15% 20%, rgba(47, 154, 160, 0.08), transparent 45%),
+            radial-gradient(circle at 85% 80%, rgba(143, 217, 188, 0.08), transparent 45%),
+            var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 20px;
+}
+
+.student-coming-soon-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, rgba(22, 56, 107, 0.16), rgba(47, 154, 160, 0.12));
+    box-shadow: 0 10px 24px -12px rgba(22, 56, 107, 0.4);
+    font-size: 24px;
+    margin-bottom: 20px;
+    animation: student-icon-float 3s ease-in-out infinite;
+}
+
+.student-coming-soon-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 8px;
+}
+
+.student-coming-soon-desc {
+    font-size: 13px;
+    color: var(--kwzm-ink-faint);
+    line-height: 1.7;
+}
+
+/* 이미지 갤러리 (관리자 화면과 동일한 방식) */
+
+.student-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 340;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.student-lightbox.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.student-lightbox-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+}
+
+.student-lightbox-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.student-lightbox-img {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.student-lightbox-count {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 12.5px;
+}
+
+.student-lightbox-close {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.student-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.student-lightbox-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+.student-lightbox-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 341;
+}
+
+.student-lightbox-nav--prev {
+    left: 24px;
+}
+
+.student-lightbox-nav--next {
+    right: 24px;
+}
+
+.student-lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.student-lightbox-nav[hidden] {
+    visibility: hidden;
+}
+
+.student-lightbox-nav svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* 하단 경고문 (좌우로 흐르는 마퀴) */
+
+.student-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    overflow: hidden;
+    background: #17140f;
+    padding: 10px 0;
+}
+
+.student-footer-marquee {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.student-footer-marquee-track {
+    display: inline-flex;
+    gap: 60px;
+    animation: student-marquee 22s linear infinite;
+}
+
+.student-footer-marquee-track span {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(47, 154, 160, 0.85);
+    white-space: nowrap;
+}
+
+@keyframes student-marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .student-footer-marquee-track {
+        animation: none;
+    }
+}

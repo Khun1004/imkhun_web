@@ -1,0 +1,121 @@
+<!-- ===================== 마이페이지 (전체 화면) ===================== -->
+<div class="mypage-modal" id="mypageModal" aria-hidden="true">
+    <div class="mypage-modal-panel" role="dialog" aria-modal="true">
+        <div class="mypage-sticky-top">
+            <div class="mypage-topbar">
+                <button type="button" class="mypage-back-btn" data-mypage-close>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    뒤로가기
+                </button>
+                <span class="mypage-topbar-word">I'm Khun</span>
+            </div>
+
+            <div class="mypage-header">
+                <span class="mypage-header-blob mypage-header-blob--a" aria-hidden="true"></span>
+                <span class="mypage-header-blob mypage-header-blob--b" aria-hidden="true"></span>
+
+                <div class="mypage-avatar-wrap">
+                    <div class="mypage-avatar" id="mypageAvatar">?</div>
+                    <label class="mypage-avatar-upload" for="mypageAvatarInput" aria-label="프로필 사진 변경">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </label>
+                    <input type="file" id="mypageAvatarInput" accept="image/*" hidden>
+                </div>
+                <p class="mypage-header-label">MY PAGE <span class="auth-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span></p>
+                <h2 id="mypageNicknameDisplay">닉네임</h2>
+                <p class="mypage-email" id="mypageEmailDisplay">email@example.com</p>
+
+                <svg class="mypage-header-wave" viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M0,8 C8,0 17,0 25,8 C33,16 42,16 50,8 C58,0 67,0 75,8 C83,16 92,16 100,8 L100,16 L0,16 Z" fill="var(--paper-3)"/>
+                </svg>
+            </div>
+
+            <!-- 탭: 개인정보 / 강의 신청 내역 / 리뷰 내역 -->
+            <nav class="mypage-tabs" role="tablist" aria-label="마이페이지 메뉴">
+                <button type="button" class="mypage-tab active" data-mypage-tab="info" role="tab" aria-selected="true">개인정보</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="applications" role="tab" aria-selected="false">강의 신청 내역</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="reviews" role="tab" aria-selected="false">리뷰 내역</button>
+            </nav>
+        </div>
+
+        <div class="mypage-body">
+
+            <!-- ---------- 개인정보 ---------- -->
+            <div class="mypage-tab-panel active" id="mypageTabInfo">
+
+                <section class="mypage-section">
+                    <h3>계정 정보</h3>
+                    <div class="mypage-info-row">
+                        <span>아이디</span>
+                        <span id="mypageUsername">-</span>
+                    </div>
+                    <div class="mypage-info-row">
+                        <span>가입일</span>
+                        <span id="mypageJoinDate">-</span>
+                    </div>
+                </section>
+
+                <section class="mypage-section">
+                    <h3>닉네임 변경</h3>
+                    <div class="auth-input-row">
+                        <input type="text" id="mypageNicknameInput" placeholder="새 닉네임">
+                        <button type="button" class="auth-inline-btn" id="mypageSaveNicknameBtn">저장</button>
+                    </div>
+                    <p class="auth-field-hint" id="mypageNicknameHint"></p>
+                </section>
+
+                <section class="mypage-section">
+                    <h3>전화번호</h3>
+                    <div class="auth-input-row">
+                        <input type="text" id="mypagePhoneInput" placeholder="010-0000-0000">
+                        <button type="button" class="auth-inline-btn" id="mypageSavePhoneBtn">저장</button>
+                    </div>
+                    <p class="auth-field-hint" id="mypagePhoneHint"></p>
+                </section>
+
+                <section class="mypage-section">
+                    <h3>비밀번호 변경</h3>
+                    <div class="auth-form-field">
+                        <label for="mypageCurrentPassword">현재 비밀번호</label>
+                        <div class="auth-input-row">
+                            <input type="password" id="mypageCurrentPassword" placeholder="******" autocomplete="current-password">
+                            <button type="button" class="auth-eye-btn" id="toggleMypageCurrentPwBtn" aria-label="비밀번호 표시">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="auth-form-field">
+                        <label for="mypageNewPassword">새 비밀번호</label>
+                        <div class="auth-input-row">
+                            <input type="password" id="mypageNewPassword" placeholder="******" autocomplete="new-password">
+                            <button type="button" class="auth-eye-btn" id="toggleMypageNewPwBtn" aria-label="비밀번호 표시">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="auth-form-error" id="mypagePasswordError" hidden></p>
+                    <p class="auth-field-hint is-ok" id="mypagePasswordSuccess" hidden>비밀번호가 변경됐어요.</p>
+                    <button type="button" class="auth-form-submit" id="mypageChangePasswordBtn">비밀번호 변경</button>
+                </section>
+
+                <section class="mypage-section mypage-section--last">
+                    <button type="button" class="mypage-logout-btn" id="mypageLogoutBtn">로그아웃</button>
+                </section>
+
+            </div>
+
+            <!-- ---------- 강의 신청 내역 ---------- -->
+            <div class="mypage-tab-panel" id="mypageTabApplications" hidden>
+                <p class="mypage-empty-text" id="mypageApplicationsEmpty" hidden>아직 신청한 강의가 없어요.</p>
+                <div id="mypageApplicationList"></div>
+            </div>
+
+            <!-- ---------- 리뷰 내역 ---------- -->
+            <div class="mypage-tab-panel" id="mypageTabReviews" hidden>
+                <p class="mypage-empty-text" id="mypageReviewsEmpty" hidden>아직 작성한 리뷰가 없어요.</p>
+                <div id="mypageReviewList"></div>
+            </div>
+
+        </div>
+    </div>
+</div>

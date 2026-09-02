@@ -1,0 +1,190 @@
+<!-- ===================== 회원가입 / 로그인 모달 ===================== -->
+<div class="auth-modal" id="authModal" aria-hidden="true">
+    <div class="auth-modal-backdrop" data-auth-close></div>
+    <div class="auth-modal-panel" role="dialog" aria-modal="true">
+        <div class="auth-modal-banner">
+            <span class="auth-banner-blob auth-banner-blob--a" aria-hidden="true"></span>
+            <span class="auth-banner-blob auth-banner-blob--b" aria-hidden="true"></span>
+
+            <span class="auth-banner-word">I'm Khun</span>
+            <button type="button" class="auth-modal-close" data-auth-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+
+            <svg class="auth-banner-wave" viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0,8 C8,0 17,0 25,8 C33,16 42,16 50,8 C58,0 67,0 75,8 C83,16 92,16 100,8 L100,16 L0,16 Z" fill="var(--paper-3)"/>
+            </svg>
+        </div>
+
+        <div class="auth-modal-body">
+
+            <!-- STEP 1: 구글로 본인 확인 (회원가입) -->
+            <div class="auth-step" id="authStepGoogle">
+                <h3>회원가입 <span class="auth-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span></h3>
+                <p class="auth-modal-desc">
+                    먼저 구글 계정으로 본인 확인을 해주세요. 그 다음 사용하실 아이디와 비밀번호를 정하시면 가입이 끝나요.
+                </p>
+
+                <ul class="auth-benefit-list">
+                    <li>
+            <span class="auth-benefit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+                        강의 자료 열람하기
+                    </li>
+                    <li>
+            <span class="auth-benefit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l2.7 5.8 6.3.6-4.7 4.3 1.3 6.3L12 16.9 6.4 20l1.3-6.3L3 9.4l6.3-.6L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+                        리뷰 남기기
+                    </li>
+                    <li>
+            <span class="auth-benefit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8.5 15l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+                        강의 신청하기
+                    </li>
+                </ul>
+
+                <a href="/oauth2/authorization/google" class="auth-google-btn">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.47c-.28 1.5-1.13 2.77-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81Z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.96-1.08 7.95-2.92l-3.88-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.27v3.12C3.25 21.3 7.31 24 12 24Z"/>
+                        <path fill="#FBBC05" d="M5.27 14.27a7.2 7.2 0 0 1 0-4.54V6.61H1.27a12 12 0 0 0 0 10.78l4-3.12Z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.79l3.44-3.44C17.95 1.19 15.23 0 12 0 7.31 0 3.25 2.7 1.27 6.61l4 3.12C6.22 6.87 8.87 4.75 12 4.75Z"/>
+                    </svg>
+                    Google로 본인 확인하기
+                </a>
+            </div>
+
+            <!-- STEP 2: 구글 인증 완료 후 아이디/비밀번호 설정 -->
+            <div class="auth-step" id="authStepDetails" hidden>
+                <h3>거의 다 됐어요</h3>
+                <p class="auth-modal-desc">구글 인증이 완료됐어요. 사용하실 아이디와 비밀번호를 정해주세요.</p>
+
+                <div class="auth-readonly-field">
+                    <span class="auth-readonly-label">닉네임</span>
+                    <span class="auth-readonly-value" id="authGoogleNickname">-</span>
+                </div>
+                <div class="auth-readonly-field">
+                    <span class="auth-readonly-label">이메일</span>
+                    <span class="auth-readonly-value" id="authGoogleEmail">-</span>
+                </div>
+
+                <div class="auth-form-field">
+                    <label for="signupUsername">아이디</label>
+                    <div class="auth-input-row">
+                        <input type="text" id="signupUsername" placeholder="영문/숫자 4자 이상" autocomplete="username">
+                        <button type="button" class="auth-inline-btn" id="checkUsernameBtn">중복확인</button>
+                    </div>
+                    <p class="auth-field-hint" id="usernameHint"></p>
+                </div>
+
+                <div class="auth-form-field">
+                    <label for="signupPassword">비밀번호</label>
+                    <div class="auth-input-row">
+                        <input type="password" id="signupPassword" placeholder="8자 이상" autocomplete="new-password">
+                        <button type="button" class="auth-eye-btn" id="toggleSignupPasswordBtn" aria-label="비밀번호 표시">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <p class="auth-form-error" id="signupDetailsError" hidden></p>
+
+                <button type="button" class="auth-form-submit" id="completeSignupBtn">가입 완료</button>
+            </div>
+
+            <!-- STEP 3: 아이디/비밀번호 로그인 -->
+            <div class="auth-step" id="authStepLogin" hidden>
+                <h3>로그인 <span class="auth-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span></h3>
+                <p class="auth-modal-desc" id="loginIntro">아이디와 비밀번호를 입력해주세요.</p>
+
+                <div class="auth-form-field">
+                    <label for="loginUsername">아이디</label>
+                    <input type="text" id="loginUsername" placeholder="아이디 입력" autocomplete="username">
+                </div>
+
+                <div class="auth-form-field">
+                    <label for="loginPassword">비밀번호</label>
+                    <div class="auth-input-row">
+                        <input type="password" id="loginPassword" placeholder="비밀번호 입력" autocomplete="current-password">
+                        <button type="button" class="auth-eye-btn" id="toggleLoginPasswordBtn" aria-label="비밀번호 표시">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <p class="auth-form-error" id="loginError" hidden></p>
+
+                <button type="button" class="auth-form-submit" id="loginSubmitBtn">로그인</button>
+
+                <div class="auth-links-row">
+                    <button type="button" class="auth-link-btn" id="showFindIdBtn">아이디 찾기</button>
+                    <span class="auth-links-divider">·</span>
+                    <button type="button" class="auth-link-btn" id="showFindPasswordBtn">비밀번호 찾기</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: 아이디/비밀번호 찾기 (구글 재인증) -->
+            <div class="auth-step" id="authStepRecover" hidden>
+                <h3 id="recoverStepTitle">계정 찾기</h3>
+                <p class="auth-modal-desc" id="recoverStepDesc">가입할 때 쓰신 구글 계정으로 다시 본인 확인을 해주세요.</p>
+
+                <a href="/oauth2/authorization/google" class="auth-google-btn">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.47c-.28 1.5-1.13 2.77-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81Z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.96-1.08 7.95-2.92l-3.88-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.27v3.12C3.25 21.3 7.31 24 12 24Z"/>
+                        <path fill="#FBBC05" d="M5.27 14.27a7.2 7.2 0 0 1 0-4.54V6.61H1.27a12 12 0 0 0 0 10.78l4-3.12Z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.79l3.44-3.44C17.95 1.19 15.23 0 12 0 7.31 0 3.25 2.7 1.27 6.61l4 3.12C6.22 6.87 8.87 4.75 12 4.75Z"/>
+                    </svg>
+                    Google로 본인 확인하기
+                </a>
+            </div>
+
+            <!-- STEP 5: 찾기 결과 -->
+            <div class="auth-step" id="authStepRecoverResult" hidden>
+
+                <!-- 아이디 찾기 결과 -->
+                <div id="recoverFoundId" hidden>
+                    <h3>아이디를 찾았어요</h3>
+                    <div class="auth-readonly-field">
+                        <span class="auth-readonly-label">아이디</span>
+                        <span class="auth-readonly-value" id="recoverUsernameOnly">-</span>
+                    </div>
+                    <button type="button" class="auth-form-submit" id="goToLoginFromIdBtn">로그인 하러가기</button>
+                </div>
+
+                <!-- 비밀번호 찾기 결과 -->
+                <div id="recoverFoundPassword" hidden>
+                    <h3>새 비밀번호를 설정해주세요</h3>
+                    <div class="auth-readonly-field">
+                        <span class="auth-readonly-label">아이디</span>
+                        <span class="auth-readonly-value" id="recoverUsername">-</span>
+                    </div>
+
+                    <div class="auth-form-field">
+                        <label for="recoverNewPassword">새 비밀번호</label>
+                        <div class="auth-input-row">
+                            <input type="password" id="recoverNewPassword" placeholder="8자 이상" autocomplete="new-password">
+                            <button type="button" class="auth-eye-btn" id="toggleRecoverPasswordBtn" aria-label="비밀번호 표시">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="auth-form-error" id="recoverError" hidden></p>
+                    <button type="button" class="auth-form-submit" id="recoverResetBtn">비밀번호 재설정</button>
+                </div>
+
+                <!-- 가입 내역 없음 (아이디/비밀번호 찾기 공통) -->
+                <div id="recoverNotFound" hidden>
+                    <h3>가입 내역이 없어요</h3>
+                    <p class="auth-modal-desc">이 구글 계정으로 가입한 기록을 찾을 수 없어요. 먼저 회원가입을 진행해주세요.</p>
+                    <button type="button" class="auth-form-submit" id="goToSignupBtn">회원가입 하러가기</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,523 @@
+/* '회원가입 / 로그인 / 마이페이지' 전용 스타일 */
+/* ---------- 회원가입 / 로그인 (구글) ---------- */
+
+.auth-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: calc(var(--header-h, 210px) - 40px);
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.auth-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.auth-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(23, 20, 15, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.auth-modal-panel {
+    position: relative;
+    width: min(380px, 92vw);
+    background: var(--paper-3);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px -24px rgba(23, 20, 15, 0.5);
+    transform: translateY(-24px);
+    transition: transform 0.25s ease;
+}
+
+.auth-modal.open .auth-modal-panel {
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-modal-panel {
+        transition: none;
+    }
+}
+
+.auth-modal-banner {
+    position: relative;
+    height: 116px;
+    background: var(--gradient-main);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-banner-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(26px);
+    opacity: 0.55;
+}
+
+.auth-banner-blob--a {
+    width: 110px;
+    height: 110px;
+    background: #fff;
+    top: -50px;
+    left: -20px;
+}
+
+.auth-banner-blob--b {
+    width: 90px;
+    height: 90px;
+    background: #163c2c;
+    bottom: -45px;
+    right: -10px;
+}
+
+.auth-banner-word {
+    position: relative;
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 24px;
+    color: #fff;
+    margin-top: 34px;
+}
+
+.auth-banner-wave {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 16px;
+    display: block;
+}
+
+.auth-dots {
+    display: inline-flex;
+    gap: 4px;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.auth-dots i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.auth-dots i:nth-child(1) { background: var(--accent); }
+.auth-dots i:nth-child(2) { background: var(--accent-2); }
+.auth-dots i:nth-child(3) { background: var(--accent-3); }
+.auth-dots i:nth-child(4) { background: #8fd9bc; }
+
+.auth-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.auth-modal-close:hover {
+    background: rgba(255, 255, 255, 0.32);
+}
+
+.auth-modal-close svg {
+    width: 14px;
+    height: 14px;
+}
+
+.auth-modal-body {
+    padding: 22px 24px 26px;
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-step {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.auth-modal-body h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+.auth-modal-desc {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 18px;
+}
+
+.auth-benefit-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+    padding: 14px 16px;
+    background: var(--paper-2);
+    border-radius: 12px;
+}
+
+.auth-benefit-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+.auth-benefit-icon {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--paper-3);
+    color: var(--accent-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-benefit-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.auth-google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.auth-google-btn:hover {
+    background: var(--paper-2);
+    border-color: var(--accent);
+}
+
+/* 단계(step) 전환 */
+
+.auth-step[hidden] {
+    display: none;
+}
+
+.auth-modal-body h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+}
+
+/* 구글에서 가져온 정보 (읽기 전용) */
+
+.auth-readonly-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+}
+
+.auth-readonly-label {
+    color: var(--ink-faint);
+}
+
+.auth-readonly-value {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.auth-readonly-field:last-of-type {
+    margin-bottom: 18px;
+}
+
+/* 아이디 입력 + 중복확인 / 비밀번호 + 눈 아이콘 */
+
+.auth-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.auth-input-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.auth-inline-btn {
+    flex-shrink: 0;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper-2);
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.auth-inline-btn:hover {
+    border-color: var(--accent);
+}
+
+.auth-field-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    min-height: 15px;
+}
+
+.auth-field-hint.is-ok {
+    color: #2e7d4f;
+}
+
+.auth-field-hint.is-taken {
+    color: #a33;
+}
+
+.auth-eye-btn {
+    flex-shrink: 0;
+    width: 40px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper-2);
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.auth-eye-btn:hover,
+.auth-eye-btn.is-active {
+    color: var(--accent-2);
+    border-color: var(--accent);
+}
+
+.auth-eye-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+.auth-form-field {
+    margin-bottom: 16px;
+}
+
+.auth-form-field label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+}
+
+.auth-form-field input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+}
+
+.auth-form-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.auth-form-error {
+    font-size: 12.5px;
+    color: #a33;
+    margin: -6px 0 14px;
+}
+
+.auth-form-submit {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gradient-main);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.auth-form-submit:hover {
+    opacity: 0.9;
+}
+
+.auth-form-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.auth-guest {
+    display: flex;
+    gap: 10px;
+}
+
+.auth-guest[hidden],
+.auth-user[hidden] {
+    display: none;
+}
+
+.auth-user {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.auth-logout-link {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-faint);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.auth-logout-link:hover {
+    color: var(--accent-2);
+}
+
+.auth-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 5px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper-3);
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.auth-profile-btn:hover {
+    border-color: var(--accent);
+}
+
+.auth-profile-avatar {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    border-radius: 50%;
+    background: var(--gradient-main);
+    color: #fff;
+    font-family: "Noto Serif KR", serif;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.auth-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.auth-profile-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.auth-profile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 120px;
+    background: var(--paper-3);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 16px 32px -16px rgba(23, 20, 15, 0.35);
+    padding: 6px;
+    z-index: 60;
+}
+
+.auth-profile-menu a {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+}
+
+.auth-profile-menu a:hover {
+    background: var(--paper-2);
+    color: var(--ink);
+}
+
+/* 아이디/비밀번호 찾기 링크 */
+
+.auth-links-row {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.auth-links-divider {
+    color: var(--line);
+    margin: 0 10px;
+}
+
+.auth-link-btn {
+    border: none;
+    background: none;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.auth-link-btn:hover {
+    color: var(--accent-2);
+}

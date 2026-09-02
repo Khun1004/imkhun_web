@@ -1,0 +1,1012 @@
+/* '나만의 공부 화면'(관리자) — 고급스러운 다크 사이드바 + 그라데이션 헤더 */
+
+.admin-screen {
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    min-height: 100vh;
+    max-width: 1100px;
+    margin: 0 auto;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+}
+
+.admin-screen[hidden] {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-screen {
+        transition: none;
+    }
+}
+
+/* 위쪽 그라데이션 헤더 */
+
+.admin-topheader {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    background: var(--gradient-main);
+    overflow: hidden;
+}
+
+.admin-topheader-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(30px);
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.admin-topheader-blob--a {
+    width: 140px;
+    height: 140px;
+    background: #fff;
+    top: -70px;
+    left: 10%;
+}
+
+.admin-topheader-blob--b {
+    width: 120px;
+    height: 120px;
+    background: #163c2c;
+    bottom: -70px;
+    right: 8%;
+}
+
+.admin-topheader-side {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-topheader-side--right {
+    justify-content: flex-end;
+}
+
+.admin-topheader-logo {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: #fff;
+}
+
+.admin-topheader-title {
+    position: relative;
+    flex-shrink: 0;
+    text-align: center;
+    font-family: "Noto Serif KR", serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    padding: 0 24px;
+}
+
+.admin-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.admin-back-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.admin-back-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.admin-register-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 18px;
+    background: #fff;
+    color: var(--accent-2);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s;
+}
+
+.admin-register-btn:hover {
+    transform: translateY(-1px);
+}
+
+.admin-register-btn span {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* 헤더 아래: 사이드바 + 콘텐츠 */
+
+.admin-main-row {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+/* 왼쪽 사이드바 (다크 톤) */
+
+.admin-sidebar {
+    flex-shrink: 0;
+    width: 250px;
+    min-height: 100%;
+    overflow-y: auto;
+    background: #17140f;
+    padding: 24px 0;
+    scrollbar-width: none;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+/* 세로 탭 메뉴 */
+
+.admin-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 14px;
+}
+
+.admin-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 11px 14px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: rgba(247, 243, 233, 0.6);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+
+.admin-tab:hover {
+    background: rgba(247, 243, 233, 0.06);
+    color: rgba(247, 243, 233, 0.9);
+}
+
+.admin-tab.active {
+    background: var(--gradient-main);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 8px 20px -10px rgba(168, 124, 34, 0.5);
+}
+
+.admin-tab-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(247, 243, 233, 0.08);
+    color: rgba(247, 243, 233, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Noto Serif KR", serif;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.admin-tab.active .admin-tab-icon {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.admin-tab-icon--svg svg {
+    width: 15px;
+    height: 15px;
+}
+
+.admin-tab-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-tab-arrow {
+    flex-shrink: 0;
+    color: rgba(247, 243, 233, 0.35);
+    font-size: 15px;
+    font-weight: 400;
+    transition: color 0.15s, transform 0.15s;
+}
+
+.admin-tab:hover .admin-tab-arrow {
+    color: rgba(247, 243, 233, 0.7);
+    transform: translateX(2px);
+}
+
+.admin-tab.active .admin-tab-arrow {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* 오른쪽 콘텐츠 */
+
+.admin-tab-panel[hidden] {
+    display: none;
+}
+
+.admin-body {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    padding: 44px 52px 60px;
+    scrollbar-width: none;
+    container-type: inline-size;
+}
+
+.admin-body::-webkit-scrollbar {
+    display: none;
+}
+
+@media (max-width: 860px) {
+    .admin-topheader {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px 18px;
+    }
+
+    .admin-topheader-title {
+        order: 3;
+        width: 100%;
+        font-size: 17px;
+        padding: 0;
+        text-align: left;
+    }
+
+    .admin-topheader-side {
+        flex: none;
+    }
+
+    .admin-topheader-logo {
+        display: none;
+    }
+
+
+    .admin-main-row {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        height: auto;
+    }
+
+    .admin-tabs {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0 16px;
+    }
+
+    .admin-tab {
+        flex-shrink: 0;
+    }
+
+    .admin-tab-arrow {
+        display: none;
+    }
+
+    .admin-body {
+        padding: 28px 20px 50px;
+    }
+}
+
+/* 언어 그룹 펼치기(문법/읽기/쓰기/말하기/기타) */
+
+.admin-tab-group {
+    margin-bottom: 2px;
+}
+
+.admin-tab-arrow[data-expand-arrow] {
+    transition: color 0.15s, transform 0.2s;
+}
+
+.admin-tab-group.expanded .admin-tab-arrow[data-expand-arrow] {
+    transform: rotate(90deg);
+    color: rgba(247, 243, 233, 0.85);
+}
+
+.admin-subtabs {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 4px 0 6px 40px;
+}
+
+.admin-subtabs[hidden] {
+    display: none;
+}
+
+.admin-subtab {
+    text-align: left;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: rgba(247, 243, 233, 0.5);
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.admin-subtab:hover {
+    background: rgba(247, 243, 233, 0.06);
+    color: rgba(247, 243, 233, 0.85);
+}
+
+.admin-subtab.active {
+    background: rgba(214, 169, 61, 0.18);
+    color: #d6a93d;
+    font-weight: 700;
+}
+
+.admin-tabs-divider {
+    height: 1px;
+    background: rgba(247, 243, 233, 0.1);
+    margin: 12px 14px;
+}
+
+/* 오른쪽 자료 보기 영역 */
+
+.admin-materials-empty-select {
+    color: var(--ink-faint);
+    font-size: 13.5px;
+    text-align: center;
+    padding: 60px 0;
+}
+
+.admin-materials-heading {
+    font-family: "Noto Serif KR", serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 18px;
+}
+
+.admin-materials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+/* 화면(뷰포트) 크기가 아니라, 실제 자료 목록이 차지하는 공간 기준으로 열 개수를 정함
+   (사이드바 때문에 화면은 넓어도 실제 콘텐츠 폭은 좁을 수 있어서 — 아이패드 등에서 특히 중요) */
+@container (max-width: 640px) {
+    .admin-materials-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@container (max-width: 380px) {
+    .admin-materials-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.admin-material-item {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--paper-3);
+    box-shadow: 0 4px 16px -10px rgba(23, 20, 15, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-material-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px -14px rgba(168, 124, 34, 0.35);
+    border-color: rgba(168, 124, 34, 0.35);
+}
+
+.admin-material-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(160deg, var(--paper-2) 0%, #efe6cf 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--accent-2);
+    cursor: pointer;
+}
+
+.admin-material-thumb-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-material-thumb-icon svg {
+    width: 34px;
+    height: 34px;
+    opacity: 0.75;
+}
+
+.admin-material-thumb-icon span {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+}
+
+.admin-material-count-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(23, 20, 15, 0.72);
+    backdrop-filter: blur(2px);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.admin-material-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.admin-material-item:hover .admin-material-thumb img {
+    transform: scale(1.06);
+}
+
+.admin-material-main {
+    padding: 14px 16px 6px;
+}
+
+.admin-material-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-material-meta {
+    font-size: 11px;
+    color: var(--ink-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-material-actions {
+    display: flex;
+    border-top: 1px solid var(--line);
+    margin-top: 12px;
+}
+
+.admin-material-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    padding: 10px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.admin-material-action-btn + .admin-material-action-btn {
+    border-left: 1px solid var(--line);
+}
+
+.admin-material-action-btn:hover {
+    background: linear-gradient(160deg, rgba(168, 124, 34, 0.1), rgba(14, 46, 35, 0.08));
+    color: var(--accent-2);
+}
+
+.admin-material-action-btn--danger:hover {
+    background: rgba(163, 51, 51, 0.08);
+    color: #a33;
+}
+
+
+/* 자료 등록 모달 */
+
+.admin-register-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 320;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 90px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.admin-register-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.admin-register-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(23, 20, 15, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.admin-register-panel {
+    position: relative;
+    width: min(460px, 92vw);
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+    background: var(--paper-3);
+    border-radius: 16px;
+    box-shadow: 0 40px 80px -24px rgba(23, 20, 15, 0.5);
+}
+
+.admin-register-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-register-head h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-register-close {
+    position: static;
+    background: var(--paper-2);
+    color: var(--ink-soft);
+}
+
+.admin-register-body {
+    padding: 20px 22px 24px;
+}
+
+.admin-category-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-category-chip {
+    position: relative;
+}
+
+.admin-category-chip input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.admin-category-chip span {
+    display: block;
+    padding: 8px 16px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.admin-category-chip input:checked + span {
+    background: var(--gradient-main);
+    border-color: transparent;
+    color: #fff;
+}
+
+#registerFileInput {
+    width: 100%;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+}
+
+.admin-existing-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.admin-existing-files:empty {
+    display: none;
+}
+
+.admin-existing-file-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+}
+
+.admin-existing-file-chip {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-existing-file-chip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-existing-file-chip span {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    text-align: center;
+    padding: 0 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.admin-existing-file-remove {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 2px solid var(--paper-3);
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(23, 20, 15, 0.3);
+    transition: background 0.15s, transform 0.15s;
+}
+
+.admin-existing-file-remove:hover {
+    background: #a33;
+    transform: scale(1.08);
+}
+
+.admin-existing-file-remove svg {
+    width: 10px;
+    height: 10px;
+}
+
+textarea.admin-note-textarea.admin-register-text {
+    min-height: 100px;
+}
+
+/* 관리자 전용 로그인 모달 (건드리지 않는 부분 — 원래 스타일 그대로) */
+
+.admin-header-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(26px);
+    opacity: 0.5;
+}
+
+.admin-header-blob--a {
+    width: 120px;
+    height: 120px;
+    background: #fff;
+    top: -55px;
+    left: -25px;
+}
+
+.admin-header-blob--b {
+    width: 100px;
+    height: 100px;
+    background: #163c2c;
+    bottom: -50px;
+    right: -15px;
+}
+
+.admin-standalone-body {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    background: var(--paper);
+}
+
+.admin-login-page {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    overflow: hidden;
+    background: var(--gradient-main);
+}
+
+.admin-login-page[hidden] {
+    display: none;
+}
+
+.admin-login-page-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.admin-login-page-blob--a {
+    width: 320px;
+    height: 320px;
+    background: #fff;
+    top: -140px;
+    left: 8%;
+}
+
+.admin-login-page-blob--b {
+    width: 260px;
+    height: 260px;
+    background: #0e2e23;
+    bottom: -120px;
+    right: 8%;
+}
+
+.admin-login-panel {
+    position: relative;
+    width: min(380px, 100%);
+    background: var(--paper-3);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 50px 90px -30px rgba(23, 20, 15, 0.55);
+}
+
+.admin-login-banner {
+    position: relative;
+    height: 76px;
+    background: var(--gradient-main);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-login-word {
+    position: relative;
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 20px;
+    color: #fff;
+}
+
+.admin-login-body {
+    padding: 20px 24px 24px;
+}
+
+.admin-login-body h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+
+.admin-login-body .auth-modal-desc {
+    margin-bottom: 18px;
+}
+
+/* 이미지 크게 보기 */
+
+.admin-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 340;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.admin-lightbox.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.admin-lightbox-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+}
+
+.admin-lightbox-img {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.admin-lightbox-close {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.admin-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.admin-lightbox-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-lightbox-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.admin-lightbox-count {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 12.5px;
+}
+
+.admin-lightbox-file {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 40px 50px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+}
+
+.admin-lightbox-file[hidden] {
+    display: none;
+}
+
+.admin-lightbox-text-box[hidden] {
+    display: none;
+}
+
+.admin-lightbox-file-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-lightbox-text-box {
+    max-width: 560px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 32px 36px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+}
+
+.admin-lightbox-text-box p {
+    color: #fff;
+    font-size: 14.5px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+}
+
+.admin-lightbox-file-name {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-lightbox-file .admin-material-action-btn {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    padding: 8px 18px;
+    color: #fff;
+}
+
+.admin-lightbox-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 341;
+}
+
+.admin-lightbox-nav--prev {
+    left: 24px;
+}
+
+.admin-lightbox-nav--next {
+    right: 24px;
+}
+
+.admin-lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.admin-lightbox-nav[hidden] {
+    visibility: hidden;
+}
+
+.admin-lightbox-nav svg {
+    width: 22px;
+    height: 22px;
+}

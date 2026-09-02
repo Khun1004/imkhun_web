@@ -1,0 +1,34 @@
+/* KWZM Center — 마이페이지 (~~님 클릭 시 이동하는 화면) */
+
+.student-mypage-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 44px 40px;
+    margin: -8px -48px 40px;
+    border-radius: 20px;
+    background: var(--kwzm-gradient);
+    box-shadow: 0 20px 44px -20px rgba(15, 37, 71, 0.4);
+}
+
+.student-mypage-title {
+    position: relative;
+    font-family: "Noto Serif KR", serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.student-mypage-sub {
+    position: relative;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 720px) {
+    .student-mypage-hero {
+        margin: -8px -20px 32px;
+        padding: 32px 24px;
+        border-radius: 0;
+    }
+}

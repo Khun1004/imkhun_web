@@ -1,0 +1,430 @@
+/* '마이페이지' 전용 스타일 */
+
+/* ---------- 마이페이지 ---------- */
+
+.mypage-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--paper);
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    scrollbar-width: thin;
+}
+
+/* 스크롤바 위/아래 화살표 버튼 제거 + 얇고 심플하게 */
+.mypage-modal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.mypage-modal::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.mypage-modal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mypage-modal::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 4px;
+}
+
+.mypage-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mypage-modal-panel {
+    min-height: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--paper-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mypage-modal {
+        transition: none;
+    }
+}
+
+.mypage-sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+}
+
+.mypage-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    background: var(--paper-3);
+    border-bottom: 1px solid var(--line);
+}
+
+.mypage-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.mypage-back-btn:hover {
+    color: var(--ink);
+}
+
+.mypage-back-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mypage-topbar-word {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--accent-2);
+}
+
+.mypage-header {
+    position: relative;
+    text-align: center;
+    padding: 40px 24px 34px;
+    background: var(--gradient-main);
+    overflow: hidden;
+}
+
+.mypage-header-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(26px);
+    opacity: 0.5;
+}
+
+.mypage-header-blob--a {
+    width: 120px;
+    height: 120px;
+    background: #fff;
+    top: -55px;
+    left: -25px;
+}
+
+.mypage-header-blob--b {
+    width: 100px;
+    height: 100px;
+    background: #163c2c;
+    bottom: -50px;
+    right: -15px;
+}
+
+.mypage-header-label {
+    position: relative;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.mypage-header-wave {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 16px;
+    display: block;
+}
+
+.mypage-avatar-wrap {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 12px;
+}
+
+.mypage-avatar {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-family: "Noto Serif KR", serif;
+    font-size: 28px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.mypage-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mypage-avatar-upload {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--paper-3);
+    color: var(--accent-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s;
+}
+
+.mypage-avatar-upload:hover {
+    transform: scale(1.08);
+}
+
+.mypage-avatar-upload svg {
+    width: 15px;
+    height: 15px;
+}
+
+.mypage-header h2 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.mypage-email {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* 탭: 개인정보 / 강의 신청 내역 / 리뷰 내역 */
+
+.mypage-tabs {
+    display: flex;
+    gap: 24px;
+    padding: 0 24px;
+    background: var(--paper-3);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+}
+
+.mypage-tab {
+    flex-shrink: 0;
+    padding: 14px 2px;
+    margin-bottom: -1px;
+    border: none;
+    background: none;
+    color: var(--ink-faint);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.mypage-tab:hover {
+    color: var(--ink);
+}
+
+.mypage-tab.active {
+    color: var(--accent-2);
+    border-bottom-color: var(--accent);
+}
+
+.mypage-tab-panel[hidden] {
+    display: none;
+}
+
+.mypage-example-tag {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-bottom: 16px;
+}
+
+.mypage-empty-text {
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-align: center;
+    padding: 30px 0;
+}
+
+/* 강의 신청 내역 / 리뷰 내역 카드 */
+
+.mypage-history-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.mypage-history-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.mypage-history-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.mypage-history-date {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+}
+
+.mypage-student-number {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-2);
+}
+
+.mypage-badge {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.mypage-badge--approved {
+    background: rgba(14, 46, 35, 0.12);
+    color: var(--accent-3);
+}
+
+.mypage-badge--pending {
+    background: rgba(168, 124, 34, 0.14);
+    color: var(--accent-2);
+}
+
+.mypage-history-item--review {
+    align-items: center;
+}
+
+.mypage-history-stars {
+    color: var(--accent);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.mypage-history-text {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin-top: 2px;
+}
+
+.mypage-history-reply-box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--paper-2);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+}
+
+.mypage-history-reply-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent-2);
+    margin-bottom: 3px;
+}
+
+.mypage-history-reply-text {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.mypage-body {
+    padding: 24px;
+}
+
+.mypage-section {
+    margin-bottom: 26px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.mypage-section--last {
+    margin-bottom: 4px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.mypage-section h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 14px;
+}
+
+.mypage-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.mypage-info-row span:first-child {
+    color: var(--ink-faint);
+}
+
+.mypage-info-row span:last-child {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.mypage-logout-btn {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: none;
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.mypage-logout-btn:hover {
+    border-color: #a33;
+    color: #a33;
+}

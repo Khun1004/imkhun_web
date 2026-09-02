@@ -1,0 +1,273 @@
+/* 학생 관리 */
+
+.admin-empty-text {
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-align: center;
+    padding: 30px 0;
+}
+
+.admin-student-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.admin-student-main {
+    min-width: 0;
+}
+
+.admin-student-name {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+
+.admin-student-detail {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+}
+
+.admin-student-memo {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 4px;
+}
+
+.admin-student-number {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(168, 124, 34, 0.12);
+    color: var(--accent-2);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: "EB Garamond", monospace;
+}
+
+.admin-student-date {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 6px;
+}
+
+.admin-student-side {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.admin-approve-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--accent-2);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+}
+
+.admin-approve-btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+@media (max-width: 560px) {
+    .admin-student-item {
+        flex-direction: column;
+    }
+
+    .admin-student-side {
+        align-items: flex-start;
+        flex-direction: row;
+    }
+}
+
+/* 강의 신청 내역 / 리뷰 탭 */
+
+.admin-inline-tabs {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-inline-tab {
+    padding: 0 2px 12px;
+    border: none;
+    background: none;
+    color: var(--ink-faint);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.admin-inline-tab:hover {
+    color: var(--ink);
+}
+
+.admin-inline-tab.active {
+    color: var(--accent-2);
+    border-bottom-color: var(--accent);
+}
+
+.admin-inline-panel[hidden] {
+    display: none;
+}
+
+
+.admin-review-item {
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.admin-review-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.admin-review-avatar {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--accent-2);
+    font-family: "Noto Serif KR", serif;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.admin-review-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-review-name {
+    font-family: "Noto Serif KR", serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-review-stars {
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.admin-review-tag {
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--accent-2);
+    background: rgba(168, 124, 34, 0.12);
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.admin-review-text {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 4px;
+}
+
+.admin-review-date {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-faint);
+}
+
+.admin-review-reply-box {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: var(--paper-2);
+    border-radius: 10px;
+}
+
+.admin-review-reply-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-2);
+    margin-bottom: 4px;
+}
+
+.admin-review-reply-text {
+    font-size: 12.5px;
+    color: var(--ink);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.admin-review-reply-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.admin-review-reply-input {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12.5px;
+    font-family: "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    background: var(--paper-3);
+    resize: vertical;
+    min-height: 38px;
+}
+
+.admin-review-reply-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.admin-review-reply-submit {
+    flex-shrink: 0;
+    align-self: flex-end;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--gradient-main);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.admin-review-reply-submit:hover {
+    opacity: 0.9;
+}

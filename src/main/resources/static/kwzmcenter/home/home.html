@@ -1,0 +1,110 @@
+<!-- 큰 사진 히어로 캐러셀 (예시 이미지 — 나중에 원하는 사진으로 교체하세요) -->
+<div class="student-hero-carousel" id="studentHeroCarousel">
+    <div class="student-hero-slide active" style="background-image: url('https://picsum.photos/seed/kwzm-korean/1400/560')">
+        <div class="student-hero-slide-caption">
+            <p class="eyebrow student-hero-eyebrow">Language</p>
+            <h2>함께 배우는 즐거움</h2>
+        </div>
+    </div>
+    <div class="student-hero-slide" style="background-image: url('https://picsum.photos/seed/kwzm-computer/1400/560')">
+        <div class="student-hero-slide-caption">
+            <p class="eyebrow student-hero-eyebrow">Computer</p>
+            <h2>실무에 바로 쓰는 컴퓨터 활용</h2>
+        </div>
+    </div>
+    <div class="student-hero-slide" style="background-image: url('https://picsum.photos/seed/kwzm-study/1400/560')">
+        <div class="student-hero-slide-caption">
+            <p class="eyebrow student-hero-eyebrow">KWZM Center</p>
+            <h2>나만의 학습 공간</h2>
+        </div>
+    </div>
+
+    <button type="button" class="student-hero-nav student-hero-nav--prev" id="studentHeroPrev" aria-label="이전 사진">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="student-hero-nav student-hero-nav--next" id="studentHeroNext" aria-label="다음 사진">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <div class="student-hero-dots" id="studentHeroDots">
+        <button type="button" class="student-hero-dot active" data-hero-slide="0" aria-label="1번째 사진"></button>
+        <button type="button" class="student-hero-dot" data-hero-slide="1" aria-label="2번째 사진"></button>
+        <button type="button" class="student-hero-dot" data-hero-slide="2" aria-label="3번째 사진"></button>
+    </div>
+</div>
+
+<!-- 색깔 있는 안내 카드 3개 -->
+<div class="student-info-panels">
+    <div class="student-info-panel student-info-panel--navy">
+        <div class="student-info-panel-head">
+            <span class="student-info-panel-title">공지사항</span>
+            <span class="student-info-panel-plus" aria-hidden="true">+</span>
+        </div>
+        <ul class="student-info-panel-list">
+            <li><span class="student-info-panel-date">2026<br>03.02</span><span>새 학기 시간표가 안내됐어요</span></li>
+            <li><span class="student-info-panel-date">2026<br>02.20</span><span>설 연휴 휴관 안내</span></li>
+            <li><span class="student-info-panel-date">2026<br>02.10</span><span>KWZM Center가 새롭게 열렸어요</span></li>
+        </ul>
+    </div>
+
+    <div class="student-info-panel student-info-panel--teal">
+        <div class="student-info-panel-head">
+            <span class="student-info-panel-title">내 수강 정보</span>
+            <span class="student-info-panel-plus" aria-hidden="true">+</span>
+        </div>
+        <ul class="student-info-panel-list" id="studentHomeCourseList"></ul>
+    </div>
+
+    <div class="student-info-panel student-info-panel--gray">
+        <div class="student-info-panel-head">
+            <span class="student-info-panel-title">이벤트 &amp; 행사</span>
+            <span class="student-info-panel-plus" aria-hidden="true">+</span>
+        </div>
+        <ul class="student-info-panel-list">
+            <li><span class="student-info-panel-date">2026<br>03.15</span><span>봄맞이 특강 안내</span></li>
+            <li><span class="student-info-panel-date">2026<br>03.01</span><span>학습 성취도 테스트 예정</span></li>
+            <li><span class="student-info-panel-date">2026<br>02.14</span><span>온라인 스터디 모임 모집</span></li>
+        </ul>
+    </div>
+</div>
+
+<!-- 오늘의 표현 + 빠른 문의 -->
+<div class="student-home-row">
+    <div class="student-tip-card">
+        <p class="eyebrow student-tip-eyebrow">Today's Expression</p>
+        <p class="student-tip-text" id="studentTipText">불러오는 중...</p>
+        <p class="student-tip-sub" id="studentTipSub"></p>
+    </div>
+
+    <div class="student-contact-card">
+        <p class="eyebrow student-tip-eyebrow">Contact</p>
+        <p class="student-contact-title">궁금한 점이 있으신가요?</p>
+        <div class="student-contact-buttons">
+            <a class="student-contact-btn" href="tel:0100000000">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M4 5c0-1 1-2 2-2h2l2 5-2 2c1 3 3 5 6 6l2-2 5 2v2c0 1-1 2-2 2C10 20 4 14 4 5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                전화 문의
+            </a>
+            <a class="student-contact-btn" href="#" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v10c0 .83-.67 1.5-1.5 1.5H9l-4 3.5v-3.5H5.5C4.67 17 4 16.33 4 15.5v-10Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                카카오톡 문의
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 선생님 소개 -->
+<div class="student-teacher-card">
+    <img class="student-teacher-photo" src="https://picsum.photos/seed/kwzm-teacher/200/200" alt="쿤 선생님">
+    <div>
+        <p class="eyebrow student-tip-eyebrow">Teacher</p>
+        <p class="student-teacher-name">쿤 선생님 (Khun San Wai)</p>
+        <p class="student-teacher-desc">한국어와 컴퓨터를 재미있게 가르치는 걸 좋아해요. 궁금한 건 언제든 물어보세요!</p>
+    </div>
+</div>
+
+<!-- 최근 등록된 자료 -->
+<div class="student-home-section">
+    <h3 class="student-home-heading">최근 등록된 자료</h3>
+    <p class="admin-empty-text" id="studentRecentEmpty" hidden>아직 등록된 자료가 없어요.</p>
+    <div class="student-recent-materials" id="studentRecentMaterials"></div>
+</div>

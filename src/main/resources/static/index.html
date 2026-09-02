@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khun</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="imkhun/auth/auth.css">
+    <link rel="stylesheet" href="imkhun/mypage/mypage.css">
+    <link rel="stylesheet" href="imkhun/aboutme/aboutme.css">
+    <link rel="stylesheet" href="imkhun/courseplan/courseplan.css">
+    <link rel="stylesheet" href="imkhun/language/language.css">
+    <link rel="stylesheet" href="imkhun/review/review.css">
+    <link rel="stylesheet" href="imkhun/apply/apply.css">
+    <link rel="stylesheet" href="imkhun/notice/notice.css">
+</head>
+<body>
+
+<div class="chat-widget">
+    <div class="chat-panel" id="chatMenu" role="menu" aria-hidden="true">
+        <div class="chat-panel-header">
+            <span>문의하기</span>
+            <button class="chat-close" type="button" id="chatClose" aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+
+        <a class="chat-row" href="#" role="menuitem" style="--brand:#25D366;">
+        <span class="chat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 6.7 15.02L21 21l-3.1-2.24A9 9 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 9.5c0 3.5 2.5 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+            <span class="chat-name">WhatsApp</span>
+        </a>
+        <a class="chat-row" href="#" role="menuitem" style="--brand:#229ED9;">
+        <span class="chat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 12 20 4l-3 16-6-4-3 3-1-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+            <span class="chat-name">Telegram</span>
+        </a>
+        <a class="chat-row" href="#" role="menuitem" style="--brand:#0084FF;">
+        <span class="chat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3C6.9 3 3 6.7 3 11.4c0 2.5 1.1 4.7 2.9 6.2V21l2.8-1.5c1 .3 2.1.5 3.3.5 5.1 0 9-3.7 9-8.6S17.1 3 12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+            <span class="chat-name">Messenger</span>
+        </a>
+        <a class="chat-row" href="#" role="menuitem" style="--brand:#3C1E1E;">
+        <span class="chat-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 4c-5 0-9 3.2-9 7.1 0 2.5 1.6 4.7 4.1 6L6 21l4.2-2.3c.6.1 1.2.1 1.8.1 5 0 9-3.2 9-7.1S17 4 12 4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+            <span class="chat-name">KakaoTalk</span>
+        </a>
+    </div>
+
+
+    <button class="chat-fab" type="button" id="chatFab" aria-label="채팅 문의하기" aria-haspopup="true" aria-expanded="false" aria-controls="chatMenu">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 5.5C4 4.67 4.67 4 5.5 4h13c.83 0 1.5.67 1.5 1.5v10c0 .83-.67 1.5-1.5 1.5H9l-4 3.5v-3.5H5.5C4.67 17 4 16.33 4 15.5v-10Z"
+                  stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+    </button>
+</div>
+
+
+<div id="authFragmentRoot" data-src="imkhun/auth/auth.html"></div>
+<div id="mypageFragmentRoot" data-src="imkhun/mypage/mypage.html"></div>
+
+<header class="site-header" id="siteHeader">
+    <!-- 큰 메인 탭: 공부 / 가르침 -->
+    <nav class="main-tabs" role="tablist" aria-label="주요 화면 전환">
+        <button class="main-tab tab-study active" data-tab="study" role="tab" aria-selected="true">나만의 공부 화면</button>
+        <button class="main-tab tab-teach" data-tab="teach" role="tab" aria-selected="false">KWZM Computer Training &amp; Language Center</button>
+    </nav>
+
+    <!-- 로고 + 회원가입/로그인 바 -->
+    <div class="masthead">
+        <div class="wordmark">I'm Khun</div>
+        <div class="auth-actions">
+            <div class="auth-guest" id="authGuest">
+                <button type="button" class="btn-ghost" id="signupOpenBtn">회원가입</button>
+                <button type="button" class="btn-ghost" id="loginOpenBtn">로그인</button>
+            </div>
+
+            <div class="auth-user" id="authUser" hidden>
+                <button type="button" class="auth-profile-btn" id="authProfileBtn">
+                    <span class="auth-profile-avatar" id="authProfileAvatar"></span>
+                    <span class="auth-profile-name" id="authProfileName"></span>
+                </button>
+                <a href="/logout" class="auth-logout-link">로그아웃</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 서브 메뉴 -->
+    <nav class="subnav" role="tablist" aria-label="세부 메뉴">
+        <a href="#about" class="subnav-link active" data-panel="about" role="tab" aria-selected="true">자기소개</a>
+        <a href="#courseplan" class="subnav-link" data-panel="courseplan" role="tab" aria-selected="false">강의 계획</a>
+        <a href="#language" class="subnav-link" data-panel="language" role="tab" aria-selected="false">강의 자료</a>
+        <a href="#apply" class="subnav-link" data-panel="apply" role="tab" aria-selected="false">강의 신청</a>
+        <a href="#review" class="subnav-link" data-panel="review" role="tab" aria-selected="false">리뷰</a>
+        <a href="#notice" class="subnav-link" data-panel="notice" role="tab" aria-selected="false">공지사항</a>
+    </nav>
+</header>
+
+<main id="content-area">
+    <section id="about" class="content-panel active" data-src="imkhun/aboutme/aboutme.html"></section>
+
+    <section id="courseplan" class="content-panel" data-src="imkhun/courseplan/courseplan.html"></section>
+
+    <section id="language" class="content-panel" data-src="imkhun/language/language.html"></section>
+
+    <section id="review" class="content-panel" data-src="imkhun/review/review.html"></section>
+
+    <section id="apply" class="content-panel" data-src="imkhun/apply/apply.html"></section>
+
+    <section id="notice" class="content-panel" data-src="imkhun/notice/notice.html"></section>
+</main>
+
+<footer class="site-footer" id="siteFooter">
+    <p>Built with Spring Boot · I'm Khun</p>
+</footer>
+
+<script src="script.js"></script>
+<script src="imkhun/auth/auth.js"></script>
+<script src="imkhun/language/language.js"></script>
+<script src="imkhun/review/review.js"></script>
+<script src="imkhun/apply/apply.js"></script>
+<script src="admin/admin.js"></script>
+<script src="kwzmcenter/kwzmcenter.js"></script>
+</body>
+</html>

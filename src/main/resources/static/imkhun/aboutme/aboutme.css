@@ -1,0 +1,613 @@
+/* '자기소개' 화면 전용 스타일 */
+
+.about-quote {
+    position: relative;
+    margin: 0 0 36px;
+    padding-left: 28px;
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--ink);
+    max-width: 46ch;
+}
+
+.about-quote-mark {
+    position: absolute;
+    left: 0;
+    top: -6px;
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 34px;
+    color: var(--accent);
+}
+
+/* 사진 - 글 지그재그 행 */
+
+.story-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+    margin-bottom: 48px;
+}
+
+.story-row-photos,
+.story-row-text {
+    min-width: 0;
+}
+
+.story-row--reverse .story-row-photos {
+    order: 2;
+}
+
+.story-row--reverse .story-row-text {
+    order: 1;
+}
+
+.story-row-photos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.story-row-photos img {
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid rgba(168, 124, 34, 0.4);
+    box-shadow: 0 0 20px rgba(168, 124, 34, 0.15);
+    background: linear-gradient(160deg, var(--paper-2), var(--line));
+    display: block;
+}
+
+.story-row-photos img:nth-child(2) {
+    margin-top: 24px;
+}
+
+.story-row-text p {
+    margin: 0;
+}
+
+/* 관심사 카드 (사용 가능 기술 스타일 참고) */
+
+.about-interests {
+    margin-top: 44px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+}
+
+.section-eyebrow .interest-bracket {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid var(--accent);
+    border-top: 2px solid var(--accent);
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.interest-heading {
+    font-family: "Noto Serif KR", serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 6px 0 24px;
+}
+
+.interest-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.interest-card {
+    position: relative;
+    overflow: hidden;
+    background: #17140f;
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+}
+
+.interest-blob {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    filter: blur(30px);
+    opacity: 0.55;
+}
+
+.interest-card--gold .interest-blob {
+    background: #d6a93d;
+}
+
+.interest-card--forest .interest-blob {
+    background: #2f6b52;
+}
+
+.interest-card--mint .interest-blob {
+    background: #8fd9bc;
+}
+
+.interest-num {
+    position: relative;
+    font-family: "Noto Serif KR", serif;
+    font-style: italic;
+    font-size: 13px;
+    font-weight: 700;
+    color: #d6a93d;
+    margin-bottom: 6px;
+}
+
+.interest-card h4 {
+    position: relative;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #f7f3e9;
+    margin-bottom: auto;
+    padding-bottom: 18px;
+}
+
+.interest-tags {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.interest-tags span {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #f7f3e9;
+    background: rgba(247, 243, 233, 0.1);
+    border: 1px solid rgba(247, 243, 233, 0.16);
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+@media (max-width: 760px) {
+    .interest-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 장점 / 보완점 */
+
+.about-traits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+}
+
+.trait-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.trait-list li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+}
+
+.trait-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.trait-list--plus li::before {
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(168, 124, 34, 0.55);
+}
+
+.trait-list--minus li::before {
+    background: var(--accent-3);
+    box-shadow: 0 0 8px rgba(14, 46, 35, 0.4);
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 44px;
+    margin-top: 4px;
+}
+
+.about-photo,
+.about-story {
+    min-width: 0;
+}
+
+.about-photo-frame {
+    aspect-ratio: 4 / 5;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(14, 46, 35, 0.3);
+    box-shadow: 0 0 24px rgba(14, 46, 35, 0.15);
+    background: linear-gradient(160deg, var(--paper-2), var(--line));
+}
+
+.about-photo-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.about-photo figcaption {
+    margin-top: 14px;
+}
+
+.about-photo figcaption strong {
+    display: block;
+    font-family: "Noto Serif KR", serif;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.about-photo figcaption span {
+    display: block;
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+}
+
+.about-meta {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.about-meta li {
+    display: flex;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+}
+
+.about-meta li span {
+    min-width: 48px;
+    color: var(--ink-faint);
+    font-weight: 500;
+}
+
+.about-meta li a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.about-meta li a:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+}
+
+.about-story p {
+    margin-bottom: 18px;
+}
+
+.about-story p:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+    .about-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .about-photo-frame {
+        max-width: 180px;
+    }
+
+    .about-stats {
+        flex-wrap: wrap;
+        gap: 20px 28px;
+    }
+
+    .about-stat-divider {
+        display: none;
+    }
+
+    .story-row,
+    .story-row--reverse {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .story-row-photos img:nth-child(2) {
+        margin-top: 0;
+    }
+
+    .story-row--reverse .story-row-photos,
+    .story-row--reverse .story-row-text {
+        order: initial;
+    }
+
+    .about-traits {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+}
+
+/* 하단 통계 스트립 */
+
+.about-stats {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+}
+
+.about-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.about-stat-num {
+    font-family: "Noto Serif KR", serif;
+    font-style: italic;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--accent-2);
+}
+
+.about-stat-label {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+}
+
+.about-stat-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--line);
+}
+
+/* 장학금 & 인증 카드 */
+
+.about-credentials {
+    margin-top: 44px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+}
+
+.credential-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.credential-card {
+    background: var(--paper-3);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 16px 32px -20px rgba(23, 20, 15, 0.25);
+}
+
+.credential-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 4px;
+    margin-bottom: 12px;
+}
+
+.credential-badge {
+    grid-row: 1 / 3;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--accent-2);
+    font-family: "Noto Serif KR", serif;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.credential-badge--year {
+    font-size: 11px;
+}
+
+.credential-title {
+    grid-column: 2;
+    font-family: "Noto Serif KR", serif;
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.credential-date {
+    grid-column: 3;
+    grid-row: 1;
+    font-size: 12px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+}
+
+.credential-desc {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 18px;
+}
+
+.credential-stats {
+    display: flex;
+    gap: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.credential-stats div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.credential-stats strong {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.credential-stats span {
+    font-size: 11px;
+    color: var(--ink-faint);
+}
+
+/* 학력 타임라인 */
+
+.about-education {
+    margin-top: 40px;
+}
+
+.edu-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 16px;
+}
+
+.edu-dash {
+    width: 18px;
+    height: 2px;
+    background: var(--accent);
+}
+
+.edu-timeline {
+    background: var(--accent-3);
+    border-radius: 16px;
+    padding: 28px 28px 8px;
+    position: relative;
+}
+
+.edu-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding-left: 22px;
+    padding-bottom: 26px;
+}
+
+.edu-item::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    bottom: -2px;
+    width: 1px;
+    background: rgba(247, 243, 233, 0.25);
+}
+
+.edu-item:last-child::before {
+    display: none;
+}
+
+.edu-dot {
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(247, 243, 233, 0.5);
+    background: transparent;
+}
+
+.edu-dot--current {
+    background: var(--accent-2);
+    border-color: var(--accent-2);
+}
+
+.edu-item-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.edu-date {
+    font-size: 12px;
+    color: rgba(247, 243, 233, 0.6);
+}
+
+.edu-item-body h4 {
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #f7f3e9;
+    line-height: 1.5;
+}
+
+.edu-status {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #f7f3e9;
+    background: rgba(247, 243, 233, 0.12);
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.edu-status--current {
+    background: var(--accent-2);
+    color: #fff;
+}
+
+@media (max-width: 640px) {
+    .credential-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .edu-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .edu-status {
+        margin-left: 22px;
+    }
+}

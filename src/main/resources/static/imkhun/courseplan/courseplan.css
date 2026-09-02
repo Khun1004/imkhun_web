@@ -1,0 +1,312 @@
+/* '강의 계획' 화면 전용 스타일 */
+
+.plan-section {
+    margin-bottom: 56px;
+}
+
+.plan-section:last-child {
+    margin-bottom: 0;
+}
+
+.plan-section-label {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 18px;
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 28px;
+}
+
+/* 가르치는 방법 */
+
+.teach-method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.teach-method-card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 16px;
+    text-align: center;
+    background: var(--paper-3);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.teach-method-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+}
+
+.teach-method-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--accent-2);
+    margin-bottom: 12px;
+}
+
+.teach-method-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.teach-method-card h4 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+
+.teach-method-card p {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+}
+
+.teach-method-note {
+    margin-top: 14px;
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    text-align: center;
+}
+
+@media (max-width: 560px) {
+    .teach-method-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 네온 글래스 카드 — 공용 */
+
+.plan-stack {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid var(--stack-border);
+    border-radius: 14px;
+    padding: 14px 10px;
+    font-family: "Noto Serif KR", serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--ink);
+    text-align: center;
+    box-shadow: var(--stack-glow);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.plan-stack:hover {
+    transform: translateY(-3px);
+}
+
+.plan-stack--yellow {
+    --stack-border: rgba(168, 124, 34, 0.55);
+    --stack-glow: 0 0 20px rgba(168, 124, 34, 0.3);
+    background: linear-gradient(160deg, rgba(214, 169, 61, 0.35), rgba(168, 124, 34, 0.15));
+}
+
+.plan-stack--orange {
+    --stack-border: rgba(14, 46, 35, 0.4);
+    --stack-glow: 0 0 16px rgba(14, 46, 35, 0.2);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.plan-stack--gold {
+    --stack-border: rgba(124, 90, 22, 0.5);
+    --stack-glow: 0 0 16px rgba(124, 90, 22, 0.22);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* 트리 레이아웃 */
+
+.plan-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+}
+
+.plan-root-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.plan-root {
+    min-width: 140px;
+    padding: 16px 32px;
+}
+
+.plan-root-price {
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-soft);
+}
+
+.plan-root-stem {
+    width: 2px;
+    height: 26px;
+    background: var(--gradient-main);
+}
+
+.plan-children {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 26px;
+}
+
+.plan-children::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, #a87c22, #d6a93d, #0e2e23);
+    opacity: 0.5;
+}
+
+.plan-children--six::before {
+    left: 8.3%;
+    right: 8.3%;
+}
+
+.plan-child {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 6px;
+}
+
+.plan-child::before {
+    content: "";
+    position: absolute;
+    top: -26px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 26px;
+    background: rgba(14, 46, 35, 0.4);
+}
+
+.plan-child--single::before {
+    top: -26px;
+}
+
+.plan-level-card {
+    width: 100%;
+    max-width: 130px;
+    min-height: 56px;
+}
+
+.plan-mini-stem {
+    width: 2px;
+    height: 22px;
+    background: rgba(124, 90, 22, 0.5);
+    margin: 6px 0;
+}
+
+.plan-price-card {
+    width: 100%;
+    max-width: 130px;
+    min-height: 48px;
+}
+
+/* 준비 중인 언어 */
+
+.plan-soon-row {
+    display: flex;
+    gap: 12px;
+}
+
+.plan-soon-card {
+    flex: 1;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.75;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.plan-soon-card:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.plan-soon-card--jp {
+    border-color: rgba(181, 73, 91, 0.55);
+    box-shadow: 0 0 14px rgba(181, 73, 91, 0.15);
+}
+
+.plan-soon-card--th {
+    border-color: rgba(63, 125, 107, 0.55);
+    box-shadow: 0 0 14px rgba(63, 125, 107, 0.15);
+}
+
+.plan-soon-card--en {
+    border-color: rgba(74, 95, 163, 0.55);
+    box-shadow: 0 0 14px rgba(74, 95, 163, 0.15);
+}
+
+.plan-soon-card span {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.plan-soon-card em {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-faint);
+}
+
+@media (max-width: 640px) {
+    .plan-children {
+        flex-wrap: wrap;
+        row-gap: 32px;
+    }
+
+    .plan-children::before {
+        display: none;
+    }
+
+    .plan-child {
+        flex: 0 0 33.33%;
+    }
+
+    .plan-child::before {
+        display: none;
+    }
+
+    .plan-soon-row {
+        flex-direction: column;
+    }
+}

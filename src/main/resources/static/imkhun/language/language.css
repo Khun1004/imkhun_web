@@ -1,0 +1,335 @@
+/* '강의 자료' 화면 전용 스타일 */
+
+.material-group-label {
+    font-family: "EB Garamond", serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink);
+    margin: 8px 0 18px;
+}
+
+.material-group-label--computer {
+    margin-top: 40px;
+}
+
+.material-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+.material-card {
+    position: relative;
+    flex: 1 1 160px;
+    min-width: 160px;
+    background: #17140f;
+    border-radius: 18px;
+    padding: 22px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
+    text-decoration: none;
+    overflow: hidden;
+    border: 1px solid rgba(247, 243, 233, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.material-card--down {
+    margin-top: 40px;
+}
+
+.material-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -20px rgba(23, 20, 15, 0.5);
+}
+
+.material-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--gradient-main);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 7px 16px;
+    border-radius: 0 18px 0 12px;
+}
+
+.material-card h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #f7f3e9;
+    margin-bottom: 6px;
+}
+
+.material-card p {
+    font-size: 12.5px;
+    color: rgba(247, 243, 233, 0.6);
+    line-height: 1.6;
+    margin-bottom: auto;
+}
+
+.material-venn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+    margin: 16px 0;
+}
+
+.venn-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(247, 243, 233, 0.25);
+    margin-left: -18px;
+}
+
+.venn-circle:first-child {
+    margin-left: 0;
+}
+
+.venn-circle--fill {
+    border: none;
+    background: linear-gradient(135deg, #d6a93d, #a87c22 55%, #0e2e23);
+}
+
+.material-card--computer {
+    background: #0e2e23;
+    border-color: rgba(247, 243, 233, 0.1);
+}
+
+.material-card--computer .venn-circle {
+    border-color: rgba(247, 243, 233, 0.3);
+}
+
+.venn-circle--fill-computer {
+    border: none;
+    background: linear-gradient(135deg, #8fd9bc, #3f7d6b 55%, #163c2c);
+}
+
+.material-link--computer {
+    color: #8fd9bc;
+}
+
+/* 컴퓨터 캐러셀 (좌우 화살표) */
+
+.material-carousel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.material-grid--scroll {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+
+.material-grid--scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.material-grid--scroll .material-card {
+    flex: 0 0 200px;
+    scroll-snap-align: start;
+}
+
+.carousel-arrow {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--paper-3);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.carousel-arrow:hover {
+    background: var(--paper-2);
+    border-color: var(--accent);
+}
+
+.carousel-arrow svg {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 560px) {
+    .carousel-arrow {
+        width: 34px;
+        height: 34px;
+    }
+
+    .material-grid--scroll .material-card {
+        flex-basis: 170px;
+    }
+}
+
+.material-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #d6a93d;
+}
+
+.material-link i {
+    font-style: normal;
+}
+
+@media (max-width: 900px) {
+    .material-card--down {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 560px) {
+    .material-card {
+        flex: 1 1 100%;
+    }
+}
+
+/* PDF 뷰어 모달 */
+
+.material-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.material-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.material-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(23, 20, 15, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.material-modal-panel {
+    position: relative;
+    width: min(880px, 92vw);
+    height: min(85vh, 900px);
+    background: var(--paper-3);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 40px 80px -24px rgba(23, 20, 15, 0.5);
+}
+
+.material-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.material-modal-head h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.material-modal-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: none;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.material-modal-close:hover {
+    background: var(--paper-2);
+}
+
+.material-modal-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.material-modal-body {
+    flex: 1;
+    min-height: 0;
+}
+
+.material-modal-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.material-modal-note {
+    padding: 10px 20px;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    text-align: center;
+    border-top: 1px solid var(--line);
+}
+
+/* 하단 전체 폭 안내 배너 (오른쪽→왼쪽 흐르는 문구) */
+
+.material-notice {
+    width: 100vw;
+    margin: 48px calc(50% - 50vw) 0;
+    background: #000000;
+    overflow: hidden;
+    padding: 16px 0;
+}
+
+.material-notice-track {
+    display: flex;
+    width: max-content;
+    animation: material-marquee 90s linear infinite;
+}
+
+.material-notice-track span {
+    white-space: nowrap;
+    padding: 0 48px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: #f7f3e9;
+}
+
+@keyframes material-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .material-notice-track {
+        animation: none;
+    }
+}
