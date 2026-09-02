@@ -1,4 +1,12 @@
-/* KWZM Center — 언어 자료 */
+/* KWZM Center — 언어 자료 (단순 버전) */
+
+.student-simple-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin-bottom: 24px;
+}
 
 .student-language-pills,
 .student-category-pills {
@@ -9,77 +17,45 @@
 }
 
 .student-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
     border: 1px solid var(--kwzm-line);
     border-radius: 999px;
-    padding: 8px 20px 8px 8px;
+    padding: 9px 20px;
     background: var(--kwzm-bg-3);
     color: var(--kwzm-ink-soft);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 8px -4px rgba(23, 20, 15, 0.1);
-    transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-}
-
-.student-pill:not(:has(.student-pill-icon)) {
-    padding: 9px 20px;
-}
-
-.student-pill-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: rgba(22, 56, 107, 0.12);
-    color: var(--kwzm-accent-2);
-    font-family: "Noto Serif KR", serif;
-    font-size: 12px;
-    font-weight: 700;
-    flex-shrink: 0;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .student-pill:hover {
     border-color: var(--kwzm-accent);
     color: var(--kwzm-ink);
-    transform: translateY(-1px);
 }
 
 .student-pill.active {
-    background: var(--kwzm-gradient);
-    border-color: transparent;
-    color: #fff;
-    box-shadow: 0 8px 18px -8px rgba(22, 56, 107, 0.45);
-}
-
-.student-pill.active .student-pill-icon {
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--kwzm-primary);
+    border-color: var(--kwzm-primary);
     color: #fff;
 }
-
 
 .student-materials-heading {
     font-family: "Noto Serif KR", serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--kwzm-ink);
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 }
 
 .student-materials-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
 }
 
 @container (max-width: 640px) {
     .student-materials-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -93,113 +69,74 @@
     display: flex;
     flex-direction: column;
     border: 1px solid var(--kwzm-line);
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
     background: var(--kwzm-bg-3);
-    box-shadow: 0 4px 16px -10px rgba(23, 20, 15, 0.15);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     cursor: pointer;
-    animation: student-card-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes student-card-in {
-    from {
-        opacity: 0;
-        transform: translateY(14px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.student-material-item:nth-child(1) { animation-delay: 0.02s; }
-.student-material-item:nth-child(2) { animation-delay: 0.06s; }
-.student-material-item:nth-child(3) { animation-delay: 0.1s; }
-.student-material-item:nth-child(4) { animation-delay: 0.14s; }
-.student-material-item:nth-child(5) { animation-delay: 0.18s; }
-.student-material-item:nth-child(6) { animation-delay: 0.22s; }
-.student-material-item:nth-child(n+7) { animation-delay: 0.26s; }
-
-@media (prefers-reduced-motion: reduce) {
-    .student-material-item {
-        animation: none;
-    }
 }
 
 .student-material-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 32px -14px rgba(22, 56, 107, 0.35);
-    border-color: rgba(22, 56, 107, 0.35);
+    border-color: var(--kwzm-accent);
 }
 
 .student-material-thumb {
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
-    background: linear-gradient(160deg, var(--kwzm-bg-2) 0%, #efe6cf 100%);
+    background: var(--kwzm-bg-2);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    color: var(--kwzm-accent-2);
+    color: var(--kwzm-ink-faint);
 }
 
 .student-material-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.student-material-item:hover .student-material-thumb img {
-    transform: scale(1.06);
 }
 
 .student-material-thumb-icon {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .student-material-thumb-icon svg {
-    width: 34px;
-    height: 34px;
-    opacity: 0.75;
+    width: 28px;
+    height: 28px;
+    opacity: 0.6;
 }
 
 .student-material-thumb-icon span {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.03em;
     color: var(--kwzm-ink-faint);
-    text-transform: uppercase;
 }
 
 .student-material-count-badge {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
-    padding: 3px 9px;
+    bottom: 6px;
+    right: 6px;
+    padding: 2px 8px;
     border-radius: 999px;
-    background: rgba(23, 20, 15, 0.72);
-    backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.6);
     color: #fff;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
 }
 
 .student-material-main {
-    padding: 14px 16px 16px;
+    padding: 12px 14px;
 }
 
 .student-material-title {
-    font-family: "Noto Serif KR", serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--kwzm-ink);
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -208,19 +145,13 @@
 .student-material-desc {
     font-size: 11.5px;
     color: var(--kwzm-ink-soft);
-    line-height: 1.5;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
 }
 
 .student-material-meta {
     font-size: 11px;
     color: var(--kwzm-ink-faint);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }

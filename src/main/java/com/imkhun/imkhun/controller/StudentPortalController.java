@@ -71,6 +71,7 @@ public class StudentPortalController {
     }
 
     // 이 학생이 승인받은 언어의 자료만 볼 수 있음 (다른 언어 자료는 접근 불가)
+    // + 특정 학생만 보도록 지정된 자료는 그 학생에게만 보임
     @GetMapping("/materials")
     public ResponseEntity<?> getMaterials(HttpServletRequest request,
                                           @RequestParam String language, @RequestParam String category) {
@@ -87,7 +88,22 @@ public class StudentPortalController {
             return ResponseEntity.status(403).body("이 자료에 접근할 수 없어요.");
         }
 
-        return ResponseEntity.ok(studyMaterialService.getMaterials(language, category));
+        Set<String> myStudentNumbers = approved.stream()
+                .map(Application::getStudentNumber)
+                .collect(java.util.stream.Collectors.toSet());
+
+        List<MaterialResponse> materials = studyMaterialService.getMaterials(language, category).stream()
+                .filter(m -> isVisibleToStudent(m, myStudentNumbers))
+                .toList();
+
+        return ResponseEntity.ok(materials);
+    }
+
+    // 지정된 학생이 없으면(전체 공개) 누구나 보임, 지정돼있으면 내 학생번호가 포함될 때만 보임
+    private boolean isVisibleToStudent(MaterialResponse material, Set<String> myStudentNumbers) {
+        List<String> assigned = material.assignedStudentNumbers();
+        if (assigned == null || assigned.isEmpty()) return true;
+        return assigned.stream().anyMatch(myStudentNumbers::contains);
     }
 
     // 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중 최근 6개
@@ -101,7 +117,16 @@ public class StudentPortalController {
         Set<String> allowedLanguages = approved.stream()
                 .map(a -> applicationService.extractLanguageCode(a.getCourseName()))
                 .collect(java.util.stream.Collectors.toSet());
+        Set<String> myStudentNumbers = approved.stream()
+                .map(Application::getStudentNumber)
+                .collect(java.util.stream.Collectors.toSet());
 
-        return ResponseEntity.ok(studyMaterialService.getRecentMaterials(allowedLanguages, 6));
+        // 넉넉히 가져온 다음 개별 지정 자료를 걸러내고 6개로 자름
+        List<MaterialResponse> materials = studyMaterialService.getRecentMaterials(allowedLanguages, 30).stream()
+                .filter(m -> isVisibleToStudent(m, myStudentNumbers))
+                .limit(6)
+                .toList();
+
+        return ResponseEntity.ok(materials);
     }
 }

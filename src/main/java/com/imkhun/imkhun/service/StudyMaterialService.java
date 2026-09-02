@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +31,7 @@ public class StudyMaterialService {
         validate(request);
 
         StudyMaterial material = StudyMaterial.create(request.language(), request.category(), request.title(), request.description());
+        material.updateAssignedStudents(toStudentNumberSet(request.assignedStudentNumbers()));
         addFiles(material, request.files());
         StudyMaterial saved = studyMaterialRepository.save(material);
         return toResponse(saved);
@@ -61,6 +63,7 @@ public class StudyMaterialService {
         StudyMaterial material = studyMaterialRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("자료를 찾을 수 없어요."));
         material.updateInfo(request.language(), request.category(), request.title(), request.description());
+        material.updateAssignedStudents(toStudentNumberSet(request.assignedStudentNumbers()));
 
         // 새 파일을 골랐을 때만 기존 파일을 지우고 교체 (안 골랐으면 기존 파일 유지)
         if (request.files() != null && !request.files().isEmpty()) {
@@ -100,6 +103,11 @@ public class StudyMaterialService {
         }
     }
 
+    private Set<String> toStudentNumberSet(List<String> studentNumbers) {
+        if (studentNumbers == null) return new HashSet<>();
+        return new HashSet<>(studentNumbers);
+    }
+
     private MaterialResponse toResponse(StudyMaterial material) {
         List<MaterialFileResponse> fileResponses = material.getFiles().stream()
                 .map(f -> new MaterialFileResponse(f.getFileName(), f.getFileType(), f.getFileData(),
@@ -108,7 +116,8 @@ public class StudyMaterialService {
 
         return new MaterialResponse(
                 material.getId(), material.getLanguage(), material.getCategory(), material.getTitle(),
-                material.getDescription(), fileResponses, material.getCreatedAt().format(DATE_FORMAT)
+                material.getDescription(), fileResponses, material.getCreatedAt().format(DATE_FORMAT),
+                material.getAssignedStudentNumbers().stream().toList()
         );
     }
 }

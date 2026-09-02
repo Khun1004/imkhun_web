@@ -233,7 +233,7 @@ function renderStudentLanguagePills() {
         btn.type = "button";
         btn.className = "student-pill";
         btn.dataset.studentLang = lang;
-        btn.innerHTML = `<span class="student-pill-icon" aria-hidden="true">${STUDENT_LANGUAGE_ICON[lang] || "?"}</span>${STUDENT_LANGUAGE_LABEL[lang] || lang}`;
+        btn.textContent = STUDENT_LANGUAGE_LABEL[lang] || lang;
         btn.addEventListener("click", () => {
             pillsEl.querySelectorAll(".student-pill").forEach((p) => p.classList.remove("active"));
             btn.classList.add("active");
@@ -282,7 +282,7 @@ async function loadStudentMaterials(language, category) {
         const materials = await res.json();
 
         list.innerHTML = "";
-        emptyText.hidden = materials.length > 0;
+        if (emptyText) emptyText.hidden = materials.length > 0;
 
         const ICON_LINK = `<svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5l5-5M8 10l-1.5 1.5a3.5 3.5 0 0 0 5 5L13 15M16 14l1.5-1.5a3.5 3.5 0 0 0-5-5L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
         const ICON_TEXT = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;

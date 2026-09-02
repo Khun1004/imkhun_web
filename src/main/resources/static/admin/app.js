@@ -304,6 +304,41 @@ function renderExistingFiles() {
     });
 }
 
+async function loadStudentPickerOptions(preCheckedNumbers) {
+    const pickerEl = document.getElementById("registerStudentPicker");
+    if (!pickerEl) return;
+
+    pickerEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/admin/applications");
+        if (!res.ok) throw new Error("불러오기 실패");
+        const applications = await res.json();
+        const approvedStudents = applications.filter((a) => a.status === "APPROVED" && a.studentNumber);
+
+        if (approvedStudents.length === 0) {
+            pickerEl.innerHTML = `<p class="admin-note-hint">아직 승인된 학생이 없어요.</p>`;
+            return;
+        }
+
+        pickerEl.innerHTML = "";
+        approvedStudents.forEach((app) => {
+            const label = document.createElement("label");
+            label.className = "admin-student-picker-item";
+            const checked = preCheckedNumbers && preCheckedNumbers.includes(app.studentNumber) ? "checked" : "";
+            label.innerHTML = `
+        <input type="checkbox" value="${app.studentNumber}" ${checked}>
+        <span class="admin-student-picker-name">${escapeHtmlForAdmin(app.nickname)}</span>
+        <span class="admin-student-picker-number">${escapeHtmlForAdmin(app.courseName)} · ${escapeHtmlForAdmin(app.studentNumber)}</span>
+      `;
+            pickerEl.appendChild(label);
+        });
+    } catch (err) {
+        console.error(err);
+        pickerEl.innerHTML = `<p class="admin-note-hint">학생 목록을 불러오지 못했어요.</p>`;
+    }
+}
+
 function openEditModal(material) {
     openRegisterModal();
     document.getElementById("registerModalTitle").textContent = "자료 수정";
@@ -314,6 +349,7 @@ function openEditModal(material) {
     document.getElementById("registerDescriptionInput").value = material.description || "";
     document.querySelector(`input[name="registerCategory"][value="${material.category}"]`).checked = true;
     updateCategoryFieldVisibility();
+    loadStudentPickerOptions(material.assignedStudentNumbers || []);
 
     const allFiles = material.files || [];
     // 링크/글은 각각 전용 입력칸에 채워서 바로 고칠 수 있게 하고,
@@ -454,12 +490,16 @@ async function submitRegisterMaterial() {
             files.push({ fileName: null, fileType: null, fileData: null, linkUrl: null, textContent: textValue });
         }
 
+        const assignedStudentNumbers = Array.from(
+            document.querySelectorAll('#registerStudentPicker input[type="checkbox"]:checked')
+        ).map((cb) => cb.value);
+
         const url = isEditing ? `/api/admin/materials/${editingId}` : "/api/admin/materials";
         const method = isEditing ? "PUT" : "POST";
         const res = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ language, category, title, description, files }),
+            body: JSON.stringify({ language, category, title, description, files, assignedStudentNumbers }),
         });
 
         if (!res.ok) {
@@ -813,6 +853,7 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("adminRegisterBtn")?.addEventListener("click", () => {
         closeRegisterModal(); // 수정 모드로 남아있을 수 있는 상태를 확실히 초기화
         openRegisterModal();
+        loadStudentPickerOptions([]);
     });
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-register-close]")) closeRegisterModal();

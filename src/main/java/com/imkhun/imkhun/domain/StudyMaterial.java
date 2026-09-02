@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "study_materials")
@@ -29,6 +31,13 @@ public class StudyMaterial {
     @Lob
     @Column(columnDefinition = "CLOB")
     private String description;
+
+    // 이 자료를 볼 수 있는 학생번호들 — 비어있으면 그 언어를 듣는 전체 학생에게 보임,
+    // 하나라도 들어있으면 그 학생(들)에게만 보임
+    @ElementCollection
+    @CollectionTable(name = "material_assigned_students", joinColumns = @JoinColumn(name = "material_id"))
+    @Column(name = "student_number")
+    private Set<String> assignedStudentNumbers = new HashSet<>();
 
     // 자료 하나에 파일(사진/문서)이 여러 개 딸릴 수 있음 — 갤러리처럼 묶어서 보여줌
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -56,6 +65,13 @@ public class StudyMaterial {
         this.category = category;
         this.title = title;
         this.description = description;
+    }
+
+    public void updateAssignedStudents(Set<String> studentNumbers) {
+        this.assignedStudentNumbers.clear();
+        if (studentNumbers != null) {
+            this.assignedStudentNumbers.addAll(studentNumbers);
+        }
     }
 
     // 새 파일을 올렸을 때, 기존 파일을 전부 지움 (그 다음 addFile로 새로 채움)
@@ -86,6 +102,10 @@ public class StudyMaterial {
 
     public String getDescription() {
         return description;
+    }
+
+    public Set<String> getAssignedStudentNumbers() {
+        return assignedStudentNumbers;
     }
 
     public List<MaterialFile> getFiles() {

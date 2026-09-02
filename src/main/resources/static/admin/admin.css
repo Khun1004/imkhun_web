@@ -645,6 +645,44 @@
     color: #fff;
 }
 
+.admin-student-picker {
+    max-height: 160px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 6px;
+}
+
+.admin-student-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    cursor: pointer;
+}
+
+.admin-student-picker-item:hover {
+    background: var(--paper-2);
+}
+
+.admin-student-picker-item input {
+    flex-shrink: 0;
+}
+
+.admin-student-picker-name {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-student-picker-number {
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-family: "EB Garamond", monospace;
+}
+
 #registerFileInput {
     width: 100%;
     font-size: 12.5px;
