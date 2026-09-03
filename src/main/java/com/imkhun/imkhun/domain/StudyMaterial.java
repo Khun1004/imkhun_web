@@ -27,6 +27,10 @@ public class StudyMaterial {
     @Column(nullable = false)
     private String title;
 
+    // "PERSONAL"(나만의 공부 화면 - 개인용) / "KWZM"(KWZM Center 학생용)
+    @Column(nullable = false)
+    private String scope = "PERSONAL";
+
     // 제목 밑에 들어가는 부가 설명 (선택)
     @Lob
     @Column(columnDefinition = "CLOB")
@@ -51,12 +55,13 @@ public class StudyMaterial {
         // JPA 기본 생성자
     }
 
-    public static StudyMaterial create(String language, String category, String title, String description) {
+    public static StudyMaterial create(String language, String category, String title, String description, String scope) {
         StudyMaterial material = new StudyMaterial();
         material.language = language;
         material.category = category;
         material.title = title;
         material.description = description;
+        material.scope = scope;
         return material;
     }
 
@@ -98,6 +103,10 @@ public class StudyMaterial {
 
     public String getTitle() {
         return title;
+    }
+
+    public String getScope() {
+        return scope;
     }
 
     public String getDescription() {

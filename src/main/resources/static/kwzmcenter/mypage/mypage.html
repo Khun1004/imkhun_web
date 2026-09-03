@@ -1,26 +1,46 @@
-<div class="student-mypage-hero">
-    <span class="student-home-hero-blob student-home-hero-blob--a" aria-hidden="true"></span>
-    <span class="student-home-hero-blob student-home-hero-blob--b" aria-hidden="true"></span>
-    <p class="eyebrow student-page-banner-eyebrow">My Page</p>
-    <h2 class="student-mypage-title" id="mypageGreeting">안녕하세요!</h2>
-    <p class="student-mypage-sub">내 수강 정보를 확인할 수 있어요.</p>
-</div>
+<div class="student-photo-banner student-photo-banner--fullpage">
+    <div class="student-photo-banner-slides">
+        <div class="student-photo-banner-slide is-active" style="background-image:url('mypage/images/background1.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('mypage/images/background2.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('mypage/images/background3.jpg')"></div>
+    </div>
+    <div class="student-photo-banner-dots">
+        <button type="button" class="student-photo-banner-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
+    </div>
 
-<div class="student-home-section">
-    <h3 class="student-home-heading">내 수강 정보</h3>
-    <div class="student-home-courses" id="mypageCourses"></div>
-</div>
+    <div class="mypage-bg-inner">
+        <div class="student-mypage-hero">
+            <span class="student-home-hero-blob student-home-hero-blob--a" aria-hidden="true"></span>
+            <span class="student-home-hero-blob student-home-hero-blob--b" aria-hidden="true"></span>
+            <p class="eyebrow student-page-banner-eyebrow">My Page</p>
+            <h2 class="student-mypage-title" id="mypageGreeting">안녕하세요!</h2>
+            <p class="student-mypage-sub">내 수강 정보를 확인할 수 있어요.</p>
+        </div>
 
-<div class="student-home-section">
-    <h3 class="student-home-heading">바로가기</h3>
-    <div class="student-home-shortcuts">
-        <button type="button" class="student-home-shortcut" data-home-shortcut="language">
-            <span class="student-home-shortcut-icon" aria-hidden="true">가</span>
-            <span>언어 자료 보러가기</span>
-        </button>
-        <button type="button" class="student-home-shortcut" data-home-shortcut="video">
-            <span class="student-home-shortcut-icon" aria-hidden="true">▶</span>
-            <span>영상 강의 보러가기</span>
-        </button>
+        <div class="mypage-frosted-card">
+            <nav class="mypage-tabs" role="tablist" aria-label="마이페이지 메뉴">
+                <button type="button" class="mypage-tab active" data-mypage-tab="courses" role="tab" aria-selected="true">내 수강 정보</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="shortcuts" role="tab" aria-selected="false">바로가기</button>
+            </nav>
+
+            <div class="mypage-tab-panel active" data-mypage-panel="courses">
+                <div class="student-home-courses" id="mypageCourses"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="shortcuts" hidden>
+                <div class="student-home-shortcuts">
+                    <button type="button" class="student-home-shortcut" data-mypage-action="certificate">
+                        <span class="student-home-shortcut-icon" aria-hidden="true">🎓</span>
+                        <span>합격증 다운로드</span>
+                    </button>
+                    <button type="button" class="student-home-shortcut" data-mypage-action="exam">
+                        <span class="student-home-shortcut-icon" aria-hidden="true">📝</span>
+                        <span>시험 보러가기</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

@@ -215,7 +215,15 @@ async function loadMyApplications() {
         <div class="mypage-history-main">
           <span class="mypage-history-title">${escapeHtmlForMypage(app.courseName)} · ${studyTypeLabel[app.studyType] || app.studyType}</span>
           <span class="mypage-history-date">신청일 ${app.createdAt}</span>
-          ${app.studentNumber ? `<span class="mypage-student-number">학생번호: ${escapeHtmlForMypage(app.studentNumber)} · KWZM Center 입장에 필요해요</span>` : ""}
+          ${app.studentNumber ? `
+            <span class="mypage-student-number-row">
+              <span class="mypage-student-number">학생번호: ${escapeHtmlForMypage(app.studentNumber)} · KWZM Center 입장에 필요해요</span>
+              <button type="button" class="mypage-copy-btn" data-copy-text="${escapeHtmlForMypage(app.studentNumber)}" aria-label="학생번호 복사">
+                <svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                복사
+              </button>
+            </span>
+          ` : ""}
         </div>
         <span class="mypage-badge ${statusClass[app.status] || ""}">${statusLabel[app.status] || app.status}</span>
       `;
@@ -236,6 +244,38 @@ document.addEventListener("fragments:loaded", () => {
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-auth-close]")) closeAuthModal();
         if (e.target.closest("[data-mypage-close]")) closeMypageModal();
+    });
+
+    // 학생번호 복사 버튼 (동적으로 생기므로 위임 처리)
+    document.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".mypage-copy-btn");
+        if (!btn) return;
+
+        const text = btn.dataset.copyText;
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (err) {
+            // 클립보드 API를 못 쓰는 환경(구형 브라우저 등)을 위한 대체 방법
+            const temp = document.createElement("textarea");
+            temp.value = text;
+            temp.style.position = "fixed";
+            temp.style.opacity = "0";
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+        }
+
+        const originalHtml = btn.innerHTML;
+        btn.classList.add("is-copied");
+        btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      복사됨
+    `;
+        setTimeout(() => {
+            btn.classList.remove("is-copied");
+            btn.innerHTML = originalHtml;
+        }, 1500);
     });
 
     document.addEventListener("keydown", (e) => {

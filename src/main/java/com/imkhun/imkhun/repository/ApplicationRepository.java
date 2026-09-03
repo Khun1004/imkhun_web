@@ -15,4 +15,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     long countByStudentNumberStartingWith(String prefix);
 
     Optional<Application> findByUsernameAndStudentNumberAndStatus(String username, String studentNumber, String status);
+
+    Optional<Application> findByStudentNumber(String studentNumber);
 }

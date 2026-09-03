@@ -6,7 +6,15 @@
 <div class="admin-inline-panel active" data-students-panel="applications">
     <p class="admin-note-hint">학생들이 신청한 강의 목록이에요. 확인했으면 승인 처리해주세요.</p>
     <p class="admin-empty-text" id="adminStudentsEmpty" hidden>아직 신청 내역이 없어요.</p>
-    <div id="adminStudentList"></div>
+    <div class="admin-student-columns" aria-hidden="true">
+        <span>학생</span>
+        <span>강의정보</span>
+        <span>연락처</span>
+        <span>학생번호</span>
+        <span>신청일</span>
+        <span>상태</span>
+    </div>
+    <div id="adminStudentList" class="admin-student-table"></div>
 </div>
 
 <div class="admin-inline-panel" data-students-panel="reviews" hidden>

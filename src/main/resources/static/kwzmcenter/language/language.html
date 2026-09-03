@@ -1,11 +1,52 @@
-<h2 class="student-simple-title">언어 자료</h2>
+<!-- 언어 페이지 상단 배너: 실제 사진 배경 위에 글 -->
+<div class="student-photo-banner">
+    <div class="student-photo-banner-slides" id="studentLangBannerSlides">
+        <div class="student-photo-banner-slide is-active" style="background-image:url('images/1.png')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/2.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/3.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/4.jpg')"></div>
+    </div>
+    <div class="student-photo-banner-overlay" aria-hidden="true"></div>
+    <div class="student-photo-banner-inner">
+        <div class="student-photo-banner-textbox">
+            <p class="eyebrow student-photo-banner-eyebrow">Language</p>
+            <h2 class="student-photo-banner-title">언어별 자료</h2>
+            <p class="student-photo-banner-desc">내가 신청한 언어의 학습 자료를 항목별로 확인해보세요.</p>
+        </div>
+    </div>
+    <div class="student-photo-banner-dots" id="studentLangBannerDots">
+        <button type="button" class="student-photo-banner-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="3" aria-label="배경 사진 4"></button>
+    </div>
+</div>
 
-<div class="student-language-pills" id="studentLanguagePills"></div>
+<div class="student-lang-layout">
 
-<div class="student-category-pills" id="studentCategoryPills" hidden></div>
+    <!-- 왼쪽 사이드바: 언어 선택 -->
+    <aside class="student-lang-sidebar" id="studentLanguagePills"></aside>
 
-<div class="student-materials-view" id="studentMaterialsView" hidden>
-    <p class="student-materials-heading" id="studentMaterialsHeading"></p>
-    <p class="admin-empty-text" id="studentMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
-    <div class="student-materials-grid" id="studentMaterialsList"></div>
+    <!-- 오른쪽 콘텐츠: 선택된 언어의 자료 -->
+    <div class="student-lang-content">
+
+        <div class="student-category-pills" id="studentCategoryPills" hidden></div>
+
+        <p class="admin-empty-text" id="studentLangNotEnrolled" hidden>아직 신청하지 않은 언어예요. 없어요.</p>
+
+        <div class="student-materials-view" id="studentMaterialsView" hidden>
+            <p class="student-materials-heading" id="studentMaterialsHeading"></p>
+
+            <div class="student-materials-columns" aria-hidden="true">
+                <span></span>
+                <span>자료</span>
+                <span>유형</span>
+                <span>등록일</span>
+            </div>
+
+            <p class="admin-empty-text" id="studentMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
+            <div class="student-materials-grid" id="studentMaterialsList"></div>
+        </div>
+
+    </div>
 </div>

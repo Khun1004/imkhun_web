@@ -1,0 +1,79 @@
+/* KWZM Center — 온라인 영상 (가로 알약 탭) */
+
+:root {
+    --kwzm-tag-computer: #6b5b95;
+}
+
+.video-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.video-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1.5px solid var(--kwzm-line);
+    border-radius: 999px;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-soft);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.video-tab::before {
+    content: "";
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--kwzm-tag-other);
+}
+
+.video-tab[data-video-tab="korean"]::before { background: var(--kwzm-tag-korean); }
+.video-tab[data-video-tab="japanese"]::before { background: var(--kwzm-tag-japanese); }
+.video-tab[data-video-tab="thai"]::before { background: var(--kwzm-tag-thai); }
+.video-tab[data-video-tab="english"]::before { background: var(--kwzm-tag-english); }
+.video-tab[data-video-tab="computer"]::before { background: var(--kwzm-tag-computer); }
+
+.video-tab:hover {
+    border-color: var(--kwzm-accent);
+    color: var(--kwzm-ink);
+}
+
+.video-tab.active {
+    color: #fff;
+    border-color: transparent;
+}
+
+.video-tab.active::before {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.video-tab[data-video-tab="korean"].active { background: var(--kwzm-tag-korean); }
+.video-tab[data-video-tab="japanese"].active { background: var(--kwzm-tag-japanese); }
+.video-tab[data-video-tab="thai"].active { background: var(--kwzm-tag-thai); }
+.video-tab[data-video-tab="english"].active { background: var(--kwzm-tag-english); }
+.video-tab[data-video-tab="computer"].active { background: var(--kwzm-tag-computer); }
+
+.video-tab-panel[hidden] {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .video-tabs {
+        gap: 8px;
+        margin-bottom: 22px;
+    }
+
+    .video-tab {
+        padding: 8px 16px;
+        font-size: 12.5px;
+    }
+}

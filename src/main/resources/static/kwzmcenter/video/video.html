@@ -1,16 +1,70 @@
-<div class="student-page-banner student-page-banner--forest">
-    <span class="student-page-banner-blob student-page-banner-blob--a" aria-hidden="true"></span>
-    <span class="student-page-banner-blob student-page-banner-blob--b" aria-hidden="true"></span>
-    <span class="student-page-banner-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none"><path d="M8 6l10 6-10 6V6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-  </span>
-    <p class="eyebrow student-page-banner-eyebrow">Video Lessons</p>
-    <h2 class="student-page-banner-title">영상</h2>
-    <p class="student-page-banner-desc">강의 영상을 언제든 다시 볼 수 있는 공간이 될 거예요.</p>
+<div class="student-photo-banner">
+    <div class="student-photo-banner-slides" id="studentVideoBannerSlides">
+        <div class="student-photo-banner-slide is-active" style="background-image:url('images/1.png')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/2.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/3.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/4.jpg')"></div>
+    </div>
+    <div class="student-photo-banner-inner">
+        <div class="student-photo-banner-textbox">
+            <p class="eyebrow student-photo-banner-eyebrow">Online Video</p>
+            <h2 class="student-photo-banner-title">온라인 영상</h2>
+            <p class="student-photo-banner-desc">언어별·컴퓨터 강의 영상을 언제든 다시 볼 수 있는 공간이 될 거예요.</p>
+        </div>
+    </div>
+    <div class="student-photo-banner-dots" id="studentVideoBannerDots">
+        <button type="button" class="student-photo-banner-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="3" aria-label="배경 사진 4"></button>
+    </div>
 </div>
 
-<div class="student-coming-soon">
-    <span class="student-coming-soon-icon" aria-hidden="true">▶</span>
-    <p class="student-coming-soon-title">영상 강의를 준비하고 있어요</p>
-    <p class="student-coming-soon-desc">곧 이곳에서 강의 영상을 볼 수 있게 될 거예요. 조금만 기다려주세요!</p>
+<!-- 언어/컴퓨터 탭 -->
+<div class="video-tabs" id="videoTabs" role="tablist" aria-label="영상 카테고리">
+    <button type="button" class="video-tab active" data-video-tab="korean" role="tab" aria-selected="true">한국어</button>
+    <button type="button" class="video-tab" data-video-tab="english" role="tab" aria-selected="false">영어</button>
+    <button type="button" class="video-tab" data-video-tab="japanese" role="tab" aria-selected="false">일본어</button>
+    <button type="button" class="video-tab" data-video-tab="thai" role="tab" aria-selected="false">태국어</button>
+    <button type="button" class="video-tab" data-video-tab="computer" role="tab" aria-selected="false">컴퓨터</button>
+</div>
+
+<div class="video-tab-panel active" data-video-panel="korean">
+    <div class="student-coming-soon">
+        <span class="student-coming-soon-icon" aria-hidden="true">▶</span>
+        <p class="student-coming-soon-title">한국어 영상 강의를 준비하고 있어요</p>
+        <p class="student-coming-soon-desc">곧 이곳에서 한국어 강의 영상을 볼 수 있게 될 거예요.</p>
+    </div>
+</div>
+
+<div class="video-tab-panel" data-video-panel="english" hidden>
+    <div class="student-coming-soon">
+        <span class="student-coming-soon-icon" aria-hidden="true">▶</span>
+        <p class="student-coming-soon-title">영어 영상 강의를 준비하고 있어요</p>
+        <p class="student-coming-soon-desc">곧 이곳에서 영어 강의 영상을 볼 수 있게 될 거예요.</p>
+    </div>
+</div>
+
+<div class="video-tab-panel" data-video-panel="japanese" hidden>
+    <div class="student-coming-soon">
+        <span class="student-coming-soon-icon" aria-hidden="true">▶</span>
+        <p class="student-coming-soon-title">일본어 영상 강의를 준비하고 있어요</p>
+        <p class="student-coming-soon-desc">곧 이곳에서 일본어 강의 영상을 볼 수 있게 될 거예요.</p>
+    </div>
+</div>
+
+<div class="video-tab-panel" data-video-panel="thai" hidden>
+    <div class="student-coming-soon">
+        <span class="student-coming-soon-icon" aria-hidden="true">▶</span>
+        <p class="student-coming-soon-title">태국어 영상 강의를 준비하고 있어요</p>
+        <p class="student-coming-soon-desc">곧 이곳에서 태국어 강의 영상을 볼 수 있게 될 거예요.</p>
+    </div>
+</div>
+
+<div class="video-tab-panel" data-video-panel="computer" hidden>
+    <div class="student-coming-soon">
+        <span class="student-coming-soon-icon" aria-hidden="true">💻</span>
+        <p class="student-coming-soon-title">컴퓨터 영상 강의를 준비하고 있어요</p>
+        <p class="student-coming-soon-desc">곧 이곳에서 컴퓨터 활용 강의 영상을 볼 수 있게 될 거예요.</p>
+    </div>
 </div>

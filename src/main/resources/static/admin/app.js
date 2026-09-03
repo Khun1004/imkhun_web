@@ -1,7 +1,5 @@
 // '나만의 공부 화면' (관리자 전용) 독립 페이지 전체 로직
-// 이 페이지는 imkhun 메인 사이트와 별개의 새 창(새 탭)으로 열림
 
-// ---- 조각(fragment) 불러오기: 메인 사이트의 script.js와 같은 방식, 이 페이지 안에서 자체적으로 처리 ----
 async function loadFragments() {
     const targets = document.querySelectorAll("[data-src]:not([data-loaded])");
     if (targets.length === 0) return;
@@ -40,9 +38,112 @@ function showAdminScreen() {
     if (loginPage) loginPage.hidden = true;
     if (screen) screen.hidden = false;
     window.scrollTo({ top: 0, behavior: "instant" });
+    autoSelectFirstMaterialsForActiveTab();
+    updateHeroContent("personal");
 }
 
-// 페이지를 열었을 때 이미 로그인이 살아있으면 바로 화면으로, 아니면 로그인 화면
+// 상단 배너에 탭마다 다른 제목/설명을 보여줘요.
+const HERO_CONTENT = {
+    personal: {
+        eyebrow: "개인 보관함",
+        title: "개인용 자료",
+        desc: "나만 볼 수 있는 공부 자료를 언어와 항목별로 정리해요.",
+    },
+    kwzm: {
+        eyebrow: "KWZM 학생 공간",
+        title: "KWZM 학생 자료",
+        desc: "학생들에게 공유할 자료를 언어별로 관리하고 초대해요.",
+    },
+    students: {
+        eyebrow: "학생 관리",
+        title: "학생 관리",
+        desc: "신청 현황을 확인하고 학생을 승인해요.",
+    },
+    my: {
+        eyebrow: "마이페이지",
+        title: "마이",
+        desc: "내 정보와 결제 계좌를 관리해요.",
+    },
+};
+
+function updateHeroContent(key) {
+    const content = HERO_CONTENT[key] || HERO_CONTENT.personal;
+    const eyebrowEl = document.getElementById("adminHeroEyebrow");
+    const titleEl = document.getElementById("adminHeroTitle");
+    const descEl = document.getElementById("adminHeroDesc");
+    if (eyebrowEl) eyebrowEl.textContent = content.eyebrow;
+    if (titleEl) titleEl.textContent = content.title;
+    if (descEl) descEl.textContent = content.desc;
+}
+
+// 배경 사진 3장을 천천히 돌려가며 보여주는 슬라이드예요.
+let heroSlideIndex = 0;
+let heroSlideTimer = null;
+
+function goToHeroSlide(index) {
+    const slides = document.querySelectorAll("#adminHeroSlides .admin-hero-slide");
+    const dots = document.querySelectorAll("#adminHeroDots .admin-hero-dot");
+    if (!slides.length) return;
+
+    heroSlideIndex = (index + slides.length) % slides.length;
+    slides.forEach((s, i) => s.classList.toggle("is-active", i === heroSlideIndex));
+    dots.forEach((d, i) => d.classList.toggle("is-active", i === heroSlideIndex));
+}
+
+function initHeroSlideshow() {
+    const slides = document.querySelectorAll("#adminHeroSlides .admin-hero-slide");
+    if (slides.length <= 1) return;
+
+    document.querySelectorAll("#adminHeroDots .admin-hero-dot").forEach((dot) => {
+        dot.addEventListener("click", () => {
+            goToHeroSlide(Number(dot.dataset.slideIndex));
+            restartHeroSlideshow();
+        });
+    });
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!prefersReducedMotion) {
+        restartHeroSlideshow();
+    }
+}
+
+function restartHeroSlideshow() {
+    if (heroSlideTimer) clearInterval(heroSlideTimer);
+    heroSlideTimer = setInterval(() => goToHeroSlide(heroSlideIndex + 1), 5000);
+}
+
+// 언어를 먼저 고르지 않아도, 탭을 열면 첫 번째 언어(와 첫 번째 항목)의 자료가 바로 보이도록 해요.
+function autoSelectFirstMaterials(prefix, scope) {
+    const langContainer = document.getElementById(`${prefix}LanguagePills`);
+    const firstLangPill = langContainer?.querySelector(".admin-pill");
+    if (!firstLangPill) return;
+
+    langContainer.querySelectorAll(".admin-pill").forEach((p) => p.classList.remove("active"));
+    firstLangPill.classList.add("active");
+    const language = firstLangPill.dataset.lang;
+
+    renderCategoryPills(prefix, scope, language);
+
+    if (language !== "other") {
+        const catContainer = document.getElementById(`${prefix}CategoryPills`);
+        const firstCatPill = catContainer?.querySelector(".admin-pill");
+        firstCatPill?.click();
+    }
+}
+
+function autoSelectFirstMaterialsForActiveTab() {
+    const activeTab = document.querySelector(".admin-maintab.active");
+    const key = activeTab?.dataset.mainTab;
+    if (key !== "personal" && key !== "kwzm") return;
+
+    const prefix = key === "kwzm" ? "kwzm" : "personal";
+    const scope = key === "kwzm" ? "KWZM" : "PERSONAL";
+    const langContainer = document.getElementById(`${prefix}LanguagePills`);
+    if (langContainer && !langContainer.querySelector(".admin-pill.active")) {
+        autoSelectFirstMaterials(prefix, scope);
+    }
+}
+
 async function checkAdminSessionOnLoad() {
     try {
         const res = await fetch("/api/admin/check");
@@ -77,16 +178,68 @@ function escapeHtmlForAdminMaterial(text) {
     return div.innerHTML;
 }
 
-async function loadMaterials(language, category) {
-    const emptyText = document.getElementById("adminMaterialsEmpty");
-    const list = document.getElementById("adminMaterialsList");
-    const heading = document.getElementById("adminMaterialsHeading");
+let currentMaterialScope = "PERSONAL";
+let editingMaterialScope = "PERSONAL";
+
+function materialsApiBase(scope) {
+    return scope === "KWZM" ? "/api/admin/kwzm-materials" : "/api/admin/materials";
+}
+
+function renderCategoryPills(prefix, scope, language) {
+    const catEl = document.getElementById(`${prefix}CategoryPills`);
+    const viewEl = document.getElementById(`${prefix}MaterialsView`);
+    if (!catEl) return;
+
+    if (language === "other") {
+        catEl.hidden = true;
+        catEl.innerHTML = "";
+        loadMaterials(language, "OTHER", scope);
+        return;
+    }
+
+    catEl.hidden = false;
+    if (viewEl) viewEl.hidden = true;
+    catEl.innerHTML = "";
+
+    Object.entries(CATEGORY_LABEL).forEach(([key, label]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "admin-pill";
+        btn.textContent = label;
+        btn.addEventListener("click", () => {
+            catEl.querySelectorAll(".admin-pill").forEach((p) => p.classList.remove("active"));
+            btn.classList.add("active");
+            loadMaterials(language, key, scope);
+        });
+        catEl.appendChild(btn);
+    });
+}
+
+async function loadMaterials(language, category, scope) {
+    currentMaterialScope = scope || "PERSONAL";
+    const prefix = currentMaterialScope === "KWZM" ? "kwzm" : "personal";
+    const emptyText = document.getElementById(`${prefix}MaterialsEmpty`);
+    const list = document.getElementById(`${prefix}MaterialsList`);
+    const heading = document.getElementById(`${prefix}MaterialsHeading`);
+    const view = document.getElementById(`${prefix}MaterialsView`);
+    const inviteBtn = document.getElementById("adminInviteBtn");
     if (!list) return;
 
+    if (view) view.hidden = false;
     heading.textContent = `${LANGUAGE_LABEL[language] || language} · ${CATEGORY_LABEL[category] || category}`;
 
+    if (inviteBtn) {
+        if (currentMaterialScope === "KWZM") {
+            inviteBtn.hidden = false;
+            currentInviteLanguage = language;
+            updateInviteCountBadge();
+        } else {
+            inviteBtn.hidden = true;
+        }
+    }
+
     try {
-        const res = await fetch(`/api/admin/materials?language=${language}&category=${category}`);
+        const res = await fetch(`${materialsApiBase(currentMaterialScope)}?language=${language}&category=${category}`);
         if (!res.ok) return;
         const materials = await res.json();
 
@@ -125,18 +278,28 @@ async function loadMaterials(language, category) {
                 ? `<span class="admin-material-count-badge">+${files.length - 1}</span>`
                 : "";
 
-            const metaText = files.length === 0
-                ? "첨부 없음"
-                : files.length === 1
-                    ? (firstIsLink ? "링크" : firstIsText ? "글" : first.fileName || "파일")
-                    : `자료 ${files.length}개`;
+            // 등록된 파일들을 종류별로 모아 배지로 보여줘요 (이미지 / 파일 / 링크 / 글)
+            const typeLabels = [];
+            if (files.some((f) => f.fileType && f.fileType.startsWith("image/"))) typeLabels.push("이미지");
+            if (files.some((f) => f.fileData && !(f.fileType && f.fileType.startsWith("image/")))) typeLabels.push("파일");
+            if (files.some((f) => f.linkUrl)) typeLabels.push("링크");
+            if (files.some((f) => f.textContent && !f.linkUrl && !f.fileData)) typeLabels.push("글");
+            const typeBadgeHtml = typeLabels.length
+                ? typeLabels.map((t) => `<span class="admin-material-type-badge" data-type="${t}">${t}</span>`).join("")
+                : `<span class="admin-material-type-badge" data-type="없음">없음</span>`;
+
+            const descriptionHtml = m.description
+                ? escapeHtmlForAdminMaterial(m.description)
+                : `<span class="admin-material-desc-empty">설명 없음</span>`;
 
             item.innerHTML = `
         <div class="admin-material-thumb" ${files.length ? "data-view-btn" : ""}>${thumbHtml}${countBadgeHtml}</div>
         <div class="admin-material-main">
           <p class="admin-material-title">${escapeHtmlForAdminMaterial(m.title)}</p>
-          <p class="admin-material-meta">${escapeHtmlForAdminMaterial(metaText)} · ${m.createdAt}</p>
+          <p class="admin-material-desc">${descriptionHtml}</p>
         </div>
+        <div class="admin-material-types">${typeBadgeHtml}</div>
+        <p class="admin-material-date">${m.createdAt}</p>
         <div class="admin-material-actions">
           ${files.length ? `<button type="button" class="admin-material-action-btn" data-view-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>보기</button>` : ""}
           <button type="button" class="admin-material-action-btn" data-edit-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>수정</button>
@@ -151,8 +314,6 @@ async function loadMaterials(language, category) {
     }
 }
 
-// data:mime;base64,... 형태를 실제 파일(Blob)로 바꿔서 새 탭에 여는 함수
-// (window.open에 data URI를 그대로 넣으면 브라우저 보안 정책 때문에 막힐 때가 있어서 더 안정적인 방식으로 처리)
 function openFileInNewTab(dataUri) {
     try {
         const [header, base64] = dataUri.split(",");
@@ -174,7 +335,6 @@ function openFileInNewTab(dataUri) {
     }
 }
 
-// 글(텍스트)을 새 탭에서 깔끔하게 보여주는 함수
 function openTextInNewTab(text, title) {
     const escapeForHtml = (s) =>
         (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -200,7 +360,6 @@ ${escapeForHtml(text)}
     window.open(blobUrl, "_blank");
 }
 
-// "보기" 버튼 클릭 처리 — 이미지만 있으면 갤러리로, 파일/링크/글이면 새 탭으로 바로 열어줌
 function handleViewMaterial(material) {
     const files = material.files || [];
     if (files.length === 0) return;
@@ -304,56 +463,146 @@ function renderExistingFiles() {
     });
 }
 
-async function loadStudentPickerOptions(preCheckedNumbers) {
-    const pickerEl = document.getElementById("registerStudentPicker");
-    if (!pickerEl) return;
+let currentInviteLanguage = null;
 
-    pickerEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+function openInviteModal(language) {
+    currentInviteLanguage = language;
+    const modal = document.getElementById("adminInviteModal");
+    if (!modal) return;
+    document.getElementById("inviteModalTitle").textContent = `학생 초대 · ${LANGUAGE_LABEL[language] || language}`;
+    document.getElementById("inviteStudentNumberInput").value = "";
+    document.getElementById("inviteError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    loadInvitedStudents();
+}
+
+function closeInviteModal() {
+    const modal = document.getElementById("adminInviteModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function loadInvitedStudents() {
+    const listEl = document.getElementById("adminInvitedList");
+    const countEl = document.getElementById("inviteCount");
+    if (!listEl || !currentInviteLanguage) return;
+
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
 
     try {
-        const res = await fetch("/api/admin/applications");
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}`);
         if (!res.ok) throw new Error("불러오기 실패");
-        const applications = await res.json();
-        const approvedStudents = applications.filter((a) => a.status === "APPROVED" && a.studentNumber);
+        const students = await res.json();
 
-        if (approvedStudents.length === 0) {
-            pickerEl.innerHTML = `<p class="admin-note-hint">아직 승인된 학생이 없어요.</p>`;
+        if (countEl) countEl.textContent = `(${students.length}명)`;
+        updateInviteCountBadge(students.length);
+
+        if (students.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 초대된 학생이 없어요.</p>`;
             return;
         }
 
-        pickerEl.innerHTML = "";
-        approvedStudents.forEach((app) => {
-            const label = document.createElement("label");
-            label.className = "admin-student-picker-item";
-            const checked = preCheckedNumbers && preCheckedNumbers.includes(app.studentNumber) ? "checked" : "";
-            label.innerHTML = `
-        <input type="checkbox" value="${app.studentNumber}" ${checked}>
-        <span class="admin-student-picker-name">${escapeHtmlForAdmin(app.nickname)}</span>
-        <span class="admin-student-picker-number">${escapeHtmlForAdmin(app.courseName)} · ${escapeHtmlForAdmin(app.studentNumber)}</span>
+        listEl.innerHTML = "";
+        students.forEach((s) => {
+            const item = document.createElement("div");
+            item.className = "admin-invited-item";
+            item.innerHTML = `
+        <div class="admin-invited-item-info">
+          <p class="admin-invited-item-name">${escapeHtmlForAdmin(s.nickname)} · ${escapeHtmlForAdmin(s.courseName)}</p>
+          <p class="admin-invited-item-number">${escapeHtmlForAdmin(s.studentNumber)}</p>
+        </div>
+        <button type="button" class="admin-invited-remove-btn" data-remove-student="${escapeHtmlForAdmin(s.studentNumber)}">제거</button>
       `;
-            pickerEl.appendChild(label);
+            listEl.appendChild(item);
         });
     } catch (err) {
         console.error(err);
-        pickerEl.innerHTML = `<p class="admin-note-hint">학생 목록을 불러오지 못했어요.</p>`;
+        listEl.innerHTML = `<p class="admin-note-hint">목록을 불러오지 못했어요.</p>`;
+    }
+}
+
+async function inviteStudentToLanguage() {
+    const input = document.getElementById("inviteStudentNumberInput");
+    const errorEl = document.getElementById("inviteError");
+    const studentNumber = input.value.trim();
+    if (!studentNumber) {
+        errorEl.textContent = "학생번호를 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+
+    try {
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ studentNumber }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "초대에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        input.value = "";
+        loadInvitedStudents();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    }
+}
+
+async function removeInvitedStudent(studentNumber) {
+    if (!confirm("이 학생을 초대 목록에서 제거할까요?")) return;
+    try {
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}&studentNumber=${encodeURIComponent(studentNumber)}`, {
+            method: "DELETE",
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "제거에 실패했어요.");
+            return;
+        }
+        loadInvitedStudents();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function updateInviteCountBadge(knownCount) {
+    const badge = document.getElementById("adminInviteCountBadge");
+    if (!badge) return;
+    if (knownCount !== undefined) {
+        badge.textContent = knownCount;
+        return;
+    }
+    try {
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}`);
+        if (!res.ok) return;
+        const students = await res.json();
+        badge.textContent = students.length;
+    } catch (err) {
+        console.error(err);
     }
 }
 
 function openEditModal(material) {
     openRegisterModal();
-    document.getElementById("registerModalTitle").textContent = "자료 수정";
+    editingMaterialScope = material.scope || "PERSONAL";
+    document.getElementById("registerModalTitle").textContent = `자료 수정 (${editingMaterialScope === "KWZM" ? "KWZM 학생용" : "개인용"})`;
     document.getElementById("registerSubmitBtn").textContent = "수정하기";
     document.getElementById("registerEditingId").value = material.id;
     document.getElementById("registerLanguageSelect").value = material.language;
     document.getElementById("registerTitleInput").value = material.title;
     document.getElementById("registerDescriptionInput").value = material.description || "";
     document.querySelector(`input[name="registerCategory"][value="${material.category}"]`).checked = true;
+    document.querySelector(`input[name="registerScope"][value="${editingMaterialScope}"]`).checked = true;
+    document.querySelectorAll('input[name="registerScope"]').forEach((r) => (r.disabled = true));
     updateCategoryFieldVisibility();
-    loadStudentPickerOptions(material.assignedStudentNumbers || []);
 
     const allFiles = material.files || [];
-    // 링크/글은 각각 전용 입력칸에 채워서 바로 고칠 수 있게 하고,
-    // 나머지(실제 업로드된 이미지/파일)만 삭제 가능한 목록으로 보여줌
     const existingLink = allFiles.find((f) => f.linkUrl);
     const existingText = allFiles.find((f) => f.textContent && !f.linkUrl && !f.fileData);
     editingExistingFiles = allFiles.filter((f) => f !== existingLink && f !== existingText);
@@ -363,23 +612,22 @@ function openEditModal(material) {
     renderExistingFiles();
 }
 
-// 언어가 "기타"면 항목(문법/읽기/쓰기/말하기/기타) 선택 자체를 숨김
 function updateCategoryFieldVisibility() {
     const language = document.getElementById("registerLanguageSelect").value;
     const categoryField = document.getElementById("registerCategoryField");
     if (categoryField) categoryField.hidden = language === "other";
 }
 
-async function deleteMaterial(id, language, category) {
+async function deleteMaterial(id, language, category, scope) {
     if (!confirm("이 자료를 삭제할까요? 되돌릴 수 없어요.")) return;
 
     try {
-        const res = await fetch(`/api/admin/materials/${id}`, { method: "DELETE" });
+        const res = await fetch(`${materialsApiBase(scope)}/${id}`, { method: "DELETE" });
         if (!res.ok) {
             alert((await res.text()) || "삭제에 실패했어요.");
             return;
         }
-        loadMaterials(language, category);
+        loadMaterials(language, category, scope);
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
@@ -416,17 +664,17 @@ function closeRegisterModal() {
     updateCategoryFieldVisibility();
     editingExistingFiles = [];
     renderExistingFiles();
+    editingMaterialScope = currentMaterialScope;
 
-    // 수정 모드였다면 다음에 열 때는 다시 "등록" 상태로 되돌림
-    document.getElementById("registerModalTitle").textContent = "자료 등록";
+    document.getElementById("registerModalTitle").textContent = `자료 등록 (${currentMaterialScope === "KWZM" ? "KWZM 학생용" : "개인용"})`;
     document.getElementById("registerSubmitBtn").textContent = "등록하기";
     document.getElementById("registerEditingId").value = "";
 }
 
 async function submitRegisterMaterial() {
     const editingId = document.getElementById("registerEditingId").value;
+    const selectedScope = document.querySelector('input[name="registerScope"]:checked')?.value || "PERSONAL";
     const language = document.getElementById("registerLanguageSelect").value;
-    // 언어가 "기타"면 항목 선택 자체가 숨겨져 있으니 자동으로 OTHER로 보냄
     const category = language === "other"
         ? "OTHER"
         : document.querySelector('input[name="registerCategory"]:checked')?.value;
@@ -450,7 +698,6 @@ async function submitRegisterMaterial() {
         errorEl.hidden = false;
         return;
     }
-    // 이미지는 여러 개 가능하지만, 이미지가 아닌 파일은 (기존+새 파일 합쳐서) 1개만 가능
     const keptNonImageCount = editingExistingFiles.filter((f) => !(f.fileType && f.fileType.startsWith("image/"))).length;
     const newNonImageFiles = selectedFiles.filter((f) => !f.type.startsWith("image/"));
     const totalNonImage = keptNonImageCount + newNonImageFiles.length;
@@ -480,7 +727,6 @@ async function submitRegisterMaterial() {
 
     try {
         const newFiles = await Promise.all(selectedFiles.map(readFileAsDataUrl));
-        // 기존에 유지하기로 한 파일 + 새로 고른 파일을 합침 (교체가 아니라 추가)
         const files = [...editingExistingFiles, ...newFiles];
 
         if (linkValue) {
@@ -490,16 +736,15 @@ async function submitRegisterMaterial() {
             files.push({ fileName: null, fileType: null, fileData: null, linkUrl: null, textContent: textValue });
         }
 
-        const assignedStudentNumbers = Array.from(
-            document.querySelectorAll('#registerStudentPicker input[type="checkbox"]:checked')
-        ).map((cb) => cb.value);
+        const submitScope = isEditing ? editingMaterialScope : selectedScope;
+        currentMaterialScope = submitScope;
 
-        const url = isEditing ? `/api/admin/materials/${editingId}` : "/api/admin/materials";
+        const url = isEditing ? `${materialsApiBase(editingMaterialScope)}/${editingId}` : `${materialsApiBase(submitScope)}`;
         const method = isEditing ? "PUT" : "POST";
         const res = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ language, category, title, description, files, assignedStudentNumbers }),
+            body: JSON.stringify({ language, category, title, description, files, assignedStudentNumbers: [] }),
         });
 
         if (!res.ok) {
@@ -510,10 +755,12 @@ async function submitRegisterMaterial() {
 
         closeRegisterModal();
 
-        // 지금 보고 있는 목록이랑 같은 언어/항목이면 바로 새로고침
-        const activeSubtab = document.querySelector(".admin-subtab.active");
-        if (activeSubtab && activeSubtab.dataset.lang === language && activeSubtab.dataset.category === category) {
-            loadMaterials(language, category);
+        const prefix = submitScope === "KWZM" ? "kwzm" : "personal";
+        const activeLangPill = document.querySelector(`#${prefix}LanguagePills .admin-pill.active`);
+        const activeCatPill = document.querySelector(`#${prefix}CategoryPills .admin-pill.active`);
+        const activeCategory = language === "other" ? "OTHER" : activeCatPill?.textContent && Object.entries(CATEGORY_LABEL).find(([, v]) => v === activeCatPill.textContent)?.[0];
+        if (activeLangPill && activeLangPill.dataset.lang === language && activeCategory === category) {
+            loadMaterials(language, category, submitScope);
         }
     } catch (err) {
         console.error(err);
@@ -602,13 +849,13 @@ async function loadStudentList() {
             item.innerHTML = `
         <div class="admin-student-main">
           <p class="admin-student-name">${escapeHtmlForAdmin(app.nickname)} 님</p>
-          <p class="admin-student-detail">${escapeHtmlForAdmin(app.courseName)} · ${studyTypeLabel[app.studyType] || app.studyType}</p>
-          <p class="admin-student-detail">연락처: ${escapeHtmlForAdmin(app.contact)}</p>
           ${app.memo ? `<p class="admin-student-memo">${escapeHtmlForAdmin(app.memo)}</p>` : ""}
-          ${app.studentNumber ? `<p class="admin-student-number">학생번호: ${escapeHtmlForAdmin(app.studentNumber)}</p>` : ""}
-          <p class="admin-student-date">${app.createdAt}</p>
         </div>
-        <div class="admin-student-side">
+        <p class="admin-student-course">${escapeHtmlForAdmin(app.courseName)}<span>${escapeHtmlForAdmin(studyTypeLabel[app.studyType] || app.studyType)}</span></p>
+        <p class="admin-student-contact">${escapeHtmlForAdmin(app.contact)}</p>
+        ${app.studentNumber ? `<span class="admin-student-number">${escapeHtmlForAdmin(app.studentNumber)}</span>` : `<span></span>`}
+        <p class="admin-student-date">${app.createdAt}</p>
+        <div class="admin-student-status">
           <span class="mypage-badge ${statusClass[app.status] || ""}">${statusLabel[app.status] || app.status}</span>
           ${app.status === "PENDING" ? `<button type="button" class="admin-approve-btn" data-approve-id="${app.id}">승인하기</button>` : ""}
         </div>
@@ -676,7 +923,6 @@ document.addEventListener("fragments:loaded", () => {
 
     document.getElementById("adminBackBtn")?.addEventListener("click", logoutAdmin);
 
-    // 비밀번호 눈 아이콘
     document.getElementById("toggleAdminLoginPwBtn")?.addEventListener("click", () => {
         const input = document.getElementById("adminLoginPassword");
         const btn = document.getElementById("toggleAdminLoginPwBtn");
@@ -685,7 +931,6 @@ document.addEventListener("fragments:loaded", () => {
         btn.classList.toggle("is-active", !isVisible);
     });
 
-    // 관리자 전용 로그인 제출
     document.getElementById("adminLoginSubmitBtn")?.addEventListener("click", async () => {
         const email = document.getElementById("adminLoginEmail").value.trim();
         const phone = document.getElementById("adminLoginPhone").value.trim();
@@ -741,86 +986,51 @@ document.addEventListener("fragments:loaded", () => {
         }
     });
 
-    // 언어 그룹 펼치기/접기 (문법/읽기/쓰기/말하기/기타)
-    document.querySelectorAll("[data-lang-toggle]").forEach((toggleBtn) => {
-        toggleBtn.addEventListener("click", () => {
-            const group = toggleBtn.closest(".admin-tab-group");
-            const lang = toggleBtn.dataset.langToggle;
-            const subPanel = document.querySelector(`.admin-subtabs[data-lang-panel="${lang}"]`);
-            if (!group || !subPanel) return;
+    document.querySelectorAll(".admin-language-pills .admin-pill").forEach((pill) => {
+        pill.addEventListener("click", () => {
+            const scope = pill.dataset.scope;
+            const language = pill.dataset.lang;
+            const prefix = scope === "KWZM" ? "kwzm" : "personal";
 
-            const isExpanded = group.classList.toggle("expanded");
-            subPanel.hidden = !isExpanded;
+            document.querySelectorAll(`#${prefix}LanguagePills .admin-pill`).forEach((p) => p.classList.remove("active"));
+            pill.classList.add("active");
+
+            renderCategoryPills(prefix, scope, language);
+
+            if (language !== "other") {
+                const catContainer = document.getElementById(`${prefix}CategoryPills`);
+                const firstCatPill = catContainer?.querySelector(".admin-pill");
+                firstCatPill?.click();
+            }
         });
     });
 
-    // 서브탭 클릭 (한국어-문법, 일본어-읽기 등) → 자료 목록 보여줌
-    document.querySelectorAll(".admin-subtab").forEach((subtab) => {
-        subtab.addEventListener("click", () => {
-            document.querySelectorAll(".admin-subtab").forEach((s) => s.classList.remove("active"));
-            document.querySelectorAll(".admin-tab[data-admin-tab]").forEach((t) => {
-                t.classList.remove("active");
-                t.setAttribute("aria-selected", "false");
-            });
-            document.querySelectorAll("[data-direct-tab]").forEach((b) => b.classList.remove("active"));
-            // 언어 상위 버튼(한국어/일본어/태국어/영어)도 "학생 관리"처럼 배경 표시/해제
-            document.querySelectorAll("[data-lang-toggle]").forEach((langBtn) => {
-                langBtn.classList.toggle("active", langBtn.dataset.langToggle === subtab.dataset.lang);
-            });
-
-            subtab.classList.add("active");
-
-            document.querySelectorAll(".admin-tab-panel").forEach((p) => (p.hidden = true));
-            const materialsPanel = document.getElementById("adminTabMaterials");
-            materialsPanel.hidden = false;
-
-            document.getElementById("adminMaterialsView").hidden = false;
-            document.querySelector(".admin-materials-empty-select").hidden = true;
-
-            loadMaterials(subtab.dataset.lang, subtab.dataset.category);
-        });
-    });
-
-    // "기타" 언어처럼 펼침 없이 바로 눌리는 탭 (문법/읽기/쓰기/말하기 구분이 필요 없는 경우)
-    document.querySelectorAll("[data-direct-tab]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".admin-subtab").forEach((s) => s.classList.remove("active"));
-            document.querySelectorAll(".admin-tab[data-admin-tab]").forEach((t) => {
-                t.classList.remove("active");
-                t.setAttribute("aria-selected", "false");
-            });
-            document.querySelectorAll("[data-lang-toggle]").forEach((langBtn) => langBtn.classList.remove("active"));
-            document.querySelectorAll("[data-direct-tab]").forEach((b) => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            document.querySelectorAll(".admin-tab-panel").forEach((p) => (p.hidden = true));
-            document.getElementById("adminTabMaterials").hidden = false;
-            document.getElementById("adminMaterialsView").hidden = false;
-            document.querySelector(".admin-materials-empty-select").hidden = true;
-
-            loadMaterials(btn.dataset.lang, btn.dataset.category);
-        });
-    });
-
-    // 학생 관리 / 마이 탭
-    document.querySelectorAll(".admin-tab[data-admin-tab]").forEach((tab) => {
+    document.querySelectorAll(".admin-maintab").forEach((tab) => {
         tab.addEventListener("click", () => {
-            document.querySelectorAll(".admin-subtab").forEach((s) => s.classList.remove("active"));
-            document.querySelectorAll(".admin-tab[data-admin-tab]").forEach((t) => {
+            document.querySelectorAll(".admin-maintab").forEach((t) => {
                 t.classList.remove("active");
                 t.setAttribute("aria-selected", "false");
             });
-            document.querySelectorAll("[data-lang-toggle]").forEach((langBtn) => langBtn.classList.remove("active"));
-            document.querySelectorAll("[data-direct-tab]").forEach((b) => b.classList.remove("active"));
-            document.querySelectorAll(".admin-tab-panel").forEach((p) => (p.hidden = true));
+            document.querySelectorAll(".admin-main-panel").forEach((p) => (p.hidden = true));
 
             tab.classList.add("active");
             tab.setAttribute("aria-selected", "true");
 
-            const key = tab.dataset.adminTab;
-            const targetId = "adminTab" + key.charAt(0).toUpperCase() + key.slice(1);
-            const targetPanel = document.getElementById(targetId);
-            if (targetPanel) targetPanel.hidden = false;
+            const key = tab.dataset.mainTab;
+            const panel = document.querySelector(`.admin-main-panel[data-main-panel="${key}"]`);
+            if (panel) panel.hidden = false;
+
+            updateHeroContent(key);
+
+            currentMaterialScope = key === "kwzm" ? "KWZM" : "PERSONAL";
+
+            if (key === "personal" || key === "kwzm") {
+                const prefix = key === "kwzm" ? "kwzm" : "personal";
+                const langContainer = document.getElementById(`${prefix}LanguagePills`);
+                if (langContainer && !langContainer.querySelector(".admin-pill.active")) {
+                    autoSelectFirstMaterials(prefix, currentMaterialScope);
+                }
+            }
 
             if (key === "students") {
                 loadStudentList();
@@ -832,7 +1042,6 @@ document.addEventListener("fragments:loaded", () => {
 
     document.getElementById("adminPaymentSaveBtn")?.addEventListener("click", saveAdminPayment);
 
-    // 학생 관리 안의 "강의 신청 내역 / 리뷰" 탭 전환
     document.querySelectorAll(".admin-inline-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
             document.querySelectorAll(".admin-inline-tab").forEach((t) => {
@@ -849,16 +1058,33 @@ document.addEventListener("fragments:loaded", () => {
         });
     });
 
-    // 자료 등록 모달
     document.getElementById("adminRegisterBtn")?.addEventListener("click", () => {
-        closeRegisterModal(); // 수정 모드로 남아있을 수 있는 상태를 확실히 초기화
+        closeRegisterModal();
         openRegisterModal();
-        loadStudentPickerOptions([]);
+        document.querySelectorAll('input[name="registerScope"]').forEach((r) => (r.disabled = false));
+        const preselect = document.querySelector(`input[name="registerScope"][value="${currentMaterialScope}"]`);
+        if (preselect) preselect.checked = true;
     });
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-register-close]")) closeRegisterModal();
     });
     document.getElementById("registerSubmitBtn")?.addEventListener("click", submitRegisterMaterial);
+
+    document.getElementById("adminInviteBtn")?.addEventListener("click", () => {
+        if (currentInviteLanguage) openInviteModal(currentInviteLanguage);
+    });
+    document.addEventListener("click", (e) => {
+        if (e.target.closest("[data-invite-close]")) closeInviteModal();
+    });
+    document.getElementById("inviteAddBtn")?.addEventListener("click", inviteStudentToLanguage);
+    document.getElementById("inviteStudentNumberInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") inviteStudentToLanguage();
+    });
+    document.addEventListener("click", (e) => {
+        const removeBtn = e.target.closest("[data-remove-student]");
+        if (!removeBtn) return;
+        removeInvitedStudent(removeBtn.dataset.removeStudent);
+    });
     document.getElementById("registerLanguageSelect")?.addEventListener("change", updateCategoryFieldVisibility);
     document.getElementById("registerFileInput")?.addEventListener("change", (e) => {
         const fileNameEl = document.getElementById("registerFileName");
@@ -874,7 +1100,6 @@ document.addEventListener("fragments:loaded", () => {
         }
     });
 
-    // 라이트박스 닫기
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-lightbox-close]")) closeLightbox();
     });
@@ -882,7 +1107,6 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("adminLightboxPrev")?.addEventListener("click", showLightboxPrev);
     document.getElementById("adminLightboxNext")?.addEventListener("click", showLightboxNext);
 
-    // 자료 카드 안의 보기 / 수정 / 삭제 (동적으로 생기므로 위임 처리)
     document.addEventListener("click", (e) => {
         const card = e.target.closest(".admin-material-item");
         if (!card || !card._materialData) return;
@@ -897,12 +1121,11 @@ document.addEventListener("fragments:loaded", () => {
             return;
         }
         if (e.target.closest("[data-delete-btn]")) {
-            deleteMaterial(material.id, material.language, material.category);
+            deleteMaterial(material.id, material.language, material.category, material.scope);
             return;
         }
     });
 
-    // 학생 승인 버튼 (동적으로 생기므로 위임 처리)
     document.addEventListener("click", async (e) => {
         const approveBtn = e.target.closest("[data-approve-id]");
         if (!approveBtn) return;
@@ -931,7 +1154,6 @@ document.addEventListener("fragments:loaded", () => {
         }
     });
 
-    // 리뷰 답글 등록/수정 버튼 (동적으로 생기므로 위임 처리)
     document.addEventListener("click", async (e) => {
         const submitBtn = e.target.closest("[data-reply-submit]");
         if (!submitBtn) return;
@@ -969,5 +1191,6 @@ document.addEventListener("fragments:loaded", () => {
         }
     });
 
+    initHeroSlideshow();
     checkAdminSessionOnLoad();
 });

@@ -1,18 +1,18 @@
-<!-- 큰 사진 히어로 캐러셀 (예시 이미지 — 나중에 원하는 사진으로 교체하세요) -->
+<!-- 큰 사진 히어로 캐러셀 -->
 <div class="student-hero-carousel" id="studentHeroCarousel">
-    <div class="student-hero-slide active" style="background-image: url('https://picsum.photos/seed/kwzm-korean/1400/560')">
+    <div class="student-hero-slide active" style="background-image: url('images/hero_1.jpg')">
         <div class="student-hero-slide-caption">
             <p class="eyebrow student-hero-eyebrow">Language</p>
             <h2>함께 배우는 즐거움</h2>
         </div>
     </div>
-    <div class="student-hero-slide" style="background-image: url('https://picsum.photos/seed/kwzm-computer/1400/560')">
+    <div class="student-hero-slide" style="background-image: url('images/hero_2.jpg')">
         <div class="student-hero-slide-caption">
             <p class="eyebrow student-hero-eyebrow">Computer</p>
             <h2>실무에 바로 쓰는 컴퓨터 활용</h2>
         </div>
     </div>
-    <div class="student-hero-slide" style="background-image: url('https://picsum.photos/seed/kwzm-study/1400/560')">
+    <div class="student-hero-slide" style="background-image: url('images/hero_3.jpg')">
         <div class="student-hero-slide-caption">
             <p class="eyebrow student-hero-eyebrow">KWZM Center</p>
             <h2>나만의 학습 공간</h2>
@@ -102,9 +102,33 @@
     </div>
 </div>
 
-<!-- 최근 등록된 자료 -->
-<div class="student-home-section">
-    <h3 class="student-home-heading">최근 등록된 자료</h3>
-    <p class="admin-empty-text" id="studentRecentEmpty" hidden>아직 등록된 자료가 없어요.</p>
-    <div class="student-recent-materials" id="studentRecentMaterials"></div>
+<!-- 바로가기 카드 4개 -->
+<div class="student-quicklinks">
+    <div class="student-quicklink student-quicklink--phone">
+        <span class="student-quicklink-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 5c0-1 1-2 2-2h2l2 5-2 2c1 3 3 5 6 6l2-2 5 2v2c0 1-1 2-2 2C10 20 4 14 4 5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+        <p class="student-quicklink-title">고객센터</p>
+        <span class="student-quicklink-rule" aria-hidden="true"></span>
+        <p class="student-quicklink-hours">평일 10:00 ~ 18:00<br>토요일 10:00 ~ 13:00</p>
+        <p class="student-quicklink-phone">02-1234-5678</p>
+    </div>
+
+    <a class="student-quicklink" href="../page/info_01">
+        <p class="student-quicklink-title">회사소개</p>
+        <p class="student-quicklink-desc">KWZM Center가 어떤 곳인지 소개해드려요.</p>
+        <span class="student-quicklink-btn">더보기</span>
+    </a>
+
+    <a class="student-quicklink" href="../page/buss_01">
+        <p class="student-quicklink-title">사업소개</p>
+        <p class="student-quicklink-desc">KWZM Center가 하고 있는 사업들을 확인해보세요.</p>
+        <span class="student-quicklink-btn">더보기</span>
+    </a>
+
+    <a class="student-quicklink" href="#">
+        <p class="student-quicklink-title">미래 계획</p>
+        <p class="student-quicklink-desc">앞으로 KWZM Center가 나아갈 방향이에요.</p>
+        <span class="student-quicklink-btn">더보기</span>
+    </a>
 </div>

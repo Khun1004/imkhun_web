@@ -203,13 +203,13 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(23, 20, 15, 0.05) 0%, rgba(23, 20, 15, 0.65) 100%);
+    background: linear-gradient(180deg, rgba(23, 20, 15, 0.6) 0%, rgba(23, 20, 15, 0.05) 45%, rgba(23, 20, 15, 0.05) 100%);
 }
 
 .student-hero-slide-caption {
     position: absolute;
     left: 48px;
-    bottom: 48px;
+    top: 56px;
     z-index: 2;
 }
 
@@ -294,7 +294,7 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 20px;
-    margin-top: -56px;
+    margin-top: -100px;
 }
 
 .student-info-panel {
@@ -390,7 +390,7 @@
 @container (max-width: 460px) {
     .student-info-panels {
         grid-template-columns: minmax(0, 1fr);
-        margin-top: -30px;
+        margin-top: -60px;
     }
 }
 
@@ -403,7 +403,7 @@
 
     .student-hero-slide-caption {
         left: 24px;
-        bottom: 24px;
+        top: 32px;
     }
 
     .student-hero-slide-caption h2 {
@@ -606,5 +606,110 @@
 
     .student-recent-materials {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ---------- 바로가기 카드 4개 (고객센터/회사소개/사업소개/미래 계획) ---------- */
+
+.student-quicklinks {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+    margin-top: 40px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.student-quicklink {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+    min-height: 300px;
+    padding: 32px 24px;
+    background: linear-gradient(160deg, #cf8a97 0%, #dba3ac 100%);
+    color: #fff;
+    text-decoration: none;
+    transition: filter 0.2s;
+}
+
+.student-quicklink:hover {
+    filter: brightness(1.05);
+}
+
+.student-quicklink--phone {
+    background: linear-gradient(160deg, #b8566a 0%, #c5707f 100%);
+}
+
+.student-quicklink-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+.student-quicklink-icon svg {
+    width: 40px;
+    height: 40px;
+}
+
+.student-quicklink-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.student-quicklink-rule {
+    width: 26px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.5);
+    margin: 4px 0;
+}
+
+.student-quicklink-hours {
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+}
+
+.student-quicklink-phone {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin: 6px 0 0;
+}
+
+.student-quicklink-desc {
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 6px;
+    max-width: 22ch;
+}
+
+.student-quicklink-btn {
+    display: inline-block;
+    padding: 8px 22px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+@media (max-width: 720px) {
+    .student-quicklinks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 3px;
+    }
+
+    .student-quicklink {
+        min-height: 220px;
+        padding: 24px 18px;
     }
 }

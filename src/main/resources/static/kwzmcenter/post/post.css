@@ -1,0 +1,400 @@
+/* KWZM Center — 게시판 */
+
+:root {
+    --kwzm-tag-computer: #6b5b95;
+}
+
+/* ---------- 레이아웃 ---------- */
+
+.board-layout {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+}
+
+/* ---------- 왼쪽 사이드바: 주제 ---------- */
+
+.board-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 200px;
+    gap: 4px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 10px;
+    padding: 8px;
+    background: var(--kwzm-bg-3);
+    position: sticky;
+    top: calc(var(--kwzm-masthead-h, 90px) + var(--kwzm-subnav-h, 54px) + 20px);
+}
+
+.board-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    text-align: left;
+    padding: 11px 12px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--kwzm-ink-soft);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.board-sidebar-item::before {
+    content: "";
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--kwzm-tag-other, var(--kwzm-ink-faint));
+}
+
+.board-sidebar-item[data-board-topic="korean"]::before { background: var(--kwzm-primary); }
+.board-sidebar-item[data-board-topic="japanese"]::before { background: var(--kwzm-accent); }
+.board-sidebar-item[data-board-topic="thai"]::before { background: #5c8f4f; }
+.board-sidebar-item[data-board-topic="english"]::before { background: #c98a2f; }
+.board-sidebar-item[data-board-topic="computer"]::before { background: var(--kwzm-tag-computer); }
+
+.board-sidebar-item:hover {
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink);
+}
+
+.board-sidebar-item.active {
+    color: #fff;
+}
+
+.board-sidebar-item.active::before {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.board-sidebar-item[data-board-topic="korean"].active { background: var(--kwzm-primary); }
+.board-sidebar-item[data-board-topic="japanese"].active { background: var(--kwzm-accent); }
+.board-sidebar-item[data-board-topic="thai"].active { background: #5c8f4f; }
+.board-sidebar-item[data-board-topic="english"].active { background: #c98a2f; }
+.board-sidebar-item[data-board-topic="computer"].active { background: var(--kwzm-tag-computer); }
+
+/* ---------- 오른쪽: 도구줄 + 목록 ---------- */
+
+.board-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.board-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.board-category-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1.5px solid var(--kwzm-line);
+    flex: 1;
+    min-width: 0;
+}
+
+.board-pill {
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    border-radius: 0;
+    padding: 10px 16px;
+    background: none;
+    color: var(--kwzm-ink-faint);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: -1.5px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.board-pill:hover {
+    color: var(--kwzm-ink);
+}
+
+.board-pill.active {
+    color: var(--kwzm-accent-2);
+    border-color: var(--kwzm-accent);
+}
+
+.board-write-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    background: var(--kwzm-primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 10px;
+}
+
+.board-write-btn:hover {
+    background: var(--kwzm-primary-2);
+}
+
+.board-write-btn span {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.board-heading {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 20px 0 10px;
+}
+
+/* ---------- 글 목록 ---------- */
+
+.board-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.board-item {
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.board-item:hover {
+    border-color: var(--kwzm-accent);
+}
+
+.board-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.board-item-avatar {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-primary);
+    font-family: "Noto Serif KR", serif;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.board-item-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.board-item-badge {
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--kwzm-accent-2);
+    background: rgba(47, 154, 160, 0.12);
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.board-item-date {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+    white-space: nowrap;
+}
+
+.board-item-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0 0 4px;
+}
+
+.board-item-preview {
+    font-size: 12.5px;
+    color: var(--kwzm-ink-soft);
+    line-height: 1.6;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.board-item-content {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--kwzm-line);
+    font-size: 13px;
+    color: var(--kwzm-ink);
+    line-height: 1.8;
+    white-space: pre-wrap;
+}
+
+.board-item-content[hidden] {
+    display: none;
+}
+
+/* ---------- 글쓰기 모달 ---------- */
+
+.board-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 320;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 80px 16px 40px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.board-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.board-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 37, 71, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.board-modal-panel {
+    position: relative;
+    width: min(480px, 94vw);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    background: var(--kwzm-bg-3);
+    border-radius: 16px;
+    box-shadow: 0 44px 90px -28px rgba(15, 37, 71, 0.5);
+}
+
+.board-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    background: var(--kwzm-gradient);
+    border-radius: 16px 16px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.board-modal-head h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.board-modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.board-modal-close:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.board-modal-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.board-modal-body {
+    padding: 22px 24px 26px;
+}
+
+.board-modal-body select,
+.board-modal-body textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 10px;
+    background: var(--kwzm-bg);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 14px;
+    color: var(--kwzm-ink);
+    transition: border-color 0.2s;
+}
+
+.board-modal-body select:focus,
+.board-modal-body textarea:focus {
+    outline: none;
+    border-color: var(--kwzm-accent);
+}
+
+.board-modal-body textarea {
+    min-height: 130px;
+    resize: vertical;
+}
+
+/* ---------- 반응형 ---------- */
+
+@media (max-width: 700px) {
+    .board-layout {
+        flex-direction: column;
+    }
+
+    .board-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        flex: none;
+        width: 100%;
+        position: static;
+    }
+
+    .board-sidebar-item {
+        width: auto;
+    }
+
+    .board-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .board-write-btn {
+        justify-content: center;
+    }
+}

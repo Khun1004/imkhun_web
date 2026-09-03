@@ -1,0 +1,78 @@
+/* KWZM Center — 컴퓨터 자료 (프로그램별 색상 칩 탭) */
+
+.computer-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.computer-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 18px;
+    border: 1.5px solid var(--kwzm-line);
+    border-radius: 10px;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-soft);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.computer-tab::before {
+    content: "";
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    background: var(--kwzm-ink-faint);
+}
+
+.computer-tab[data-computer-tab="basic"]::before { background: var(--kwzm-primary); }
+.computer-tab[data-computer-tab="word"]::before { background: #2b579a; }
+.computer-tab[data-computer-tab="excel"]::before { background: #1e7145; }
+.computer-tab[data-computer-tab="powerpoint"]::before { background: #c8401d; }
+.computer-tab[data-computer-tab="pagemaker"]::before { background: #5c5c66; }
+.computer-tab[data-computer-tab="photoshop"]::before { background: #1f7cc9; }
+
+.computer-tab:hover {
+    color: var(--kwzm-ink);
+    border-color: var(--kwzm-ink-faint);
+    transform: translateY(-1px);
+}
+
+.computer-tab.active {
+    color: #fff;
+    border-color: transparent;
+}
+
+.computer-tab.active::before {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.computer-tab[data-computer-tab="basic"].active { background: var(--kwzm-primary); }
+.computer-tab[data-computer-tab="word"].active { background: #2b579a; }
+.computer-tab[data-computer-tab="excel"].active { background: #1e7145; }
+.computer-tab[data-computer-tab="powerpoint"].active { background: #c8401d; }
+.computer-tab[data-computer-tab="pagemaker"].active { background: #5c5c66; }
+.computer-tab[data-computer-tab="photoshop"].active { background: #1f7cc9; }
+
+.computer-tab-panel[hidden] {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .computer-tabs {
+        gap: 8px;
+        margin-bottom: 22px;
+    }
+
+    .computer-tab {
+        padding: 8px 14px;
+        font-size: 12.5px;
+    }
+}

@@ -6,25 +6,20 @@
     <title>나만의 공부 화면 · I'm Khun</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="../imkhun/auth/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin.css">
-    <link rel="stylesheet" href="korean/korean.css">
-    <link rel="stylesheet" href="japanese/japanese.css">
-    <link rel="stylesheet" href="thai/thai.css">
-    <link rel="stylesheet" href="english/english.css">
-    <link rel="stylesheet" href="students/students.css">
-    <link rel="stylesheet" href="my/my.css">
 </head>
 <body class="admin-standalone-body">
 
-<!-- ===================== 로그인 화면 (팝업 아님, 페이지 자체) ===================== -->
+<!-- ===================== 로그인 화면 ===================== -->
 <div class="admin-login-page" id="adminLoginPage">
     <div class="admin-login-page-blob admin-login-page-blob--a" aria-hidden="true"></div>
     <div class="admin-login-page-blob admin-login-page-blob--b" aria-hidden="true"></div>
+    <div class="admin-login-page-blob admin-login-page-blob--c" aria-hidden="true"></div>
 
     <div class="admin-login-panel" role="dialog" aria-label="나만의 공부 화면 로그인">
+        <span class="admin-login-tape" aria-hidden="true"></span>
+
         <div class="admin-login-banner">
             <span class="admin-header-blob admin-header-blob--a" aria-hidden="true"></span>
             <span class="admin-header-blob admin-header-blob--b" aria-hidden="true"></span>
@@ -32,8 +27,9 @@
         </div>
 
         <div class="admin-login-body">
+            <p class="admin-login-eyebrow">관리자 전용 출입구</p>
             <h3>나만의 공부 화면</h3>
-            <p class="auth-modal-desc">관리자만 들어올 수 있어요. 이메일, 전화번호, 아이디, 비밀번호를 모두 입력해주세요.</p>
+            <p class="auth-modal-desc">관리자만 들어올 수 있어요.<br>이메일, 전화번호, 아이디, 비밀번호를 모두 입력해주세요.</p>
 
             <div class="auth-form-field">
                 <label for="adminLoginEmail">이메일</label>
@@ -67,130 +63,120 @@
     </div>
 </div>
 
-<!-- ===================== 나만의 공부 화면 (관리자 전용) ===================== -->
+<!-- ===================== 관리자 메인 화면 ===================== -->
 <div class="admin-screen" id="adminScreen" hidden>
     <header class="admin-topheader">
-        <span class="admin-topheader-blob admin-topheader-blob--a" aria-hidden="true"></span>
-        <span class="admin-topheader-blob admin-topheader-blob--b" aria-hidden="true"></span>
-
-        <div class="admin-topheader-side">
-            <button type="button" class="admin-back-btn" id="adminBackBtn">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M9 21V13.6c0-.6.4-1 1-1h4c.6 0 1 .4 1 1V21M4.5 10.5 12 4l7.5 6.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                로그아웃
-            </button>
-            <span class="admin-topheader-logo">I'm Khun</span>
-        </div>
-
-        <span class="admin-topheader-title">나만의 공부 화면</span>
-
-        <div class="admin-topheader-side admin-topheader-side--right">
-            <button type="button" class="admin-register-btn" id="adminRegisterBtn">
-                <span aria-hidden="true">+</span> 등록하기
-            </button>
-        </div>
-    </header>
-
-    <div class="admin-main-row">
-        <aside class="admin-sidebar">
-            <nav class="admin-tabs" role="tablist" aria-label="나만의 공부 화면 메뉴">
-
-                <div class="admin-tab-group">
-                    <button type="button" class="admin-tab" data-lang-toggle="korean">
-                        <span class="admin-tab-icon" aria-hidden="true">가</span>
-                        <span class="admin-tab-label">한국어</span>
-                        <span class="admin-tab-arrow" data-expand-arrow aria-hidden="true">›</span>
-                    </button>
-                    <div class="admin-subtabs" data-lang-panel="korean" hidden>
-                        <button type="button" class="admin-subtab" data-lang="korean" data-category="GRAMMAR">문법</button>
-                        <button type="button" class="admin-subtab" data-lang="korean" data-category="READING">읽기</button>
-                        <button type="button" class="admin-subtab" data-lang="korean" data-category="WRITING">쓰기</button>
-                        <button type="button" class="admin-subtab" data-lang="korean" data-category="SPEAKING">말하기</button>
-                        <button type="button" class="admin-subtab" data-lang="korean" data-category="OTHER">기타</button>
-                    </div>
-                </div>
-
-                <div class="admin-tab-group">
-                    <button type="button" class="admin-tab" data-lang-toggle="japanese">
-                        <span class="admin-tab-icon" aria-hidden="true">あ</span>
-                        <span class="admin-tab-label">일본어</span>
-                        <span class="admin-tab-arrow" data-expand-arrow aria-hidden="true">›</span>
-                    </button>
-                    <div class="admin-subtabs" data-lang-panel="japanese" hidden>
-                        <button type="button" class="admin-subtab" data-lang="japanese" data-category="GRAMMAR">문법</button>
-                        <button type="button" class="admin-subtab" data-lang="japanese" data-category="READING">읽기</button>
-                        <button type="button" class="admin-subtab" data-lang="japanese" data-category="WRITING">쓰기</button>
-                        <button type="button" class="admin-subtab" data-lang="japanese" data-category="SPEAKING">말하기</button>
-                        <button type="button" class="admin-subtab" data-lang="japanese" data-category="OTHER">기타</button>
-                    </div>
-                </div>
-
-                <div class="admin-tab-group">
-                    <button type="button" class="admin-tab" data-lang-toggle="thai">
-                        <span class="admin-tab-icon" aria-hidden="true">ก</span>
-                        <span class="admin-tab-label">태국어</span>
-                        <span class="admin-tab-arrow" data-expand-arrow aria-hidden="true">›</span>
-                    </button>
-                    <div class="admin-subtabs" data-lang-panel="thai" hidden>
-                        <button type="button" class="admin-subtab" data-lang="thai" data-category="GRAMMAR">문법</button>
-                        <button type="button" class="admin-subtab" data-lang="thai" data-category="READING">읽기</button>
-                        <button type="button" class="admin-subtab" data-lang="thai" data-category="WRITING">쓰기</button>
-                        <button type="button" class="admin-subtab" data-lang="thai" data-category="SPEAKING">말하기</button>
-                        <button type="button" class="admin-subtab" data-lang="thai" data-category="OTHER">기타</button>
-                    </div>
-                </div>
-
-                <div class="admin-tab-group">
-                    <button type="button" class="admin-tab" data-lang-toggle="english">
-                        <span class="admin-tab-icon" aria-hidden="true">A</span>
-                        <span class="admin-tab-label">영어</span>
-                        <span class="admin-tab-arrow" data-expand-arrow aria-hidden="true">›</span>
-                    </button>
-                    <div class="admin-subtabs" data-lang-panel="english" hidden>
-                        <button type="button" class="admin-subtab" data-lang="english" data-category="GRAMMAR">문법</button>
-                        <button type="button" class="admin-subtab" data-lang="english" data-category="READING">읽기</button>
-                        <button type="button" class="admin-subtab" data-lang="english" data-category="WRITING">쓰기</button>
-                        <button type="button" class="admin-subtab" data-lang="english" data-category="SPEAKING">말하기</button>
-                        <button type="button" class="admin-subtab" data-lang="english" data-category="OTHER">기타</button>
-                    </div>
-                </div>
-
-                <button type="button" class="admin-tab" data-direct-tab data-lang="other" data-category="OTHER">
-                    <span class="admin-tab-icon" aria-hidden="true">＋</span>
-                    <span class="admin-tab-label">기타</span>
-                </button>
-
-                <div class="admin-tabs-divider"></div>
-
-                <button type="button" class="admin-tab" data-admin-tab="students" role="tab" aria-selected="false">
-          <span class="admin-tab-icon admin-tab-icon--svg" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="2.6" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="9" r="2.6" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 19c.9-3 2.7-4.6 5.5-4.6s4.6 1.6 5.5 4.6M11 19c.8-2.7 2.5-4.2 5-4.2s4 1.4 4.8 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </span>
-                    <span class="admin-tab-label">학생 관리</span>
-                    <span class="admin-tab-arrow" aria-hidden="true">›</span>
-                </button>
-                <button type="button" class="admin-tab" data-admin-tab="my" role="tab" aria-selected="false">
-          <span class="admin-tab-icon admin-tab-icon--svg" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/><path d="M5 19c1.1-3.6 3.6-5.6 7-5.6s5.9 2 7 5.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </span>
-                    <span class="admin-tab-label">마이</span>
-                    <span class="admin-tab-arrow" aria-hidden="true">›</span>
-                </button>
-            </nav>
-        </aside>
-
-        <div class="admin-body">
-            <div class="admin-tab-panel active" id="adminTabMaterials">
-                <p class="admin-materials-empty-select">왼쪽에서 언어와 항목(문법/읽기/쓰기/말하기/기타)을 선택해주세요.</p>
-                <div class="admin-materials-view" id="adminMaterialsView" hidden>
-                    <p class="admin-materials-heading" id="adminMaterialsHeading"></p>
-                    <p class="admin-empty-text" id="adminMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
-                    <div class="admin-materials-grid" id="adminMaterialsList"></div>
+        <div class="admin-topheader-inner">
+            <div class="admin-topheader-brand">
+                <span class="admin-topheader-mark" aria-hidden="true">IK</span>
+                <div class="admin-topheader-brand-text">
+                    <span class="admin-topheader-logo">I'm Khun <em>Admin</em></span>
+                    <span class="admin-topheader-sub">나만의 공부 화면</span>
                 </div>
             </div>
-            <div class="admin-tab-panel" id="adminTabStudents" data-src="students/students.html" hidden></div>
-            <div class="admin-tab-panel" id="adminTabMy" data-src="my/my.html" hidden></div>
+            <div class="admin-topheader-actions">
+                <button type="button" class="admin-register-btn" id="adminRegisterBtn">
+                    <span aria-hidden="true">+</span> 등록하기
+                </button>
+                <button type="button" class="admin-back-btn" id="adminBackBtn">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M9 21V13.6c0-.6.4-1 1-1h4c.6 0 1 .4 1 1V21M4.5 10.5 12 4l7.5 6.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    로그아웃
+                </button>
+            </div>
+        </div>
+
+        <nav class="admin-maintabs" role="tablist" aria-label="나만의 공부 화면 메뉴">
+            <button type="button" class="admin-maintab active" data-main-tab="personal" role="tab" aria-selected="true">개인용 자료</button>
+            <button type="button" class="admin-maintab" data-main-tab="kwzm" role="tab" aria-selected="false">KWZM 학생 자료</button>
+            <button type="button" class="admin-maintab" data-main-tab="students" role="tab" aria-selected="false">학생 관리</button>
+            <button type="button" class="admin-maintab" data-main-tab="my" role="tab" aria-selected="false">마이</button>
+        </nav>
+    </header>
+
+    <div class="admin-hero" id="adminHero">
+        <div class="admin-hero-slides" id="adminHeroSlides">
+            <div class="admin-hero-slide is-active" style="background-image:url('images/hero_1.jpg')"></div>
+            <div class="admin-hero-slide" style="background-image:url('images/hero_2.jpg')"></div>
+            <div class="admin-hero-slide" style="background-image:url('images/hero_3.jpg')"></div>
+        </div>
+        <div class="admin-hero-overlay" aria-hidden="true"></div>
+        <div class="admin-hero-inner">
+            <div class="admin-hero-textbox">
+                <p class="admin-hero-eyebrow" id="adminHeroEyebrow">개인 보관함</p>
+                <h1 class="admin-hero-title" id="adminHeroTitle">개인용 자료</h1>
+                <p class="admin-hero-desc" id="adminHeroDesc">나만 볼 수 있는 공부 자료를 언어와 항목별로 정리해요.</p>
+            </div>
+        </div>
+        <div class="admin-hero-dots" id="adminHeroDots">
+            <button type="button" class="admin-hero-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
+            <button type="button" class="admin-hero-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
+            <button type="button" class="admin-hero-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
         </div>
     </div>
+
+    <main class="admin-main">
+
+        <!-- 개인용 자료 -->
+        <section class="admin-main-panel active" data-main-panel="personal">
+            <div class="admin-language-pills" id="personalLanguagePills">
+                <button type="button" class="admin-pill" data-lang="korean" data-scope="PERSONAL">한국어</button>
+                <button type="button" class="admin-pill" data-lang="japanese" data-scope="PERSONAL">일본어</button>
+                <button type="button" class="admin-pill" data-lang="thai" data-scope="PERSONAL">태국어</button>
+                <button type="button" class="admin-pill" data-lang="english" data-scope="PERSONAL">영어</button>
+                <button type="button" class="admin-pill" data-lang="other" data-scope="PERSONAL">기타</button>
+            </div>
+            <div class="admin-category-pills" id="personalCategoryPills" hidden></div>
+            <div class="admin-materials-view" id="personalMaterialsView" hidden>
+                <div class="admin-materials-head-row">
+                    <p class="admin-materials-heading" id="personalMaterialsHeading"></p>
+                </div>
+                <div class="admin-materials-columns" aria-hidden="true">
+                    <span></span>
+                    <span>제목</span>
+                    <span>유형</span>
+                    <span>작성일</span>
+                    <span>관리</span>
+                </div>
+                <p class="admin-empty-text" id="personalMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
+                <div class="admin-materials-grid" id="personalMaterialsList"></div>
+            </div>
+        </section>
+
+        <!-- KWZM 학생 자료 -->
+        <section class="admin-main-panel" data-main-panel="kwzm" hidden>
+            <div class="admin-language-pills" id="kwzmLanguagePills">
+                <button type="button" class="admin-pill" data-lang="korean" data-scope="KWZM">한국어</button>
+                <button type="button" class="admin-pill" data-lang="japanese" data-scope="KWZM">일본어</button>
+                <button type="button" class="admin-pill" data-lang="thai" data-scope="KWZM">태국어</button>
+                <button type="button" class="admin-pill" data-lang="english" data-scope="KWZM">영어</button>
+                <button type="button" class="admin-pill" data-lang="other" data-scope="KWZM">기타</button>
+            </div>
+            <div class="admin-category-pills" id="kwzmCategoryPills" hidden></div>
+            <div class="admin-materials-view" id="kwzmMaterialsView" hidden>
+                <div class="admin-materials-head-row">
+                    <p class="admin-materials-heading" id="kwzmMaterialsHeading"></p>
+                    <button type="button" class="admin-invite-btn" id="adminInviteBtn" hidden>
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        학생 초대 관리 <span id="adminInviteCountBadge"></span>
+                    </button>
+                </div>
+                <div class="admin-materials-columns" aria-hidden="true">
+                    <span></span>
+                    <span>제목</span>
+                    <span>유형</span>
+                    <span>작성일</span>
+                    <span>관리</span>
+                </div>
+                <p class="admin-empty-text" id="kwzmMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
+                <div class="admin-materials-grid" id="kwzmMaterialsList"></div>
+            </div>
+        </section>
+
+        <!-- 학생 관리 / 마이 (fragment) -->
+        <section class="admin-main-panel" data-main-panel="students" hidden data-src="students/students.html"></section>
+        <section class="admin-main-panel" data-main-panel="my" hidden data-src="my/my.html"></section>
+
+    </main>
 </div>
 
 <!-- ===================== 자료 등록 모달 ===================== -->
@@ -206,6 +192,20 @@
 
         <div class="admin-register-body">
             <input type="hidden" id="registerEditingId" value="">
+
+            <div class="auth-form-field">
+                <label>어디에 등록할까요?</label>
+                <div class="admin-category-grid">
+                    <label class="admin-category-chip">
+                        <input type="radio" name="registerScope" value="PERSONAL" checked>
+                        <span>개인용 (나만의 공부 화면)</span>
+                    </label>
+                    <label class="admin-category-chip">
+                        <input type="radio" name="registerScope" value="KWZM">
+                        <span>KWZM 학생용</span>
+                    </label>
+                </div>
+            </div>
 
             <div class="auth-form-field">
                 <label for="registerLanguageSelect">언어</label>
@@ -245,13 +245,6 @@
             </div>
 
             <div class="auth-form-field">
-                <label>이 자료를 볼 학생 <span class="apply-optional">(비워두면 이 언어를 듣는 전체 학생에게 보여요)</span></label>
-                <div class="admin-student-picker" id="registerStudentPicker">
-                    <p class="admin-note-hint">언어를 먼저 선택해주세요.</p>
-                </div>
-            </div>
-
-            <div class="auth-form-field">
                 <label for="registerTitleInput">제목</label>
                 <input type="text" id="registerTitleInput" placeholder="예: 조사 정리, 3과 읽기 지문">
             </div>
@@ -285,7 +278,38 @@
     </div>
 </div>
 
-<!-- ===================== 자료 갤러리로 보기 ===================== -->
+<!-- ===================== 학생 초대 모달 ===================== -->
+<div class="admin-invite-modal" id="adminInviteModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-invite-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3 id="inviteModalTitle">학생 초대</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-invite-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+
+        <div class="admin-register-body">
+            <div class="auth-form-field">
+                <label for="inviteStudentNumberInput">학생번호로 초대하기</label>
+                <div class="auth-input-row">
+                    <input type="text" id="inviteStudentNumberInput" placeholder="예: 2026_Korean_Level1_01">
+                    <button type="button" class="admin-invite-add-btn" id="inviteAddBtn">초대</button>
+                </div>
+                <p class="auth-form-error" id="inviteError" hidden></p>
+            </div>
+
+            <div class="auth-form-field">
+                <label>초대된 학생 <span id="inviteCount" class="admin-invite-count"></span></label>
+                <div class="admin-invited-list" id="adminInvitedList">
+                    <p class="admin-note-hint">불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== 라이트박스 ===================== -->
 <div class="admin-lightbox" id="adminLightbox" aria-hidden="true">
     <div class="admin-lightbox-backdrop" data-lightbox-close></div>
     <button type="button" class="admin-lightbox-close" data-lightbox-close aria-label="닫기">

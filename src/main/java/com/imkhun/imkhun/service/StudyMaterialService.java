@@ -22,15 +22,17 @@ public class StudyMaterialService {
     private static final Set<String> VALID_LANGUAGES = Set.of("korean", "japanese", "thai", "english", "other");
     private static final Set<String> VALID_CATEGORIES = Set.of("GRAMMAR", "READING", "WRITING", "SPEAKING", "OTHER");
 
+    private static final Set<String> VALID_SCOPES = Set.of("PERSONAL", "KWZM");
+
     public StudyMaterialService(StudyMaterialRepository studyMaterialRepository) {
         this.studyMaterialRepository = studyMaterialRepository;
     }
 
     @Transactional
-    public MaterialResponse createMaterial(CreateMaterialRequest request) {
+    public MaterialResponse createMaterial(CreateMaterialRequest request, String scope) {
         validate(request);
 
-        StudyMaterial material = StudyMaterial.create(request.language(), request.category(), request.title(), request.description());
+        StudyMaterial material = StudyMaterial.create(request.language(), request.category(), request.title(), request.description(), scope);
         material.updateAssignedStudents(toStudentNumberSet(request.assignedStudentNumbers()));
         addFiles(material, request.files());
         StudyMaterial saved = studyMaterialRepository.save(material);
@@ -38,18 +40,18 @@ public class StudyMaterialService {
     }
 
     @Transactional(readOnly = true)
-    public List<MaterialResponse> getMaterials(String language, String category) {
-        return studyMaterialRepository.findByLanguageAndCategoryOrderByCreatedAtDesc(language, category)
+    public List<MaterialResponse> getMaterials(String language, String category, String scope) {
+        return studyMaterialRepository.findByLanguageAndCategoryAndScopeOrderByCreatedAtDesc(language, category, scope)
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-    // 학생 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중 최근 N개
+    // 학생 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중 최근 N개 (항상 KWZM 자료만)
     @Transactional(readOnly = true)
     public List<MaterialResponse> getRecentMaterials(Set<String> languages, int limit) {
         if (languages == null || languages.isEmpty()) return List.of();
-        return studyMaterialRepository.findByLanguageInOrderByCreatedAtDesc(languages)
+        return studyMaterialRepository.findByLanguageInAndScopeOrderByCreatedAtDesc(languages, "KWZM")
                 .stream()
                 .limit(limit)
                 .map(this::toResponse)
@@ -57,11 +59,14 @@ public class StudyMaterialService {
     }
 
     @Transactional
-    public MaterialResponse updateMaterial(Long id, CreateMaterialRequest request) {
+    public MaterialResponse updateMaterial(Long id, CreateMaterialRequest request, String scope) {
         validate(request);
 
         StudyMaterial material = studyMaterialRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("자료를 찾을 수 없어요."));
+        if (!material.getScope().equals(scope)) {
+            throw new IllegalStateException("자료를 찾을 수 없어요.");
+        }
         material.updateInfo(request.language(), request.category(), request.title(), request.description());
         material.updateAssignedStudents(toStudentNumberSet(request.assignedStudentNumbers()));
 
@@ -75,8 +80,10 @@ public class StudyMaterialService {
         return toResponse(saved);
     }
 
-    public void deleteMaterial(Long id) {
-        if (!studyMaterialRepository.existsById(id)) {
+    public void deleteMaterial(Long id, String scope) {
+        StudyMaterial material = studyMaterialRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("자료를 찾을 수 없어요."));
+        if (!material.getScope().equals(scope)) {
             throw new IllegalStateException("자료를 찾을 수 없어요.");
         }
         studyMaterialRepository.deleteById(id);
@@ -117,7 +124,7 @@ public class StudyMaterialService {
         return new MaterialResponse(
                 material.getId(), material.getLanguage(), material.getCategory(), material.getTitle(),
                 material.getDescription(), fileResponses, material.getCreatedAt().format(DATE_FORMAT),
-                material.getAssignedStudentNumbers().stream().toList()
+                material.getAssignedStudentNumbers().stream().toList(), material.getScope()
         );
     }
 }

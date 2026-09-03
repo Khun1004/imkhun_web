@@ -4,6 +4,7 @@ import com.imkhun.imkhun.domain.Application;
 import com.imkhun.imkhun.domain.User;
 import com.imkhun.imkhun.dto.*;
 import com.imkhun.imkhun.service.ApplicationService;
+import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.StudentAuthService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,12 +24,14 @@ public class StudentPortalController {
     private final StudentAuthService studentAuthService;
     private final ApplicationService applicationService;
     private final StudyMaterialService studyMaterialService;
+    private final KwzmInviteService kwzmInviteService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
-                                   StudyMaterialService studyMaterialService) {
+                                   StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.studyMaterialService = studyMaterialService;
+        this.kwzmInviteService = kwzmInviteService;
     }
 
     @PostMapping("/login")
@@ -70,8 +73,7 @@ public class StudentPortalController {
         return ResponseEntity.ok(new StudentMeResponse(user.getNickname(), courses));
     }
 
-    // 이 학생이 승인받은 언어의 자료만 볼 수 있음 (다른 언어 자료는 접근 불가)
-    // + 특정 학생만 보도록 지정된 자료는 그 학생에게만 보임
+    // 이 학생이 승인받은 언어이면서, 그 언어의 KWZM 자료를 볼 수 있게 "초대"까지 받은 경우에만 자료가 보임
     @GetMapping("/materials")
     public ResponseEntity<?> getMaterials(HttpServletRequest request,
                                           @RequestParam String language, @RequestParam String category) {
@@ -79,34 +81,22 @@ public class StudentPortalController {
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         User user = userOpt.get();
 
-        List<Application> approved = studentAuthService.getApprovedApplications(user.getUsername());
-        Set<String> allowedLanguages = approved.stream()
-                .map(a -> applicationService.extractLanguageCode(a.getCourseName()))
-                .collect(java.util.stream.Collectors.toSet());
-
-        if (!allowedLanguages.contains(language)) {
-            return ResponseEntity.status(403).body("이 자료에 접근할 수 없어요.");
+        if (!isInvitedForLanguage(user.getUsername(), language)) {
+            return ResponseEntity.status(403).body("아직 이 언어 자료를 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요.");
         }
 
-        Set<String> myStudentNumbers = approved.stream()
-                .map(Application::getStudentNumber)
-                .collect(java.util.stream.Collectors.toSet());
-
-        List<MaterialResponse> materials = studyMaterialService.getMaterials(language, category).stream()
-                .filter(m -> isVisibleToStudent(m, myStudentNumbers))
-                .toList();
-
-        return ResponseEntity.ok(materials);
+        return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "KWZM"));
     }
 
-    // 지정된 학생이 없으면(전체 공개) 누구나 보임, 지정돼있으면 내 학생번호가 포함될 때만 보임
-    private boolean isVisibleToStudent(MaterialResponse material, Set<String> myStudentNumbers) {
-        List<String> assigned = material.assignedStudentNumbers();
-        if (assigned == null || assigned.isEmpty()) return true;
-        return assigned.stream().anyMatch(myStudentNumbers::contains);
+    // 이 학생의 승인된 신청서 중, 이 언어에 해당하는 학생번호가 초대 목록에 있는지 확인
+    private boolean isInvitedForLanguage(String username, String language) {
+        List<Application> approved = studentAuthService.getApprovedApplications(username);
+        return approved.stream()
+                .filter(a -> language.equals(applicationService.extractLanguageCode(a.getCourseName())))
+                .anyMatch(a -> kwzmInviteService.isInvited(language, a.getStudentNumber()));
     }
 
-    // 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중 최근 6개
+    // 홈 화면 "최근 등록된 자료" — 초대받은 언어들 중 최근 6개
     @GetMapping("/materials/recent")
     public ResponseEntity<?> getRecentMaterials(HttpServletRequest request) {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
@@ -114,19 +104,12 @@ public class StudentPortalController {
         User user = userOpt.get();
 
         List<Application> approved = studentAuthService.getApprovedApplications(user.getUsername());
-        Set<String> allowedLanguages = approved.stream()
+        Set<String> invitedLanguages = approved.stream()
                 .map(a -> applicationService.extractLanguageCode(a.getCourseName()))
-                .collect(java.util.stream.Collectors.toSet());
-        Set<String> myStudentNumbers = approved.stream()
-                .map(Application::getStudentNumber)
+                .filter(lang -> isInvitedForLanguage(user.getUsername(), lang))
                 .collect(java.util.stream.Collectors.toSet());
 
-        // 넉넉히 가져온 다음 개별 지정 자료를 걸러내고 6개로 자름
-        List<MaterialResponse> materials = studyMaterialService.getRecentMaterials(allowedLanguages, 30).stream()
-                .filter(m -> isVisibleToStudent(m, myStudentNumbers))
-                .limit(6)
-                .toList();
-
+        List<MaterialResponse> materials = studyMaterialService.getRecentMaterials(invitedLanguages, 6);
         return ResponseEntity.ok(materials);
     }
 }

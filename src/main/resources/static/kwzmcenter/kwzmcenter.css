@@ -3,6 +3,7 @@
 .kwzm-standalone-body {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
+    overflow-x: hidden;
     background: var(--kwzm-bg);
 }
 
@@ -236,6 +237,12 @@
     font-style: italic;
 }
 
+.student-masthead-logo-mark {
+    font-size: 1.5em;
+    font-weight: 700;
+    font-style: normal;
+}
+
 .student-masthead-right {
     position: relative;
     display: flex;
@@ -317,35 +324,39 @@
 
 .student-subnav-inner {
     display: flex;
-    justify-content: center;
-    gap: 28px;
     max-width: 1000px;
     margin: 0 auto;
-    padding: 10px 32px 18px;
-    flex-wrap: wrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.student-subnav-inner::-webkit-scrollbar {
+    display: none;
 }
 
 .student-subnav-link {
+    flex: 1 1 0;
+    min-width: 0;
     border: none;
-    background: none;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    padding: 14px 12px;
     color: var(--kwzm-ink-faint);
     text-decoration: none;
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding-bottom: 6px;
-    border-bottom: 2px solid transparent;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
+    transition: background 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out;
 }
 
 .student-subnav-link:hover {
+    background: var(--kwzm-bg-2);
     color: var(--kwzm-ink);
 }
 
 .student-subnav-link.active {
-    color: var(--kwzm-ink);
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-accent-2);
     border-bottom-color: var(--kwzm-accent);
 }
 

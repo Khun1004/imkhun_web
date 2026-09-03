@@ -1,16 +1,90 @@
-<div class="student-page-banner student-page-banner--forest">
-    <span class="student-page-banner-blob student-page-banner-blob--a" aria-hidden="true"></span>
-    <span class="student-page-banner-blob student-page-banner-blob--b" aria-hidden="true"></span>
-    <span class="student-page-banner-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-  </span>
-    <p class="eyebrow student-page-banner-eyebrow">Post</p>
-    <h2 class="student-page-banner-title">Post</h2>
-    <p class="student-page-banner-desc">공지, 과제, 안내 글을 이곳에서 확인할 수 있게 될 거예요.</p>
+<div class="student-photo-banner">
+    <div class="student-photo-banner-slides" id="studentPostBannerSlides">
+        <div class="student-photo-banner-slide is-active" style="background-image:url('images/1.png')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/2.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/3.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/4.jpg')"></div>
+    </div>
+    <div class="student-photo-banner-inner">
+        <div class="student-photo-banner-textbox">
+            <p class="eyebrow student-photo-banner-eyebrow">Board</p>
+            <h2 class="student-photo-banner-title">게시판</h2>
+            <p class="student-photo-banner-desc">언어별 어휘·문법·쓰기 팁이나 컴퓨터 관련 글을 서로 나눠보세요.</p>
+        </div>
+    </div>
+    <div class="student-photo-banner-dots" id="studentPostBannerDots">
+        <button type="button" class="student-photo-banner-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="3" aria-label="배경 사진 4"></button>
+    </div>
 </div>
 
-<div class="student-coming-soon">
-    <span class="student-coming-soon-icon" aria-hidden="true">📝</span>
-    <p class="student-coming-soon-title">게시판을 준비하고 있어요</p>
-    <p class="student-coming-soon-desc">공지, 과제, 안내 글 등을 이곳에서 볼 수 있게 될 거예요.</p>
+<div class="board-layout">
+    <!-- 왼쪽 사이드바: 주제 선택 -->
+    <aside class="board-sidebar" id="boardTopics"></aside>
+
+    <!-- 오른쪽 콘텐츠 -->
+    <div class="board-content">
+        <div class="board-toolbar">
+            <div class="board-category-pills" id="boardCategoryPills"></div>
+            <button type="button" class="board-write-btn" id="boardWriteBtn">
+                <span aria-hidden="true">+</span> 글쓰기
+            </button>
+        </div>
+
+        <p class="board-heading" id="boardHeading"></p>
+
+        <p class="admin-empty-text" id="boardEmpty" hidden>아직 등록된 글이 없어요. 첫 글을 남겨보세요!</p>
+        <div class="board-list" id="boardList"></div>
+    </div>
+</div>
+
+<!-- 글쓰기 모달 -->
+<div class="board-modal" id="boardWriteModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-board-modal-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="글쓰기">
+        <div class="board-modal-head">
+            <h3>글쓰기</h3>
+            <button type="button" class="board-modal-close" data-board-modal-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <div class="auth-form-field">
+                <label for="boardFormTopic">주제</label>
+                <select id="boardFormTopic">
+                    <option value="korean">한국어</option>
+                    <option value="japanese">일본어</option>
+                    <option value="thai">태국어</option>
+                    <option value="english">영어</option>
+                    <option value="computer">컴퓨터</option>
+                </select>
+            </div>
+
+            <div class="auth-form-field" id="boardFormCategoryField">
+                <label for="boardFormCategory">항목</label>
+                <select id="boardFormCategory">
+                    <option value="VOCAB">어휘</option>
+                    <option value="GRAMMAR">문법</option>
+                    <option value="WRITING">쓰기</option>
+                    <option value="OTHER">기타</option>
+                </select>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="boardFormTitle">제목</label>
+                <input type="text" id="boardFormTitle" placeholder="예: 헷갈리는 조사 정리">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="boardFormContent">내용</label>
+                <textarea id="boardFormContent" placeholder="알고 있는 어휘, 문법, 쓰기 팁이나 컴퓨터 활용 팁을 자유롭게 나눠주세요"></textarea>
+            </div>
+
+            <p class="auth-form-error" id="boardFormError" hidden></p>
+
+            <button type="button" class="auth-form-submit" id="boardFormSubmitBtn">올리기</button>
+        </div>
+    </div>
 </div>

@@ -226,21 +226,41 @@ function renderStudentLanguagePills() {
     const pillsEl = document.getElementById("studentLanguagePills");
     if (!pillsEl) return;
 
-    const languages = [...new Set(studentCourses.map((c) => c.language))];
+    const enrolledLanguages = new Set(studentCourses.map((c) => c.language));
     pillsEl.innerHTML = "";
-    languages.forEach((lang) => {
+
+    Object.keys(STUDENT_LANGUAGE_LABEL).forEach((lang) => {
+        const isEnrolled = enrolledLanguages.has(lang);
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "student-pill";
+        btn.className = "student-lang-sidebar-item";
+        btn.classList.toggle("is-locked", !isEnrolled);
         btn.dataset.studentLang = lang;
         btn.textContent = STUDENT_LANGUAGE_LABEL[lang] || lang;
         btn.addEventListener("click", () => {
-            pillsEl.querySelectorAll(".student-pill").forEach((p) => p.classList.remove("active"));
+            pillsEl.querySelectorAll(".student-lang-sidebar-item").forEach((p) => p.classList.remove("active"));
             btn.classList.add("active");
-            renderStudentCategoryPills(lang);
+
+            const catEl = document.getElementById("studentCategoryPills");
+            const view = document.getElementById("studentMaterialsView");
+            const notEnrolledEl = document.getElementById("studentLangNotEnrolled");
+
+            if (isEnrolled) {
+                if (notEnrolledEl) notEnrolledEl.hidden = true;
+                renderStudentCategoryPills(lang);
+            } else {
+                if (catEl) { catEl.hidden = true; catEl.innerHTML = ""; }
+                if (view) view.hidden = true;
+                if (notEnrolledEl) notEnrolledEl.hidden = false;
+            }
         });
         pillsEl.appendChild(btn);
     });
+
+    // 신청한 언어가 있으면 그걸 먼저 보여주고, 없으면 그냥 첫 번째 언어를 보여줘요.
+    const firstEnrolledPill = pillsEl.querySelector(".student-lang-sidebar-item:not(.is-locked)");
+    const firstPill = firstEnrolledPill || pillsEl.querySelector(".student-lang-sidebar-item");
+    if (firstPill) firstPill.click();
 }
 
 function renderStudentCategoryPills(language) {
@@ -264,6 +284,9 @@ function renderStudentCategoryPills(language) {
         });
         catEl.appendChild(btn);
     });
+
+    const firstCatPill = catEl.querySelector(".student-pill");
+    if (firstCatPill) firstCatPill.click();
 }
 
 async function loadStudentMaterials(language, category) {
@@ -314,19 +337,27 @@ async function loadStudentMaterials(language, category) {
                 ? `<span class="student-material-count-badge">+${files.length - 1}</span>`
                 : "";
 
-            const metaText = files.length === 0
-                ? "첨부 없음"
-                : files.length === 1
-                    ? (firstIsLink ? "링크" : firstIsText ? "글" : first.fileName || "파일")
-                    : `자료 ${files.length}개`;
+            const typeLabels = [];
+            if (files.some((f) => f.fileType && f.fileType.startsWith("image/"))) typeLabels.push("이미지");
+            if (files.some((f) => f.fileData && !(f.fileType && f.fileType.startsWith("image/")))) typeLabels.push("파일");
+            if (files.some((f) => f.linkUrl)) typeLabels.push("링크");
+            if (files.some((f) => f.textContent && !f.linkUrl && !f.fileData)) typeLabels.push("글");
+            const typeBadgeHtml = typeLabels.length
+                ? typeLabels.map((t) => `<span class="student-material-type-badge" data-type="${t}">${t}</span>`).join("")
+                : `<span class="student-material-type-badge" data-type="없음">없음</span>`;
+
+            const descHtml = m.description
+                ? escapeHtmlForStudent(m.description)
+                : `<span class="student-material-desc-empty">설명 없음</span>`;
 
             item.innerHTML = `
         <div class="student-material-thumb">${thumbHtml}${countBadgeHtml}</div>
         <div class="student-material-main">
           <p class="student-material-title">${escapeHtmlForStudent(m.title)}</p>
-          ${m.description ? `<p class="student-material-desc">${escapeHtmlForStudent(m.description)}</p>` : ""}
-          <p class="student-material-meta">${escapeHtmlForStudent(metaText)} · ${m.createdAt}</p>
+          <p class="student-material-desc">${descHtml}</p>
         </div>
+        <div class="student-material-types">${typeBadgeHtml}</div>
+        <p class="student-material-date">${m.createdAt}</p>
       `;
             item.addEventListener("click", () => handleStudentViewMaterial(m));
             list.appendChild(item);
@@ -452,6 +483,231 @@ function stopHeroAutoplay() {
     if (heroAutoTimer) clearInterval(heroAutoTimer);
 }
 
+// ---- 게시판: 주제/항목별로 학생들이 글을 올리고 볼 수 있는 공간 ----
+
+const BOARD_TOPIC_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터" };
+const BOARD_CATEGORY_LABEL = { VOCAB: "어휘", GRAMMAR: "문법", WRITING: "쓰기", OTHER: "기타" };
+
+let currentBoardTopic = "korean";
+let currentBoardCategory = "VOCAB";
+
+function renderBoardTopics() {
+    const el = document.getElementById("boardTopics");
+    if (!el) return;
+
+    el.innerHTML = "";
+    Object.keys(BOARD_TOPIC_LABEL).forEach((topic) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "board-sidebar-item";
+        btn.dataset.boardTopic = topic;
+        btn.textContent = BOARD_TOPIC_LABEL[topic];
+        btn.addEventListener("click", () => {
+            el.querySelectorAll(".board-sidebar-item").forEach((p) => p.classList.remove("active"));
+            btn.classList.add("active");
+            currentBoardTopic = topic;
+            renderBoardCategoryPills(topic);
+        });
+        el.appendChild(btn);
+    });
+
+    const firstTopic = el.querySelector(".board-sidebar-item");
+    if (firstTopic) firstTopic.click();
+}
+
+function renderBoardCategoryPills(topic) {
+    const el = document.getElementById("boardCategoryPills");
+    if (!el) return;
+
+    if (topic === "computer") {
+        el.hidden = true;
+        el.innerHTML = "";
+        currentBoardCategory = "ALL";
+        loadBoardPosts(topic, "ALL");
+        return;
+    }
+
+    el.hidden = false;
+    el.innerHTML = "";
+    Object.entries(BOARD_CATEGORY_LABEL).forEach(([key, label]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "board-pill";
+        btn.textContent = label;
+        btn.addEventListener("click", () => {
+            el.querySelectorAll(".board-pill").forEach((p) => p.classList.remove("active"));
+            btn.classList.add("active");
+            currentBoardCategory = key;
+            loadBoardPosts(topic, key);
+        });
+        el.appendChild(btn);
+    });
+
+    const firstCat = el.querySelector(".board-pill");
+    if (firstCat) firstCat.click();
+}
+
+async function loadBoardPosts(topic, category) {
+    const list = document.getElementById("boardList");
+    const emptyText = document.getElementById("boardEmpty");
+    const heading = document.getElementById("boardHeading");
+    if (!list) return;
+
+    if (heading) {
+        heading.textContent = category === "ALL"
+            ? `${BOARD_TOPIC_LABEL[topic] || topic}`
+            : `${BOARD_TOPIC_LABEL[topic] || topic} · ${BOARD_CATEGORY_LABEL[category] || category}`;
+    }
+
+    try {
+        const query = category === "ALL"
+            ? `topic=${topic}`
+            : `topic=${topic}&category=${category}`;
+        const res = await fetch(`/api/student/posts?${query}`);
+        if (!res.ok) return;
+        const posts = await res.json();
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = posts.length > 0;
+
+        posts.forEach((p) => {
+            const item = document.createElement("div");
+            item.className = "board-item";
+            const initial = (p.nickname || "?").charAt(0);
+            const badgeHtml = p.category
+                ? `<span class="board-item-badge">${escapeHtmlForStudent(BOARD_CATEGORY_LABEL[p.category] || p.category)}</span>`
+                : "";
+            item.innerHTML = `
+        <div class="board-item-header">
+          <span class="board-item-avatar">${escapeHtmlForStudent(initial)}</span>
+          <span class="board-item-name">${escapeHtmlForStudent(p.nickname)}</span>
+          ${badgeHtml}
+          <span class="board-item-date">${p.createdAt}</span>
+        </div>
+        <p class="board-item-title">${escapeHtmlForStudent(p.title)}</p>
+        <p class="board-item-preview">${escapeHtmlForStudent(p.content)}</p>
+        <p class="board-item-content" hidden>${escapeHtmlForStudent(p.content)}</p>
+      `;
+            item.addEventListener("click", () => {
+                const preview = item.querySelector(".board-item-preview");
+                const full = item.querySelector(".board-item-content");
+                if (!preview || !full) return;
+                const isOpen = !full.hidden;
+                full.hidden = isOpen;
+                preview.hidden = !isOpen;
+            });
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function updateBoardCategoryFieldVisibility() {
+    const topic = document.getElementById("boardFormTopic").value;
+    const field = document.getElementById("boardFormCategoryField");
+    if (field) field.hidden = topic === "computer";
+}
+
+function openBoardWriteModal() {
+    const modal = document.getElementById("boardWriteModal");
+    if (!modal) return;
+    document.getElementById("boardFormTopic").value = currentBoardTopic;
+    document.getElementById("boardFormCategory").value = BOARD_CATEGORY_LABEL[currentBoardCategory] ? currentBoardCategory : "VOCAB";
+    document.getElementById("boardFormTitle").value = "";
+    document.getElementById("boardFormContent").value = "";
+    document.getElementById("boardFormError").hidden = true;
+    updateBoardCategoryFieldVisibility();
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeBoardWriteModal() {
+    const modal = document.getElementById("boardWriteModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitBoardPost() {
+    const topic = document.getElementById("boardFormTopic").value;
+    const category = topic === "computer" ? null : document.getElementById("boardFormCategory").value;
+    const title = document.getElementById("boardFormTitle").value.trim();
+    const content = document.getElementById("boardFormContent").value.trim();
+    const errorEl = document.getElementById("boardFormError");
+    const submitBtn = document.getElementById("boardFormSubmitBtn");
+
+    if (!title || !content) {
+        errorEl.textContent = "제목과 내용을 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "올리는 중...";
+
+    try {
+        const res = await fetch("/api/student/posts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic, category, title, content }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "글 등록에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeBoardWriteModal();
+
+        const refreshCategory = topic === "computer" ? "ALL" : category;
+        if (topic === currentBoardTopic && refreshCategory === currentBoardCategory) {
+            loadBoardPosts(topic, refreshCategory);
+        }
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "올리기";
+    }
+}
+
+// 사진 배너 상단 슬라이드쇼 (언어/영상 등 여러 화면에서 재사용, 화면마다 각자 독립적으로 넘어감)
+function setupPhotoBanners() {
+    document.querySelectorAll(".student-photo-banner").forEach((banner) => {
+        const slides = banner.querySelectorAll(".student-photo-banner-slide");
+        const dots = banner.querySelectorAll(".student-photo-banner-dot");
+        if (slides.length <= 1) return;
+
+        let index = 0;
+        let timer = null;
+
+        const goTo = (i) => {
+            index = (i + slides.length) % slides.length;
+            slides.forEach((s, idx) => s.classList.toggle("is-active", idx === index));
+            dots.forEach((d, idx) => d.classList.toggle("is-active", idx === index));
+        };
+
+        const restart = () => {
+            if (timer) clearInterval(timer);
+            timer = setInterval(() => goTo(index + 1), 5000);
+        };
+
+        dots.forEach((dot) => {
+            dot.addEventListener("click", () => {
+                goTo(Number(dot.dataset.slideIndex));
+                restart();
+            });
+        });
+
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (!prefersReducedMotion) restart();
+    });
+}
+
 // 고정된 헤더(마스트헤드+서브내비)/푸터의 실제 높이를 재서 본문 여백에 반영
 function syncKwzmFixedOffsets() {
     const masthead = document.querySelector(".student-masthead");
@@ -490,8 +746,17 @@ function setupHeroCarousel() {
 document.addEventListener("fragments:loaded", () => {
 
     setupHeroCarousel();
+    setupPhotoBanners();
+    renderBoardTopics();
     syncKwzmFixedOffsets();
     window.addEventListener("resize", syncKwzmFixedOffsets);
+
+    document.getElementById("boardWriteBtn")?.addEventListener("click", openBoardWriteModal);
+    document.addEventListener("click", (e) => {
+        if (e.target.closest("[data-board-modal-close]")) closeBoardWriteModal();
+    });
+    document.getElementById("boardFormSubmitBtn")?.addEventListener("click", submitBoardPost);
+    document.getElementById("boardFormTopic")?.addEventListener("change", updateBoardCategoryFieldVisibility);
 
     // "로그아웃" 버튼
     document.getElementById("studentBackBtn")?.addEventListener("click", logoutStudent);
@@ -565,6 +830,82 @@ document.addEventListener("fragments:loaded", () => {
         const shortcut = e.target.closest("[data-home-shortcut]");
         if (!shortcut) return;
         switchStudentMainTab(shortcut.dataset.homeShortcut);
+    });
+
+    // "온라인 영상" 화면의 언어/컴퓨터 탭 전환
+    document.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-video-tab]");
+        if (!tab) return;
+        const key = tab.dataset.videoTab;
+
+        document.querySelectorAll("[data-video-tab]").forEach((t) => {
+            t.classList.toggle("active", t === tab);
+            t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        });
+        document.querySelectorAll("[data-video-panel]").forEach((p) => {
+            p.hidden = p.dataset.videoPanel !== key;
+            p.classList.toggle("active", p.dataset.videoPanel === key);
+        });
+    });
+
+    // "무료체험" 화면의 언어/컴퓨터 탭 전환
+    document.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-trial-tab]");
+        if (!tab) return;
+        const key = tab.dataset.trialTab;
+
+        document.querySelectorAll("[data-trial-tab]").forEach((t) => {
+            t.classList.toggle("active", t === tab);
+            t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        });
+        document.querySelectorAll("[data-trial-panel]").forEach((p) => {
+            p.hidden = p.dataset.trialPanel !== key;
+            p.classList.toggle("active", p.dataset.trialPanel === key);
+        });
+    });
+
+    // "컴퓨터 자료" 화면의 프로그램별 탭 전환
+    document.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-computer-tab]");
+        if (!tab) return;
+        const key = tab.dataset.computerTab;
+
+        document.querySelectorAll("[data-computer-tab]").forEach((t) => {
+            t.classList.toggle("active", t === tab);
+            t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        });
+        document.querySelectorAll("[data-computer-panel]").forEach((p) => {
+            p.hidden = p.dataset.computerPanel !== key;
+            p.classList.toggle("active", p.dataset.computerPanel === key);
+        });
+    });
+
+    // "마이페이지"의 내 수강 정보/바로가기 탭 전환
+    document.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-mypage-tab]");
+        if (!tab) return;
+        const key = tab.dataset.mypageTab;
+
+        document.querySelectorAll("[data-mypage-tab]").forEach((t) => {
+            t.classList.toggle("active", t === tab);
+            t.setAttribute("aria-selected", t === tab ? "true" : "false");
+        });
+        document.querySelectorAll("[data-mypage-panel]").forEach((p) => {
+            p.hidden = p.dataset.mypagePanel !== key;
+            p.classList.toggle("active", p.dataset.mypagePanel === key);
+        });
+    });
+
+    // "합격증 다운로드" / "시험 보러가기" — 관리자가 나중에 보내주는 기능이라 지금은 안내만
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-mypage-action]");
+        if (!btn) return;
+        const action = btn.dataset.mypageAction;
+        if (action === "certificate") {
+            alert("합격증은 관리자가 발급하면 여기에서 다운로드할 수 있어요.");
+        } else if (action === "exam") {
+            alert("시험은 관리자가 열어주면 여기에서 볼 수 있어요.");
+        }
     });
 
     document.addEventListener("keydown", (e) => {

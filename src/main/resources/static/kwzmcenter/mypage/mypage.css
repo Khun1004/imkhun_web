@@ -1,10 +1,48 @@
 /* KWZM Center — 마이페이지 (~~님 클릭 시 이동하는 화면) */
 
+/* 화면 전체를 감싸는 슬라이드 사진 배경 */
+
+.student-photo-banner--fullpage {
+    height: auto;
+    min-height: calc(100vh - var(--kwzm-masthead-h, 90px) - var(--kwzm-subnav-h, 54px) - var(--kwzm-footer-h, 38px));
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    margin-top: -40px;
+    margin-bottom: 0;
+    padding: 44px 48px 28px;
+}
+
+.student-photo-banner--fullpage .student-photo-banner-slide {
+    background-size: cover;
+}
+
+.student-photo-banner--fullpage .student-photo-banner-dots {
+    top: 20px;
+    bottom: auto;
+}
+
+.mypage-bg-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.mypage-frosted-card {
+    margin-top: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 18px;
+    padding: 28px 28px 32px;
+    box-shadow: 0 24px 50px -26px rgba(15, 37, 71, 0.4);
+}
+
 .student-mypage-hero {
     position: relative;
     overflow: hidden;
     padding: 44px 40px;
-    margin: -8px -48px 40px;
     border-radius: 20px;
     background: var(--kwzm-gradient);
     box-shadow: 0 20px 44px -20px rgba(15, 37, 71, 0.4);
@@ -26,9 +64,52 @@
 }
 
 @media (max-width: 720px) {
-    .student-mypage-hero {
-        margin: -8px -20px 32px;
-        padding: 32px 24px;
-        border-radius: 0;
+    .student-photo-banner--fullpage {
+        padding: 32px 20px 24px;
     }
+
+    .student-mypage-hero {
+        padding: 32px 24px;
+    }
+
+    .mypage-frosted-card {
+        padding: 20px 18px 24px;
+        border-radius: 14px;
+    }
+}
+
+/* 내 수강 정보 / 바로가기 탭 */
+
+.mypage-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 1.5px solid var(--kwzm-line);
+}
+
+.mypage-tab {
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    border-radius: 0;
+    padding: 10px 18px;
+    background: none;
+    color: var(--kwzm-ink-faint);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: -1.5px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.mypage-tab:hover {
+    color: var(--kwzm-ink);
+}
+
+.mypage-tab.active {
+    color: var(--kwzm-accent-2);
+    border-color: var(--kwzm-accent);
+}
+
+.mypage-tab-panel[hidden] {
+    display: none;
 }

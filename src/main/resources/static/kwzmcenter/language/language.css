@@ -1,89 +1,353 @@
-/* KWZM Center — 언어 자료 (단순 버전) */
+/* KWZM Center — 언어 자료 (사이드바 레이아웃) */
 
-.student-simple-title {
-    font-family: "Noto Serif KR", serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--kwzm-ink);
-    margin-bottom: 24px;
+:root {
+    /* 언어별 표시 색 — 사이드바 점, 유형 배지에 사용 */
+    --kwzm-tag-korean: var(--kwzm-primary);
+    --kwzm-tag-japanese: var(--kwzm-accent);
+    --kwzm-tag-thai: #5c8f4f;
+    --kwzm-tag-english: #c98a2f;
+    --kwzm-tag-other: #7a7f8c;
 }
 
-.student-language-pills,
+/* ---------- 상단 사진 배너 ---------- */
+
+.student-photo-banner {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    margin-top: -40px;
+    margin-bottom: 40px;
+    background: var(--kwzm-primary-2);
+}
+
+.student-photo-banner-slides {
+    position: absolute;
+    inset: 0;
+}
+
+.student-photo-banner-slide {
+    position: absolute;
+    inset: 0;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: var(--kwzm-primary-2);
+    opacity: 0;
+    transition: opacity 1.2s ease;
+}
+
+.student-photo-banner-slide.is-active {
+    opacity: 1;
+    z-index: 1;
+}
+
+.student-photo-banner-overlay {
+    display: none;
+}
+
+.student-photo-banner-inner {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.student-photo-banner-textbox {
+    width: 100%;
+    max-width: 100%;
+    background: rgba(15, 37, 71, 0.42);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border-radius: 5px;
+    padding: 22px 26px;
+    text-align: left;
+}
+
+.student-photo-banner-eyebrow {
+    display: inline-block !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #17120a !important;
+    background: #f8cb84;
+    padding: 4px 12px;
+    border-radius: 3px;
+    margin: 0 0 12px !important;
+}
+
+.student-photo-banner-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 27px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px;
+    line-height: 1.3;
+}
+
+.student-photo-banner-desc {
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.student-photo-banner-dots {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+}
+
+.student-photo-banner-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.student-photo-banner-dot:hover {
+    transform: scale(1.15);
+}
+
+.student-photo-banner-dot.is-active {
+    background: #f8cb84;
+    border-color: #f8cb84;
+}
+
+
+@media (max-width: 860px) {
+    .student-photo-banner {
+        height: 150px;
+        margin-top: -40px;
+        margin-bottom: 32px;
+    }
+
+    .student-photo-banner-inner {
+        padding: 0 20px;
+    }
+
+    .student-photo-banner-textbox {
+        max-width: 100%;
+        padding: 16px 18px;
+    }
+
+    .student-photo-banner-title {
+        font-size: 21px;
+    }
+
+    .student-photo-banner-desc {
+        font-size: 12.5px;
+    }
+}
+
+/* ---------- 전체 레이아웃 ---------- */
+
+.student-lang-layout {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+}
+
+/* ---------- 왼쪽 사이드바 ---------- */
+
+.student-lang-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 200px;
+    gap: 4px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 10px;
+    padding: 8px;
+    background: var(--kwzm-bg-3);
+    position: sticky;
+    top: calc(var(--kwzm-masthead-h, 90px) + var(--kwzm-subnav-h, 54px) + 20px);
+}
+
+.student-lang-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    text-align: left;
+    padding: 11px 12px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--kwzm-ink-soft);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.student-lang-sidebar-item::before {
+    content: "";
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--kwzm-tag-other);
+}
+
+.student-lang-sidebar-item[data-student-lang="korean"]::before { background: var(--kwzm-tag-korean); }
+.student-lang-sidebar-item[data-student-lang="japanese"]::before { background: var(--kwzm-tag-japanese); }
+.student-lang-sidebar-item[data-student-lang="thai"]::before { background: var(--kwzm-tag-thai); }
+.student-lang-sidebar-item[data-student-lang="english"]::before { background: var(--kwzm-tag-english); }
+
+.student-lang-sidebar-item:hover {
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink);
+}
+
+.student-lang-sidebar-item.active {
+    color: #fff;
+}
+
+.student-lang-sidebar-item.is-locked {
+    color: var(--kwzm-ink-faint);
+}
+
+.student-lang-sidebar-item.is-locked::before {
+    background: transparent;
+    border: 1.5px solid var(--kwzm-ink-faint);
+}
+
+.student-lang-sidebar-item.is-locked.active {
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink-faint);
+}
+
+.student-lang-sidebar-item.is-locked.active::before {
+    border-color: var(--kwzm-ink-faint);
+}
+
+.student-lang-sidebar-item.active::before {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.student-lang-sidebar-item[data-student-lang="korean"].active { background: var(--kwzm-tag-korean); }
+.student-lang-sidebar-item[data-student-lang="japanese"].active { background: var(--kwzm-tag-japanese); }
+.student-lang-sidebar-item[data-student-lang="thai"].active { background: var(--kwzm-tag-thai); }
+.student-lang-sidebar-item[data-student-lang="english"].active { background: var(--kwzm-tag-english); }
+.student-lang-sidebar-item[data-student-lang="other"].active { background: var(--kwzm-tag-other); }
+
+/* ---------- 오른쪽 콘텐츠 ---------- */
+
+.student-lang-content {
+    flex: 1;
+    min-width: 0;
+}
+
 .student-category-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 24px;
+    gap: 4px;
+    margin-bottom: 4px;
+    border-bottom: 1.5px solid var(--kwzm-line);
 }
 
 .student-pill {
-    border: 1px solid var(--kwzm-line);
-    border-radius: 999px;
-    padding: 9px 20px;
-    background: var(--kwzm-bg-3);
-    color: var(--kwzm-ink-soft);
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    border-radius: 0;
+    padding: 10px 16px;
+    background: none;
+    color: var(--kwzm-ink-faint);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    margin-bottom: -1.5px;
+    transition: color 0.15s, border-color 0.15s;
 }
 
 .student-pill:hover {
-    border-color: var(--kwzm-accent);
     color: var(--kwzm-ink);
 }
 
 .student-pill.active {
-    background: var(--kwzm-primary);
-    border-color: var(--kwzm-primary);
-    color: #fff;
+    color: var(--kwzm-accent-2);
+    border-color: var(--kwzm-accent);
 }
 
 .student-materials-heading {
     font-family: "Noto Serif KR", serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--kwzm-ink);
-    margin-bottom: 16px;
+    margin: 20px 0 10px;
 }
+
+/* 목록 위 열 이름표 */
+
+.student-materials-columns {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 160px 100px;
+    gap: 14px;
+    padding: 0 16px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--kwzm-ink-faint);
+}
+
+.student-materials-columns span:nth-child(4) {
+    text-align: right;
+}
+
+/* ---------- 자료 목록 (표 형태) ---------- */
 
 .student-materials-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-}
-
-@container (max-width: 640px) {
-    .student-materials-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@container (max-width: 380px) {
-    .student-materials-grid {
-        grid-template-columns: 1fr;
-    }
+    display: flex;
+    flex-direction: column;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 .student-material-item {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--kwzm-line);
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--kwzm-bg-3);
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 160px 100px;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--kwzm-line);
     cursor: pointer;
+    transition: background 0.15s;
+}
+
+.student-material-item:last-child {
+    border-bottom: none;
 }
 
 .student-material-item:hover {
-    border-color: var(--kwzm-accent);
+    background: var(--kwzm-bg-2);
 }
 
 .student-material-thumb {
     position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
+    width: 48px;
+    height: 48px;
+    border-radius: 7px;
     background: var(--kwzm-bg-2);
+    border: 1px solid var(--kwzm-line);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -101,57 +365,127 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 2px;
 }
 
 .student-material-thumb-icon svg {
-    width: 28px;
-    height: 28px;
+    width: 18px;
+    height: 18px;
     opacity: 0.6;
 }
 
 .student-material-thumb-icon span {
-    font-size: 10px;
+    font-size: 7px;
     font-weight: 700;
     color: var(--kwzm-ink-faint);
 }
 
 .student-material-count-badge {
     position: absolute;
-    bottom: 6px;
-    right: 6px;
-    padding: 2px 8px;
+    bottom: -2px;
+    right: -2px;
+    padding: 0 4px;
+    min-width: 15px;
+    line-height: 15px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--kwzm-primary);
     color: #fff;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
+    text-align: center;
 }
 
 .student-material-main {
-    padding: 12px 14px;
+    min-width: 0;
 }
 
 .student-material-title {
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 700;
     color: var(--kwzm-ink);
-    margin-bottom: 3px;
+    margin: 0 0 3px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .student-material-desc {
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--kwzm-ink-soft);
-    margin-bottom: 3px;
+    margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.student-material-meta {
-    font-size: 11px;
+.student-material-desc-empty {
     color: var(--kwzm-ink-faint);
+    font-style: italic;
+}
+
+.student-material-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.student-material-type-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+    background: rgba(47, 154, 160, 0.12);
+    color: var(--kwzm-accent-2);
+    white-space: nowrap;
+}
+
+.student-material-type-badge[data-type="링크"] { background: rgba(22, 56, 107, 0.1); color: var(--kwzm-primary); }
+.student-material-type-badge[data-type="글"] { background: rgba(122, 127, 140, 0.14); color: #565b66; }
+.student-material-type-badge[data-type="없음"] { background: var(--kwzm-bg-2); color: var(--kwzm-ink-faint); }
+
+.student-material-date {
+    margin: 0;
+    font-size: 12px;
+    color: var(--kwzm-ink-faint);
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ---------- 반응형 ---------- */
+
+@media (max-width: 700px) {
+    .student-lang-layout {
+        flex-direction: column;
+    }
+
+    .student-lang-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        flex: none;
+        width: 100%;
+        position: static;
+    }
+
+    .student-lang-sidebar-item {
+        width: auto;
+    }
+
+    .student-materials-columns {
+        display: none;
+    }
+
+    .student-material-item {
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        grid-template-areas:
+            "thumb main main"
+            "types types date";
+        row-gap: 6px;
+    }
+
+    .student-material-thumb { grid-area: thumb; width: 40px; height: 40px; }
+    .student-material-main { grid-area: main; }
+    .student-material-types { grid-area: types; }
+    .student-material-date { grid-area: date; }
+    .student-material-title, .student-material-desc { white-space: normal; }
 }
