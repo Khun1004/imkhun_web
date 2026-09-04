@@ -6,6 +6,7 @@ import com.imkhun.imkhun.repository.AdminRepository;
 import com.imkhun.imkhun.service.AdminAuthService;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.KwzmInviteService;
+import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.ReviewService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyNoteService;
@@ -29,11 +30,13 @@ public class AdminController {
     private final ReviewService reviewService;
     private final KwzmInviteService kwzmInviteService;
     private final StudyPostService studyPostService;
+    private final NotificationService notificationService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
                            StudyMaterialService studyMaterialService, ReviewService reviewService,
-                           KwzmInviteService kwzmInviteService, StudyPostService studyPostService) {
+                           KwzmInviteService kwzmInviteService, StudyPostService studyPostService,
+                           NotificationService notificationService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -42,6 +45,7 @@ public class AdminController {
         this.reviewService = reviewService;
         this.studyPostService = studyPostService;
         this.kwzmInviteService = kwzmInviteService;
+        this.notificationService = notificationService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -421,19 +425,61 @@ public class AdminController {
     @GetMapping("/posts/{id}/comments")
     public ResponseEntity<?> getPostComments(HttpServletRequest request, @PathVariable Long id) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
-        return ResponseEntity.ok(studyPostService.getComments(id));
+        String adminUsername = adminAuthService.getLoggedInUsername(request);
+        return ResponseEntity.ok(studyPostService.getComments(id, adminUsername));
     }
 
-    // 관리자가 학생 글에 댓글을 남겨요 — 학생 화면에는 "관리자 댓글"로 표시돼요.
+    // 관리자가 학생 글/댓글에 댓글을 남겨요 — 학생 화면에는 "관리자 댓글"로 표시돼요. parentCommentId를 보내면 답글이에요.
     @PostMapping("/posts/{id}/comments")
     public ResponseEntity<?> addPostComment(HttpServletRequest request, @PathVariable Long id,
                                             @RequestBody CommentRequest commentRequest) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         String adminUsername = adminAuthService.getLoggedInUsername(request);
         try {
-            return ResponseEntity.ok(studyPostService.addAdminComment(id, adminUsername, commentRequest.content()));
+            return ResponseEntity.ok(studyPostService.addAdminComment(id, adminUsername, commentRequest.content(), commentRequest.parentCommentId()));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // 관리자가 학생 댓글에 좋아요/싫어요
+    @PostMapping("/comments/{id}/reaction")
+    public ResponseEntity<?> reactToComment(HttpServletRequest request, @PathVariable Long id,
+                                            @RequestBody ReactionRequest reactionRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        String adminUsername = adminAuthService.getLoggedInUsername(request);
+        try {
+            return ResponseEntity.ok(studyPostService.toggleCommentReaction(id, reactionRequest.type(), adminUsername));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---- 알림 ----
+
+    @GetMapping("/notifications")
+    public ResponseEntity<?> getNotifications(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(notificationService.getAdminNotifications());
+    }
+
+    @GetMapping("/notifications/unread-count")
+    public ResponseEntity<?> getUnreadNotificationCount(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(notificationService.getUnreadCountForAdmin());
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    public ResponseEntity<?> markNotificationRead(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        notificationService.markRead(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/notifications/read-all")
+    public ResponseEntity<?> markAllNotificationsRead(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        notificationService.markAllReadForAdmin();
+        return ResponseEntity.ok().build();
     }
 }

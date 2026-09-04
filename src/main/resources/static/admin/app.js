@@ -155,6 +155,10 @@ async function checkAdminSessionOnLoad() {
         const data = await res.json();
         if (data.isAdmin) {
             showAdminScreen();
+            loadAdminNotifUnreadCount();
+            if (!adminNotifPollTimer) {
+                adminNotifPollTimer = setInterval(loadAdminNotifUnreadCount, 30000);
+            }
         } else {
             showAdminLoginPage();
         }
@@ -173,6 +177,17 @@ async function logoutAdmin() {
         showAdminLoginPage();
     }
 }
+
+const ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.6"/></svg>`;
+const ICON_CHECK = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+let adminNotifPollTimer = null;
+const ADMIN_NOTIF_TYPE_ICON = {
+    NEW_APPLICATION: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    NEW_POST: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    NEW_REVIEW: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 17l-5.6 3.1 1.4-6.3-4.8-4.3 6.4-.6L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+};
+const ADMIN_NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
 const CATEGORY_LABEL = { GRAMMAR: "문법", READING: "읽기", WRITING: "쓰기", SPEAKING: "말하기", OTHER: "기타" };
 const COMPUTER_CATEGORY_LABEL = { BASIC: "Basic", WORD: "Word", EXCEL: "Excel", POWERPOINT: "PowerPoint", PAGEMAKER: "PageMaker", PHOTOSHOP: "Photoshop" };
@@ -1011,10 +1026,10 @@ async function loadStudentList() {
           <p class="admin-student-name">${escapeHtmlForAdmin(app.nickname)} 님</p>
           ${app.memo ? `<p class="admin-student-memo">${escapeHtmlForAdmin(app.memo)}</p>` : ""}
         </div>
-        <p class="admin-student-email">${escapeHtmlForAdmin(app.email || "-")}</p>
+        <p class="admin-student-email">${app.email ? `<span class="admin-student-email-text">${escapeHtmlForAdmin(app.email)}</span><button type="button" class="admin-copy-btn" data-copy-value="${escapeHtmlForAdmin(app.email)}" aria-label="이메일 복사" title="이메일 복사">${ICON_COPY}</button>` : "-"}</p>
         <p class="admin-student-course">${escapeHtmlForAdmin(app.courseName)}<span>${escapeHtmlForAdmin(studyTypeLabel[app.studyType] || app.studyType)}</span></p>
         <p class="admin-student-contact">${escapeHtmlForAdmin(app.contact)}</p>
-        ${app.studentNumber ? `<span class="admin-student-number">${escapeHtmlForAdmin(app.studentNumber)}</span>` : `<span></span>`}
+        ${app.studentNumber ? `<span class="admin-student-number">${escapeHtmlForAdmin(app.studentNumber)}<button type="button" class="admin-copy-btn" data-copy-value="${escapeHtmlForAdmin(app.studentNumber)}" aria-label="학생번호 복사" title="학생번호 복사">${ICON_COPY}</button></span>` : `<span></span>`}
         <p class="admin-student-date">${app.createdAt}</p>
         <div class="admin-student-status">
           <span class="mypage-badge ${statusClass[app.status] || ""}">${statusLabel[app.status] || app.status}</span>
@@ -1086,6 +1101,101 @@ const BOARD_CATEGORY_LABEL_ADMIN = { VOCAB: "어휘", GRAMMAR: "문법", WRITING
 const ICON_LIKE_ADMIN = `<svg class="admin-post-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3Zm0 0 4.5-8a2 2 0 0 1 2.7 2.7L13 9h5.2a2 2 0 0 1 1.98 2.28l-1 7A2 2 0 0 1 17.2 20H10a3 3 0 0 1-3-3v-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
 const ICON_DISLIKE_ADMIN = `<svg class="admin-post-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 13V4h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-3Zm0 0-4.5 8a2 2 0 0 1-2.7-2.7L11 15H5.8a2 2 0 0 1-1.98-2.28l1-7A2 2 0 0 1 6.8 4H14a3 3 0 0 1 3 3v6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
 const ICON_COMMENT_ADMIN = `<svg class="admin-post-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+
+async function loadAdminNotifUnreadCount() {
+    const badge = document.getElementById("adminNotifBadge");
+    if (!badge) return;
+    try {
+        const res = await fetch("/api/admin/notifications/unread-count");
+        if (!res.ok) return;
+        const count = await res.json();
+        badge.textContent = count > 99 ? "99+" : String(count);
+        badge.hidden = count === 0;
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function toggleAdminNotifPanel() {
+    const panel = document.getElementById("adminNotifPanel");
+    const btn = document.getElementById("adminNotifBtn");
+    if (!panel || !btn) return;
+
+    const willOpen = panel.hidden;
+    if (willOpen) {
+        const rect = btn.getBoundingClientRect();
+        panel.style.top = `${rect.bottom + 10}px`;
+        panel.style.right = `${window.innerWidth - rect.right}px`;
+    }
+    panel.hidden = !willOpen;
+    btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    if (willOpen) await loadAdminNotifList();
+}
+
+function closeAdminNotifPanel() {
+    const panel = document.getElementById("adminNotifPanel");
+    const btn = document.getElementById("adminNotifBtn");
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+async function loadAdminNotifList() {
+    const listEl = document.getElementById("adminNotifList");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-notif-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/admin/notifications");
+        if (!res.ok) return;
+        const notifications = await res.json();
+
+        listEl.innerHTML = "";
+        if (notifications.length === 0) {
+            listEl.innerHTML = `<p class="admin-notif-hint">아직 알림이 없어요.</p>`;
+            return;
+        }
+
+        notifications.forEach((n) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = n.isRead ? "admin-notif-item" : "admin-notif-item is-unread";
+            item.innerHTML = `
+        <span class="admin-notif-icon">${ADMIN_NOTIF_TYPE_ICON[n.type] || ADMIN_NOTIF_ICON_DEFAULT}</span>
+        <span class="admin-notif-body">
+          <span class="admin-notif-message">${escapeHtmlForAdmin(n.message)}</span>
+          <span class="admin-notif-date">${n.createdAt}</span>
+        </span>
+      `;
+            item.addEventListener("click", () => handleAdminNotifClick(n));
+            listEl.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function handleAdminNotifClick(notification) {
+    if (!notification.isRead) {
+        try {
+            await fetch(`/api/admin/notifications/${notification.id}/read`, { method: "POST" });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+    closeAdminNotifPanel();
+    loadAdminNotifUnreadCount();
+    document.querySelector('[data-main-tab="students"]')?.click();
+}
+
+async function markAllAdminNotifsRead() {
+    try {
+        await fetch("/api/admin/notifications/read-all", { method: "POST" });
+        await loadAdminNotifList();
+        loadAdminNotifUnreadCount();
+    } catch (err) {
+        console.error(err);
+    }
+}
 
 async function loadAdminPosts() {
     const list = document.getElementById("adminPostList");
@@ -1180,24 +1290,108 @@ async function loadAdminPostComments(postId, panel) {
             listEl.innerHTML = `<p class="admin-note-hint">아직 댓글이 없어요.</p>`;
             return;
         }
+
+        const byParent = new Map();
         comments.forEach((c) => {
-            const row = document.createElement("div");
-            row.className = c.isAdmin ? "admin-post-comment-item admin-post-comment-item--admin" : "admin-post-comment-item";
-            const adminBadge = c.isAdmin ? `<span class="admin-post-comment-badge">관리자</span>` : "";
-            row.innerHTML = `
-        <span class="admin-post-comment-name">${escapeHtmlForAdmin(c.nickname)}</span>
-        ${adminBadge}
-        <span class="admin-post-comment-text">${escapeHtmlForAdmin(c.content)}</span>
-        <span class="admin-post-comment-date">${c.createdAt}</span>
-      `;
-            listEl.appendChild(row);
+            const key = c.parentCommentId || "root";
+            if (!byParent.has(key)) byParent.set(key, []);
+            byParent.get(key).push(c);
+        });
+
+        (byParent.get("root") || []).forEach((c) => {
+            listEl.appendChild(renderAdminCommentNode(c, byParent, postId, 0));
         });
     } catch (err) {
         console.error(err);
     }
 }
 
-async function submitAdminPostComment(postId, itemEl, inputEl, submitBtn) {
+function renderAdminCommentNode(comment, byParent, postId, depth) {
+    const row = document.createElement("div");
+    row.className = comment.isAdmin ? "admin-post-comment-item admin-post-comment-item--admin" : "admin-post-comment-item";
+    if (depth > 0) row.classList.add("admin-post-comment-item--reply");
+
+    const adminBadge = comment.isAdmin ? `<span class="admin-post-comment-badge">관리자</span>` : "";
+
+    row.innerHTML = `
+      <div class="admin-post-comment-row">
+        <span class="admin-post-comment-name">${escapeHtmlForAdmin(comment.nickname)}</span>
+        ${adminBadge}
+        <span class="admin-post-comment-text">${escapeHtmlForAdmin(comment.content)}</span>
+        <span class="admin-post-comment-date">${comment.createdAt}</span>
+      </div>
+      <div class="admin-post-comment-actions">
+        <button type="button" class="admin-post-comment-reaction-btn ${comment.myReaction === "LIKE" ? "is-active" : ""}" data-reaction="LIKE">
+          ${ICON_LIKE_ADMIN}<span>${comment.likeCount ?? 0}</span>
+        </button>
+        <button type="button" class="admin-post-comment-reaction-btn ${comment.myReaction === "DISLIKE" ? "is-active" : ""}" data-reaction="DISLIKE">
+          ${ICON_DISLIKE_ADMIN}<span>${comment.dislikeCount ?? 0}</span>
+        </button>
+        <button type="button" class="admin-post-comment-reply-btn">답글</button>
+      </div>
+      <div class="admin-post-comment-reply-form" hidden>
+        <input type="text" class="admin-post-comment-reply-input" placeholder="${escapeHtmlForAdmin(comment.nickname)}님에게 답글 남기기">
+        <button type="button" class="admin-post-comment-reply-submit">등록</button>
+      </div>
+      <div class="admin-post-comment-replies"></div>
+    `;
+
+    const actionsEl = row.querySelector(".admin-post-comment-actions");
+    const likeBtn = actionsEl.querySelector('[data-reaction="LIKE"]');
+    const dislikeBtn = actionsEl.querySelector('[data-reaction="DISLIKE"]');
+    likeBtn.addEventListener("click", () => submitAdminCommentReaction(comment.id, "LIKE", likeBtn, dislikeBtn));
+    dislikeBtn.addEventListener("click", () => submitAdminCommentReaction(comment.id, "DISLIKE", likeBtn, dislikeBtn));
+
+    const replyForm = row.querySelector(".admin-post-comment-reply-form");
+    row.querySelector(".admin-post-comment-reply-btn").addEventListener("click", () => {
+        replyForm.hidden = !replyForm.hidden;
+        if (!replyForm.hidden) replyForm.querySelector("input").focus();
+    });
+    const replyInput = replyForm.querySelector(".admin-post-comment-reply-input");
+    const replySubmitBtn = replyForm.querySelector(".admin-post-comment-reply-submit");
+    const submitReply = () => {
+        const itemEl = row.closest(".admin-post-item");
+        submitAdminPostComment(postId, itemEl, replyInput, replySubmitBtn, comment.id);
+        replyForm.hidden = true;
+    };
+    replySubmitBtn.addEventListener("click", submitReply);
+    replyInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submitReply();
+    });
+
+    const repliesEl = row.querySelector(".admin-post-comment-replies");
+    (byParent.get(comment.id) || []).forEach((child) => {
+        repliesEl.appendChild(renderAdminCommentNode(child, byParent, postId, depth + 1));
+    });
+
+    return row;
+}
+
+async function submitAdminCommentReaction(commentId, type, likeBtn, dislikeBtn) {
+    try {
+        const res = await fetch(`/api/admin/comments/${commentId}/reaction`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type }),
+        });
+        if (!res.ok) return;
+        const updated = await res.json();
+
+        if (likeBtn) {
+            likeBtn.querySelector("span:last-child").textContent = updated.likeCount;
+            likeBtn.classList.toggle("is-active", updated.myReaction === "LIKE");
+        }
+        if (dislikeBtn) {
+            dislikeBtn.querySelector("span:last-child").textContent = updated.dislikeCount;
+            dislikeBtn.classList.toggle("is-active", updated.myReaction === "DISLIKE");
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// parentCommentId가 있으면 그 댓글에 대한 답글로 등록돼요
+async function submitAdminPostComment(postId, itemEl, inputEl, submitBtn, parentCommentId) {
     const content = inputEl.value.trim();
     if (!content) return;
 
@@ -1206,7 +1400,7 @@ async function submitAdminPostComment(postId, itemEl, inputEl, submitBtn) {
         const res = await fetch(`/api/admin/posts/${postId}/comments`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content }),
+            body: JSON.stringify({ content, parentCommentId: parentCommentId || null }),
         });
         if (!res.ok) {
             alert((await res.text()) || "댓글 등록에 실패했어요.");
@@ -1246,6 +1440,21 @@ async function deleteAdminPost(id) {
 document.addEventListener("fragments:loaded", () => {
 
     document.getElementById("adminBackBtn")?.addEventListener("click", logoutAdmin);
+
+    document.getElementById("adminNotifBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleAdminNotifPanel();
+    });
+    document.getElementById("adminNotifReadAllBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        markAllAdminNotifsRead();
+    });
+    document.getElementById("adminNotifPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", (e) => {
+        const wrap = document.getElementById("adminNotifBtn")?.closest(".admin-notif-wrap");
+        if (wrap && !wrap.contains(e.target)) closeAdminNotifPanel();
+    });
+
 
     document.getElementById("toggleAdminLoginPwBtn")?.addEventListener("click", () => {
         const input = document.getElementById("adminLoginPassword");
@@ -1504,6 +1713,28 @@ document.addEventListener("fragments:loaded", () => {
         const deleteBtn = e.target.closest("[data-delete-post-id]");
         if (!deleteBtn) return;
         deleteAdminPost(deleteBtn.dataset.deletePostId);
+    });
+
+    document.addEventListener("click", async (e) => {
+        const copyBtn = e.target.closest(".admin-copy-btn");
+        if (!copyBtn) return;
+        e.stopPropagation();
+
+        const value = copyBtn.dataset.copyValue;
+        if (!value) return;
+
+        try {
+            await navigator.clipboard.writeText(value);
+            const original = copyBtn.innerHTML;
+            copyBtn.innerHTML = ICON_CHECK;
+            copyBtn.classList.add("is-copied");
+            setTimeout(() => {
+                copyBtn.innerHTML = original;
+                copyBtn.classList.remove("is-copied");
+            }, 1200);
+        } catch (err) {
+            console.error(err);
+        }
     });
 
     document.addEventListener("click", async (e) => {

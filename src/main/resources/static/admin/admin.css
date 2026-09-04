@@ -505,6 +505,183 @@ body.admin-standalone-body {
     border-left: 1px solid var(--line);
 }
 
+/* 알림 종 아이콘 + 드롭다운 패널 */
+
+.admin-notif-wrap {
+    position: relative;
+}
+
+.admin-notif-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--paper-3);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.admin-notif-btn:hover {
+    background: var(--paper-2);
+    color: var(--ink);
+}
+
+.admin-notif-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-notif-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #d64545;
+    border: 1.5px solid var(--card);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 13px;
+    text-align: center;
+}
+
+.admin-notif-panel {
+    position: fixed;
+    width: 320px;
+    max-height: 420px;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 20px 44px -18px rgba(23, 20, 15, 0.3);
+    overflow: hidden;
+    z-index: 200;
+}
+
+.admin-notif-panel[hidden] {
+    display: none;
+}
+
+.admin-notif-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    flex-shrink: 0;
+}
+
+.admin-notif-readall-btn {
+    border: none;
+    background: none;
+    color: var(--teal-deep);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-notif-readall-btn:hover {
+    text-decoration: underline;
+}
+
+.admin-notif-list {
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.admin-notif-hint {
+    padding: 20px 12px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+}
+
+.admin-notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.admin-notif-item:hover {
+    background: var(--paper-2);
+}
+
+.admin-notif-item.is-unread {
+    background: var(--teal-soft);
+}
+
+.admin-notif-item.is-unread:hover {
+    background: rgba(14, 111, 95, 0.16);
+}
+
+.admin-notif-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--ink-soft);
+}
+
+.admin-notif-item.is-unread .admin-notif-icon {
+    background: var(--teal);
+    color: #fff;
+}
+
+.admin-notif-icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+.admin-notif-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.admin-notif-message {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.admin-notif-date {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    font-family: "JetBrains Mono", monospace;
+}
+
+@media (max-width: 640px) {
+    .admin-notif-panel {
+        left: 12px;
+        width: auto;
+    }
+}
+
 .admin-register-btn {
     display: flex;
     align-items: center;
@@ -1470,7 +1647,30 @@ body.admin-standalone-body {
 .admin-note-hint {
     font-size: 12px;
     color: var(--ink-faint);
-    margin: 8px 0 0;
+    margin: 8px 0 18px;
+}
+
+.admin-note-textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13.5px;
+    line-height: 1.75;
+    resize: vertical;
+    min-height: 110px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.admin-note-textarea:focus {
+    outline: none;
+    border-color: var(--teal);
+    background: var(--card);
 }
 
 textarea.admin-note-textarea.admin-register-text {
@@ -1851,18 +2051,28 @@ textarea.admin-note-textarea.admin-register-text {
 }
 
 .admin-student-email {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
     font-size: 12px;
     color: var(--ink-soft);
     font-family: "JetBrains Mono", monospace;
     margin: 0;
+}
+
+.admin-student-email-text {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .admin-student-number {
-    display: inline-block;
-    padding: 3px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 10px;
     border-radius: 999px;
     background: var(--teal-soft);
     color: var(--teal-deep);
@@ -1870,6 +2080,44 @@ textarea.admin-note-textarea.admin-register-text {
     font-weight: 700;
     font-family: "JetBrains Mono", monospace;
     white-space: nowrap;
+}
+
+.admin-copy-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.admin-copy-btn svg {
+    width: 13px;
+    height: 13px;
+}
+
+.admin-copy-btn:hover {
+    background: var(--paper-2);
+    color: var(--teal-deep);
+}
+
+.admin-student-number .admin-copy-btn {
+    color: var(--teal-deep);
+}
+
+.admin-student-number .admin-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.admin-copy-btn.is-copied {
+    color: var(--teal-deep);
 }
 
 .admin-student-date {
@@ -2243,8 +2491,7 @@ textarea.admin-note-textarea.admin-register-text {
 
 .admin-post-comment-item {
     display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
+    flex-direction: column;
     gap: 8px;
     padding: 8px 10px;
     background: var(--card);
@@ -2254,6 +2501,13 @@ textarea.admin-note-textarea.admin-register-text {
 .admin-post-comment-item--admin {
     background: var(--teal-soft);
     border: 1px solid rgba(14, 111, 95, 0.25);
+}
+
+.admin-post-comment-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
 }
 
 .admin-post-comment-badge {
@@ -2286,6 +2540,115 @@ textarea.admin-note-textarea.admin-register-text {
     color: var(--ink-faint);
     flex-shrink: 0;
     font-family: "JetBrains Mono", monospace;
+}
+
+/* 댓글 좋아요/싫어요 + 답글 버튼 */
+
+.admin-post-comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.admin-post-comment-reaction-btn,
+.admin-post-comment-reply-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    padding: 3px 7px;
+    border-radius: 999px;
+    color: var(--ink-faint);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: "JetBrains Mono", "Noto Sans KR", monospace;
+    transition: background 0.15s, color 0.15s;
+}
+
+.admin-post-comment-reaction-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+.admin-post-comment-reaction-btn:hover,
+.admin-post-comment-reply-btn:hover {
+    background: var(--paper-2);
+    color: var(--ink);
+}
+
+.admin-post-comment-reaction-btn.is-active[data-reaction="LIKE"] {
+    color: var(--teal-deep);
+}
+
+.admin-post-comment-reaction-btn.is-active[data-reaction="DISLIKE"] {
+    color: #b8566a;
+}
+
+.admin-post-comment-reply-form {
+    display: flex;
+    gap: 6px;
+}
+
+.admin-post-comment-reply-form[hidden] {
+    display: none;
+}
+
+.admin-post-comment-reply-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 999px;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 11.5px;
+    color: var(--ink);
+    background: var(--card);
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.admin-post-comment-reply-input:focus {
+    outline: none;
+    border-style: solid;
+    border-color: var(--teal);
+    background: var(--teal-soft);
+}
+
+.admin-post-comment-reply-submit {
+    flex-shrink: 0;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 14px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.admin-post-comment-reply-submit:hover {
+    background: var(--teal-deep);
+}
+
+/* 답글 — 왼쪽에 세로선 + 들여쓰기로 원댓글에 딸려있는 걸 표시 */
+
+.admin-post-comment-replies {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-post-comment-replies:empty {
+    display: none;
+}
+
+.admin-post-comment-item--reply {
+    margin-left: 18px;
+    padding-left: 12px;
+    border-left: 2px solid var(--line);
+    background: var(--paper-2);
 }
 
 .admin-post-comment-form {
@@ -2342,14 +2705,15 @@ textarea.admin-note-textarea.admin-register-text {
    ============================================ */
 
 .admin-my-section {
-    margin-bottom: 30px;
-    padding-bottom: 26px;
-    border-bottom: 1.5px dashed var(--line);
+    margin-bottom: 20px;
+    padding: 24px 28px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
 }
 
 .admin-my-section:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+    margin-bottom: 0;
 }
 
 .admin-my-section h3 {
@@ -2389,9 +2753,9 @@ textarea.admin-note-textarea.admin-register-text {
 .admin-note-footer {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 12px;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 .admin-note-updated {

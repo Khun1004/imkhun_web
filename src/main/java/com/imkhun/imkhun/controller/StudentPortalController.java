@@ -5,6 +5,7 @@ import com.imkhun.imkhun.domain.User;
 import com.imkhun.imkhun.dto.*;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.KwzmInviteService;
+import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.StudentAuthService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyPostService;
@@ -27,12 +28,14 @@ public class StudentPortalController {
     private final StudyMaterialService studyMaterialService;
     private final KwzmInviteService kwzmInviteService;
     private final StudyPostService studyPostService;
+    private final NotificationService notificationService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
-                                   StudyPostService studyPostService) {
+                                   StudyPostService studyPostService, NotificationService notificationService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
+        this.notificationService = notificationService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -217,12 +220,12 @@ public class StudentPortalController {
 
     @GetMapping("/posts/{id}/comments")
     public ResponseEntity<?> getComments(HttpServletRequest request, @PathVariable Long id) {
-        if (studentAuthService.getLoggedInUser(request).isEmpty()) {
-            return ResponseEntity.status(403).body("로그인이 필요해요.");
-        }
-        return ResponseEntity.ok(studyPostService.getComments(id));
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(studyPostService.getComments(id, userOpt.get().getUsername()));
     }
 
+    // parentCommentId를 같이 보내면 그 댓글에 대한 답글로 달려요
     @PostMapping("/posts/{id}/comments")
     public ResponseEntity<?> addComment(HttpServletRequest request, @PathVariable Long id,
                                         @RequestBody CommentRequest commentRequest) {
@@ -231,9 +234,57 @@ public class StudentPortalController {
         User user = userOpt.get();
 
         try {
-            return ResponseEntity.ok(studyPostService.addComment(id, commentRequest.content(), user.getUsername(), user.getNickname()));
+            return ResponseEntity.ok(studyPostService.addComment(id, commentRequest.content(), user.getUsername(),
+                    user.getNickname(), commentRequest.parentCommentId()));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // 댓글 좋아요/싫어요 — 같은 걸 다시 누르면 취소, 다른 걸 누르면 전환
+    @PostMapping("/comments/{id}/reaction")
+    public ResponseEntity<?> reactToComment(HttpServletRequest request, @PathVariable Long id,
+                                            @RequestBody ReactionRequest reactionRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+
+        try {
+            return ResponseEntity.ok(studyPostService.toggleCommentReaction(id, reactionRequest.type(), userOpt.get().getUsername()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---- 알림 ----
+
+    @GetMapping("/notifications")
+    public ResponseEntity<?> getNotifications(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(notificationService.getStudentNotifications(userOpt.get().getUsername()));
+    }
+
+    @GetMapping("/notifications/unread-count")
+    public ResponseEntity<?> getUnreadNotificationCount(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(notificationService.getUnreadCountForStudent(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    public ResponseEntity<?> markNotificationRead(HttpServletRequest request, @PathVariable Long id) {
+        if (studentAuthService.getLoggedInUser(request).isEmpty()) {
+            return ResponseEntity.status(403).body("로그인이 필요해요.");
+        }
+        notificationService.markRead(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/notifications/read-all")
+    public ResponseEntity<?> markAllNotificationsRead(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        notificationService.markAllReadForStudent(userOpt.get().getUsername());
+        return ResponseEntity.ok().build();
     }
 }

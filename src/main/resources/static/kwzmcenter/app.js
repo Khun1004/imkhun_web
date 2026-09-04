@@ -84,6 +84,15 @@ function escapeHtmlForStudent(text) {
 }
 
 let studentCourses = [];
+let studentNotifPollTimer = null;
+
+const NOTIF_TYPE_ICON = {
+    COMMENT_REPLY: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    POST_COMMENT: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    ADMIN_COMMENT: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    APPLICATION_APPROVED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+};
+const NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
 // 메인 탭(홈/언어/영상/Post/커뮤니티) 전환
 function switchStudentMainTab(key) {
@@ -111,6 +120,10 @@ async function loadStudentPortalData() {
         renderStudentLanguagePills();
         renderTodaysTip();
         loadRecentMaterials();
+        loadStudentNotifUnreadCount();
+        if (!studentNotifPollTimer) {
+            studentNotifPollTimer = setInterval(loadStudentNotifUnreadCount, 30000);
+        }
     } catch (err) {
         console.error(err);
     }
@@ -185,6 +198,104 @@ function renderTodaysTip() {
 }
 
 // 홈 화면 "최근 등록된 자료"
+async function loadStudentNotifUnreadCount() {
+    const badge = document.getElementById("studentNotifBadge");
+    if (!badge) return;
+    try {
+        const res = await fetch("/api/student/notifications/unread-count");
+        if (!res.ok) return;
+        const count = await res.json();
+        badge.textContent = count > 99 ? "99+" : String(count);
+        badge.hidden = count === 0;
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function toggleStudentNotifPanel() {
+    const panel = document.getElementById("studentNotifPanel");
+    const btn = document.getElementById("studentNotifBtn");
+    if (!panel || !btn) return;
+
+    const willOpen = panel.hidden;
+    if (willOpen) {
+        const rect = btn.getBoundingClientRect();
+        panel.style.top = `${rect.bottom + 10}px`;
+        panel.style.right = `${window.innerWidth - rect.right}px`;
+    }
+    panel.hidden = !willOpen;
+    btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    if (willOpen) await loadStudentNotifList();
+}
+
+function closeStudentNotifPanel() {
+    const panel = document.getElementById("studentNotifPanel");
+    const btn = document.getElementById("studentNotifBtn");
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+async function loadStudentNotifList() {
+    const listEl = document.getElementById("studentNotifList");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="student-notif-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/notifications");
+        if (!res.ok) return;
+        const notifications = await res.json();
+
+        listEl.innerHTML = "";
+        if (notifications.length === 0) {
+            listEl.innerHTML = `<p class="student-notif-hint">아직 알림이 없어요.</p>`;
+            return;
+        }
+
+        notifications.forEach((n) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = n.isRead ? "student-notif-item" : "student-notif-item is-unread";
+            item.innerHTML = `
+        <span class="student-notif-icon">${NOTIF_TYPE_ICON[n.type] || NOTIF_ICON_DEFAULT}</span>
+        <span class="student-notif-body">
+          <span class="student-notif-message">${escapeHtmlForStudent(n.message)}</span>
+          <span class="student-notif-date">${n.createdAt}</span>
+        </span>
+      `;
+            item.addEventListener("click", () => handleStudentNotifClick(n));
+            listEl.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function handleStudentNotifClick(notification) {
+    if (!notification.isRead) {
+        try {
+            await fetch(`/api/student/notifications/${notification.id}/read`, { method: "POST" });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+    closeStudentNotifPanel();
+    loadStudentNotifUnreadCount();
+
+    if (notification.postId) {
+        switchStudentMainTab("post");
+    }
+}
+
+async function markAllStudentNotifsRead() {
+    try {
+        await fetch("/api/student/notifications/read-all", { method: "POST" });
+        await loadStudentNotifList();
+        loadStudentNotifUnreadCount();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 async function loadRecentMaterials() {
     const listEl = document.getElementById("studentRecentMaterials");
     const emptyEl = document.getElementById("studentRecentEmpty");
@@ -949,24 +1060,109 @@ async function loadBoardComments(postId, panel) {
             listEl.innerHTML = `<p class="board-comments-hint">아직 댓글이 없어요. 첫 댓글을 남겨보세요!</p>`;
             return;
         }
+
+        // parentCommentId별로 묶어서 트리 구조로 만들어요 (답글의 답글도 계속 이어질 수 있어요)
+        const byParent = new Map();
         comments.forEach((c) => {
-            const row = document.createElement("div");
-            row.className = c.isAdmin ? "board-comment-item board-comment-item--admin" : "board-comment-item";
-            const adminBadgeHtml = c.isAdmin ? `<span class="board-comment-admin-badge">관리자 댓글</span>` : "";
-            row.innerHTML = `
-        <span class="board-comment-name">${escapeHtmlForStudent(c.nickname)}</span>
-        ${adminBadgeHtml}
-        <span class="board-comment-text">${escapeHtmlForStudent(c.content)}</span>
-        <span class="board-comment-date">${c.createdAt}</span>
-      `;
-            listEl.appendChild(row);
+            const key = c.parentCommentId || "root";
+            if (!byParent.has(key)) byParent.set(key, []);
+            byParent.get(key).push(c);
+        });
+
+        (byParent.get("root") || []).forEach((c) => {
+            listEl.appendChild(renderBoardCommentNode(c, byParent, postId, 0));
         });
     } catch (err) {
         console.error(err);
     }
 }
 
-async function submitBoardComment(postId, itemEl, inputEl, submitBtn) {
+function renderBoardCommentNode(comment, byParent, postId, depth) {
+    const wrap = document.createElement("div");
+    wrap.className = comment.isAdmin ? "board-comment-item board-comment-item--admin" : "board-comment-item";
+    if (depth > 0) wrap.classList.add("board-comment-item--reply");
+
+    const adminBadgeHtml = comment.isAdmin ? `<span class="board-comment-admin-badge">관리자 댓글</span>` : "";
+
+    wrap.innerHTML = `
+      <div class="board-comment-row">
+        <span class="board-comment-name">${escapeHtmlForStudent(comment.nickname)}</span>
+        ${adminBadgeHtml}
+        <span class="board-comment-text">${escapeHtmlForStudent(comment.content)}</span>
+        <span class="board-comment-date">${comment.createdAt}</span>
+      </div>
+      <div class="board-comment-actions">
+        <button type="button" class="board-comment-reaction-btn ${comment.myReaction === "LIKE" ? "is-active" : ""}" data-reaction="LIKE">
+          ${ICON_LIKE}<span>${comment.likeCount ?? 0}</span>
+        </button>
+        <button type="button" class="board-comment-reaction-btn ${comment.myReaction === "DISLIKE" ? "is-active" : ""}" data-reaction="DISLIKE">
+          ${ICON_DISLIKE}<span>${comment.dislikeCount ?? 0}</span>
+        </button>
+        <button type="button" class="board-comment-reply-btn">답글</button>
+      </div>
+      <div class="board-comment-reply-form" hidden>
+        <input type="text" class="board-comment-reply-input" placeholder="${escapeHtmlForStudent(comment.nickname)}님에게 답글 남기기">
+        <button type="button" class="board-comment-reply-submit">등록</button>
+      </div>
+      <div class="board-comment-replies"></div>
+    `;
+
+    const actionsEl = wrap.querySelector(".board-comment-actions");
+    const likeBtn = actionsEl.querySelector('[data-reaction="LIKE"]');
+    const dislikeBtn = actionsEl.querySelector('[data-reaction="DISLIKE"]');
+    likeBtn.addEventListener("click", () => submitCommentReaction(comment.id, "LIKE", likeBtn, dislikeBtn));
+    dislikeBtn.addEventListener("click", () => submitCommentReaction(comment.id, "DISLIKE", likeBtn, dislikeBtn));
+
+    const replyForm = wrap.querySelector(".board-comment-reply-form");
+    wrap.querySelector(".board-comment-reply-btn").addEventListener("click", () => {
+        replyForm.hidden = !replyForm.hidden;
+        if (!replyForm.hidden) replyForm.querySelector("input").focus();
+    });
+    const replyInput = replyForm.querySelector(".board-comment-reply-input");
+    const replySubmitBtn = replyForm.querySelector(".board-comment-reply-submit");
+    const submitReply = () => {
+        const itemEl = wrap.closest(".board-item");
+        submitBoardComment(postId, itemEl, replyInput, replySubmitBtn, comment.id);
+        replyForm.hidden = true;
+    };
+    replySubmitBtn.addEventListener("click", submitReply);
+    replyInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submitReply();
+    });
+
+    const repliesEl = wrap.querySelector(".board-comment-replies");
+    (byParent.get(comment.id) || []).forEach((child) => {
+        repliesEl.appendChild(renderBoardCommentNode(child, byParent, postId, depth + 1));
+    });
+
+    return wrap;
+}
+
+async function submitCommentReaction(commentId, type, likeBtn, dislikeBtn) {
+    try {
+        const res = await fetch(`/api/student/comments/${commentId}/reaction`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type }),
+        });
+        if (!res.ok) return;
+        const updated = await res.json();
+
+        if (likeBtn) {
+            likeBtn.querySelector("span:last-child").textContent = updated.likeCount;
+            likeBtn.classList.toggle("is-active", updated.myReaction === "LIKE");
+        }
+        if (dislikeBtn) {
+            dislikeBtn.querySelector("span:last-child").textContent = updated.dislikeCount;
+            dislikeBtn.classList.toggle("is-active", updated.myReaction === "DISLIKE");
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// parentCommentId가 있으면 그 댓글에 대한 답글로 등록돼요
+async function submitBoardComment(postId, itemEl, inputEl, submitBtn, parentCommentId) {
     const content = inputEl.value.trim();
     if (!content) return;
 
@@ -975,7 +1171,7 @@ async function submitBoardComment(postId, itemEl, inputEl, submitBtn) {
         const res = await fetch(`/api/student/posts/${postId}/comments`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content }),
+            body: JSON.stringify({ content, parentCommentId: parentCommentId || null }),
         });
         if (!res.ok) return;
 
@@ -1236,6 +1432,21 @@ document.addEventListener("fragments:loaded", () => {
     // "OO 님" 클릭 → 마이페이지 화면으로 바로 이동
     document.getElementById("studentTopheaderName")?.addEventListener("click", () => {
         switchStudentMainTab("mypage");
+    });
+
+    // 알림 종 아이콘
+    document.getElementById("studentNotifBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleStudentNotifPanel();
+    });
+    document.getElementById("studentNotifReadAllBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        markAllStudentNotifsRead();
+    });
+    document.getElementById("studentNotifPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", (e) => {
+        const wrap = document.getElementById("studentNotifBtn")?.closest(".student-notif-wrap");
+        if (wrap && !wrap.contains(e.target)) closeStudentNotifPanel();
     });
 
     document.getElementById("toggleStudentLoginPwBtn")?.addEventListener("click", () => {

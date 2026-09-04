@@ -75,6 +75,19 @@
                 </div>
             </div>
             <div class="admin-topheader-actions">
+                <div class="admin-notif-wrap">
+                    <button type="button" class="admin-notif-btn" id="adminNotifBtn" aria-haspopup="true" aria-expanded="false" aria-label="알림">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v.6a6 6 0 0 1 5 5.9v3l1.6 2.6a1 1 0 0 1-.85 1.5H5.25a1 1 0 0 1-.85-1.5L6 13.5v-3a6 6 0 0 1 5-5.9V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        <span class="admin-notif-badge" id="adminNotifBadge" hidden>0</span>
+                    </button>
+                    <div class="admin-notif-panel" id="adminNotifPanel" hidden>
+                        <div class="admin-notif-panel-head">
+                            <span>알림</span>
+                            <button type="button" class="admin-notif-readall-btn" id="adminNotifReadAllBtn">모두 읽음</button>
+                        </div>
+                        <div class="admin-notif-list" id="adminNotifList"></div>
+                    </div>
+                </div>
                 <button type="button" class="admin-register-btn" id="adminRegisterBtn">
                     <span aria-hidden="true">+</span> 등록하기
                 </button>

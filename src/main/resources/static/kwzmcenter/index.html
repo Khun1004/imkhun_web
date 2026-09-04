@@ -80,6 +80,19 @@
             </div>
 
             <div class="student-masthead-right">
+                <div class="student-notif-wrap">
+                    <button type="button" class="student-notif-btn" id="studentNotifBtn" aria-haspopup="true" aria-expanded="false" aria-label="알림">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v.6a6 6 0 0 1 5 5.9v3l1.6 2.6a1 1 0 0 1-.85 1.5H5.25a1 1 0 0 1-.85-1.5L6 13.5v-3a6 6 0 0 1 5-5.9V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        <span class="student-notif-badge" id="studentNotifBadge" hidden>0</span>
+                    </button>
+                    <div class="student-notif-panel" id="studentNotifPanel" hidden>
+                        <div class="student-notif-panel-head">
+                            <span>알림</span>
+                            <button type="button" class="student-notif-readall-btn" id="studentNotifReadAllBtn">모두 읽음</button>
+                        </div>
+                        <div class="student-notif-list" id="studentNotifList"></div>
+                    </div>
+                </div>
                 <button type="button" class="student-masthead-name" id="studentTopheaderName" data-student-main-tab="mypage"></button>
                 <button type="button" class="student-back-btn" id="studentBackBtn">
                     <svg viewBox="0 0 24 24" fill="none"><path d="M9 21V13.6c0-.6.4-1 1-1h4c.6 0 1 .4 1 1V21M4.5 10.5 12 4l7.5 6.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>

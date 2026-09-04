@@ -19,13 +19,16 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final Set<String> VALID_STUDY_TYPES = Set.of("TOGETHER", "VIDEO");
     private static final Set<String> VALID_STATUSES = Set.of("PENDING", "APPROVED");
 
-    public ApplicationService(ApplicationRepository applicationRepository, UserRepository userRepository) {
+    public ApplicationService(ApplicationRepository applicationRepository, UserRepository userRepository,
+                              NotificationService notificationService) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public ApplicationResponse createApplication(String username, CreateApplicationRequest request) {
@@ -47,6 +50,11 @@ public class ApplicationService {
                 request.memo()
         );
         Application saved = applicationRepository.save(application);
+
+        String nickname = userRepository.findByUsername(username).map(User::getNickname).orElse(username);
+        notificationService.notifyAdmin("NEW_APPLICATION",
+                nickname + "님이 " + request.courseName() + " 강의를 신청했어요.", null);
+
         return toResponse(saved);
     }
 
@@ -81,6 +89,7 @@ public class ApplicationService {
         }
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+        boolean wasAlreadyApproved = "APPROVED".equals(application.getStatus());
         application.changeStatus(status);
 
         if ("APPROVED".equals(status) && application.getStudentNumber() == null) {
@@ -88,6 +97,11 @@ public class ApplicationService {
         }
 
         applicationRepository.save(application);
+
+        if ("APPROVED".equals(status) && !wasAlreadyApproved) {
+            notificationService.notifyStudent(application.getUsername(), "APPLICATION_APPROVED",
+                    "신청하신 " + application.getCourseName() + " 강의가 승인됐어요!", null);
+        }
     }
 
     // 예: "일본어 1급" -> "2026_Japanese_Level1_01"
