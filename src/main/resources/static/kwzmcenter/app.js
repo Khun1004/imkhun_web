@@ -75,6 +75,7 @@ async function logoutStudent() {
 
 const STUDENT_CATEGORY_LABEL = { GRAMMAR: "문법", READING: "읽기", WRITING: "쓰기", SPEAKING: "말하기", OTHER: "기타" };
 const STUDENT_LANGUAGE_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", other: "기타" };
+const COMPUTER_PROGRAM_LABEL = { BASIC: "Basic", WORD: "Word", EXCEL: "Excel", POWERPOINT: "PowerPoint", PAGEMAKER: "PageMaker", PHOTOSHOP: "Photoshop" };
 
 function escapeHtmlForStudent(text) {
     const div = document.createElement("div");
@@ -367,6 +368,251 @@ async function loadStudentMaterials(language, category) {
     }
 }
 
+const VIDEO_TOPIC_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터" };
+
+async function loadVideoMaterials(topic) {
+    const emptyText = document.getElementById("videoMaterialsEmpty");
+    const lockedText = document.getElementById("videoMaterialsLocked");
+    const list = document.getElementById("videoMaterialsList");
+    const heading = document.getElementById("videoMaterialsHeading");
+    if (!list) return;
+
+    if (lockedText) lockedText.hidden = true;
+    if (emptyText) emptyText.hidden = true;
+    if (heading) heading.textContent = VIDEO_TOPIC_LABEL[topic] || topic;
+    list.innerHTML = "";
+
+    try {
+        const res = await fetch(`/api/student/videos?topic=${topic}`);
+        if (!res.ok) {
+            if (res.status === 403 && lockedText) lockedText.hidden = false;
+            return;
+        }
+        const materials = await res.json();
+
+        if (emptyText) emptyText.hidden = materials.length > 0;
+
+        const ICON_LINK = `<svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5l5-5M8 10l-1.5 1.5a3.5 3.5 0 0 0 5 5L13 15M16 14l1.5-1.5a3.5 3.5 0 0 0-5-5L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        const ICON_TEXT = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+        const ICON_FILE = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+        const ICON_NONE = `<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>`;
+
+        materials.forEach((m) => {
+            const item = document.createElement("div");
+            item.className = "student-material-item";
+
+            const files = m.files || [];
+            const first = files[0];
+            const firstIsImage = first && first.fileType && first.fileType.startsWith("image/");
+            const firstIsLink = first && first.linkUrl;
+            const firstIsText = first && first.textContent && !first.linkUrl && !first.fileData;
+            const fileExt = (first?.fileName || "").split(".").pop()?.toUpperCase().slice(0, 4) || "FILE";
+
+            const thumbHtml = firstIsImage
+                ? `<img src="${first.fileData}" alt="">`
+                : firstIsLink
+                    ? `<div class="student-material-thumb-icon">${ICON_LINK}<span>링크</span></div>`
+                    : firstIsText
+                        ? `<div class="student-material-thumb-icon">${ICON_TEXT}<span>글</span></div>`
+                        : first
+                            ? `<div class="student-material-thumb-icon">${ICON_FILE}<span>${escapeHtmlForStudent(fileExt)}</span></div>`
+                            : `<div class="student-material-thumb-icon">${ICON_NONE}<span>없음</span></div>`;
+
+            const countBadgeHtml = files.length > 1
+                ? `<span class="student-material-count-badge">+${files.length - 1}</span>`
+                : "";
+
+            const typeLabels = [];
+            if (files.some((f) => f.fileType && f.fileType.startsWith("image/"))) typeLabels.push("이미지");
+            if (files.some((f) => f.fileData && !(f.fileType && f.fileType.startsWith("image/")))) typeLabels.push("파일");
+            if (files.some((f) => f.linkUrl)) typeLabels.push("링크");
+            if (files.some((f) => f.textContent && !f.linkUrl && !f.fileData)) typeLabels.push("글");
+            const typeBadgeHtml = typeLabels.length
+                ? typeLabels.map((t) => `<span class="student-material-type-badge" data-type="${t}">${t}</span>`).join("")
+                : `<span class="student-material-type-badge" data-type="없음">없음</span>`;
+
+            const descHtml = m.description
+                ? escapeHtmlForStudent(m.description)
+                : `<span class="student-material-desc-empty">설명 없음</span>`;
+
+            item.innerHTML = `
+        <div class="student-material-thumb">${thumbHtml}${countBadgeHtml}</div>
+        <div class="student-material-main">
+          <p class="student-material-title">${escapeHtmlForStudent(m.title)}</p>
+          <p class="student-material-desc">${descHtml}</p>
+        </div>
+        <div class="student-material-types">${typeBadgeHtml}</div>
+        <p class="student-material-date">${m.createdAt}</p>
+      `;
+            item.addEventListener("click", () => handleStudentViewMaterial(m));
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+const TRIAL_TOPIC_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터", video: "영상" };
+
+async function loadTrialMaterials(topic) {
+    const emptyText = document.getElementById("trialMaterialsEmpty");
+    const list = document.getElementById("trialMaterialsList");
+    const heading = document.getElementById("trialMaterialsHeading");
+    if (!list) return;
+
+    if (emptyText) emptyText.hidden = true;
+    if (heading) heading.textContent = TRIAL_TOPIC_LABEL[topic] || topic;
+    list.innerHTML = "";
+
+    try {
+        const res = await fetch(`/api/student/trial?topic=${topic}`);
+        if (!res.ok) return;
+        const materials = await res.json();
+
+        if (emptyText) emptyText.hidden = materials.length > 0;
+
+        const ICON_LINK = `<svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5l5-5M8 10l-1.5 1.5a3.5 3.5 0 0 0 5 5L13 15M16 14l1.5-1.5a3.5 3.5 0 0 0-5-5L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        const ICON_TEXT = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+        const ICON_FILE = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+        const ICON_NONE = `<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>`;
+
+        materials.forEach((m) => {
+            const item = document.createElement("div");
+            item.className = "student-material-item";
+
+            const files = m.files || [];
+            const first = files[0];
+            const firstIsImage = first && first.fileType && first.fileType.startsWith("image/");
+            const firstIsLink = first && first.linkUrl;
+            const firstIsText = first && first.textContent && !first.linkUrl && !first.fileData;
+            const fileExt = (first?.fileName || "").split(".").pop()?.toUpperCase().slice(0, 4) || "FILE";
+
+            const thumbHtml = firstIsImage
+                ? `<img src="${first.fileData}" alt="">`
+                : firstIsLink
+                    ? `<div class="student-material-thumb-icon">${ICON_LINK}<span>링크</span></div>`
+                    : firstIsText
+                        ? `<div class="student-material-thumb-icon">${ICON_TEXT}<span>글</span></div>`
+                        : first
+                            ? `<div class="student-material-thumb-icon">${ICON_FILE}<span>${escapeHtmlForStudent(fileExt)}</span></div>`
+                            : `<div class="student-material-thumb-icon">${ICON_NONE}<span>없음</span></div>`;
+
+            const countBadgeHtml = files.length > 1
+                ? `<span class="student-material-count-badge">+${files.length - 1}</span>`
+                : "";
+
+            const typeLabels = [];
+            if (files.some((f) => f.fileType && f.fileType.startsWith("image/"))) typeLabels.push("이미지");
+            if (files.some((f) => f.fileData && !(f.fileType && f.fileType.startsWith("image/")))) typeLabels.push("파일");
+            if (files.some((f) => f.linkUrl)) typeLabels.push("링크");
+            if (files.some((f) => f.textContent && !f.linkUrl && !f.fileData)) typeLabels.push("글");
+            const typeBadgeHtml = typeLabels.length
+                ? typeLabels.map((t) => `<span class="student-material-type-badge" data-type="${t}">${t}</span>`).join("")
+                : `<span class="student-material-type-badge" data-type="없음">없음</span>`;
+
+            const descHtml = m.description
+                ? escapeHtmlForStudent(m.description)
+                : `<span class="student-material-desc-empty">설명 없음</span>`;
+
+            item.innerHTML = `
+        <div class="student-material-thumb">${thumbHtml}${countBadgeHtml}</div>
+        <div class="student-material-main">
+          <p class="student-material-title">${escapeHtmlForStudent(m.title)}</p>
+          <p class="student-material-desc">${descHtml}</p>
+        </div>
+        <div class="student-material-types">${typeBadgeHtml}</div>
+        <p class="student-material-date">${m.createdAt}</p>
+      `;
+            item.addEventListener("click", () => handleStudentViewMaterial(m));
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadComputerMaterials(category) {
+    const emptyText = document.getElementById("computerMaterialsEmpty");
+    const lockedText = document.getElementById("computerMaterialsLocked");
+    const list = document.getElementById("computerMaterialsList");
+    const heading = document.getElementById("computerMaterialsHeading");
+    if (!list) return;
+
+    if (lockedText) lockedText.hidden = true;
+    if (emptyText) emptyText.hidden = true;
+    if (heading) heading.textContent = COMPUTER_PROGRAM_LABEL[category] || category;
+    list.innerHTML = "";
+
+    try {
+        const res = await fetch(`/api/student/materials?language=computer&category=${category}`);
+        if (!res.ok) {
+            if (res.status === 403 && lockedText) lockedText.hidden = false;
+            return;
+        }
+        const materials = await res.json();
+
+        if (emptyText) emptyText.hidden = materials.length > 0;
+
+        const ICON_LINK = `<svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5l5-5M8 10l-1.5 1.5a3.5 3.5 0 0 0 5 5L13 15M16 14l1.5-1.5a3.5 3.5 0 0 0-5-5L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        const ICON_TEXT = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+        const ICON_FILE = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+        const ICON_NONE = `<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>`;
+
+        materials.forEach((m) => {
+            const item = document.createElement("div");
+            item.className = "student-material-item";
+
+            const files = m.files || [];
+            const first = files[0];
+            const firstIsImage = first && first.fileType && first.fileType.startsWith("image/");
+            const firstIsLink = first && first.linkUrl;
+            const firstIsText = first && first.textContent && !first.linkUrl && !first.fileData;
+            const fileExt = (first?.fileName || "").split(".").pop()?.toUpperCase().slice(0, 4) || "FILE";
+
+            const thumbHtml = firstIsImage
+                ? `<img src="${first.fileData}" alt="">`
+                : firstIsLink
+                    ? `<div class="student-material-thumb-icon">${ICON_LINK}<span>링크</span></div>`
+                    : firstIsText
+                        ? `<div class="student-material-thumb-icon">${ICON_TEXT}<span>글</span></div>`
+                        : first
+                            ? `<div class="student-material-thumb-icon">${ICON_FILE}<span>${escapeHtmlForStudent(fileExt)}</span></div>`
+                            : `<div class="student-material-thumb-icon">${ICON_NONE}<span>없음</span></div>`;
+
+            const countBadgeHtml = files.length > 1
+                ? `<span class="student-material-count-badge">+${files.length - 1}</span>`
+                : "";
+
+            const typeLabels = [];
+            if (files.some((f) => f.fileType && f.fileType.startsWith("image/"))) typeLabels.push("이미지");
+            if (files.some((f) => f.fileData && !(f.fileType && f.fileType.startsWith("image/")))) typeLabels.push("파일");
+            if (files.some((f) => f.linkUrl)) typeLabels.push("링크");
+            if (files.some((f) => f.textContent && !f.linkUrl && !f.fileData)) typeLabels.push("글");
+            const typeBadgeHtml = typeLabels.length
+                ? typeLabels.map((t) => `<span class="student-material-type-badge" data-type="${t}">${t}</span>`).join("")
+                : `<span class="student-material-type-badge" data-type="없음">없음</span>`;
+
+            const descHtml = m.description
+                ? escapeHtmlForStudent(m.description)
+                : `<span class="student-material-desc-empty">설명 없음</span>`;
+
+            item.innerHTML = `
+        <div class="student-material-thumb">${thumbHtml}${countBadgeHtml}</div>
+        <div class="student-material-main">
+          <p class="student-material-title">${escapeHtmlForStudent(m.title)}</p>
+          <p class="student-material-desc">${descHtml}</p>
+        </div>
+        <div class="student-material-types">${typeBadgeHtml}</div>
+        <p class="student-material-date">${m.createdAt}</p>
+      `;
+            item.addEventListener("click", () => handleStudentViewMaterial(m));
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 function openStudentFileInNewTab(dataUri) {
     try {
         const [header, base64] = dataUri.split(",");
@@ -488,8 +734,13 @@ function stopHeroAutoplay() {
 const BOARD_TOPIC_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터" };
 const BOARD_CATEGORY_LABEL = { VOCAB: "어휘", GRAMMAR: "문법", WRITING: "쓰기", OTHER: "기타" };
 
+const ICON_LIKE = `<svg class="board-reaction-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3Zm0 0 4.5-8a2 2 0 0 1 2.7 2.7L13 9h5.2a2 2 0 0 1 1.98 2.28l-1 7A2 2 0 0 1 17.2 20H10a3 3 0 0 1-3-3v-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const ICON_DISLIKE = `<svg class="board-reaction-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 13V4h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-3Zm0 0-4.5 8a2 2 0 0 1-2.7-2.7L11 15H5.8a2 2 0 0 1-1.98-2.28l1-7A2 2 0 0 1 6.8 4H14a3 3 0 0 1 3 3v6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const ICON_COMMENT = `<svg class="board-reaction-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+
 let currentBoardTopic = "korean";
 let currentBoardCategory = "VOCAB";
+let editingPostId = null;
 
 function renderBoardTopics() {
     const el = document.getElementById("boardTopics");
@@ -587,6 +838,24 @@ async function loadBoardPosts(topic, category) {
         <p class="board-item-title">${escapeHtmlForStudent(p.title)}</p>
         <p class="board-item-preview">${escapeHtmlForStudent(p.content)}</p>
         <p class="board-item-content" hidden>${escapeHtmlForStudent(p.content)}</p>
+        <div class="board-item-footer">
+          <button type="button" class="board-reaction-btn ${p.myReaction === "LIKE" ? "is-active" : ""}" data-reaction="LIKE">
+            ${ICON_LIKE}<span>${p.likeCount ?? 0}</span>
+          </button>
+          <button type="button" class="board-reaction-btn ${p.myReaction === "DISLIKE" ? "is-active" : ""}" data-reaction="DISLIKE">
+            ${ICON_DISLIKE}<span>${p.dislikeCount ?? 0}</span>
+          </button>
+          <button type="button" class="board-comment-toggle-btn">
+            ${ICON_COMMENT}<span>${p.commentCount ?? 0}</span>
+          </button>
+        </div>
+        <div class="board-comments" hidden>
+          <div class="board-comments-list"></div>
+          <div class="board-comment-form">
+            <input type="text" class="board-comment-input" placeholder="댓글을 남겨보세요">
+            <button type="button" class="board-comment-submit">등록</button>
+          </div>
+        </div>
       `;
             item.addEventListener("click", () => {
                 const preview = item.querySelector(".board-item-preview");
@@ -596,10 +865,130 @@ async function loadBoardPosts(topic, category) {
                 full.hidden = isOpen;
                 preview.hidden = !isOpen;
             });
+
+            const footer = item.querySelector(".board-item-footer");
+            footer.addEventListener("click", (e) => e.stopPropagation());
+
+            item.querySelector('.board-reaction-btn[data-reaction="LIKE"]').addEventListener("click", () => {
+                submitBoardReaction(p.id, "LIKE", item);
+            });
+            item.querySelector('.board-reaction-btn[data-reaction="DISLIKE"]').addEventListener("click", () => {
+                submitBoardReaction(p.id, "DISLIKE", item);
+            });
+
+            const commentsPanel = item.querySelector(".board-comments");
+            commentsPanel.addEventListener("click", (e) => e.stopPropagation());
+
+            item.querySelector(".board-comment-toggle-btn").addEventListener("click", () => {
+                toggleBoardComments(p.id, commentsPanel);
+            });
+
+            const commentInput = item.querySelector(".board-comment-input");
+            const commentSubmitBtn = item.querySelector(".board-comment-submit");
+            const submitNewComment = () => submitBoardComment(p.id, item, commentInput, commentSubmitBtn);
+            commentSubmitBtn.addEventListener("click", submitNewComment);
+            commentInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") submitNewComment();
+            });
+
             list.appendChild(item);
         });
     } catch (err) {
         console.error(err);
+    }
+}
+
+// 좋아요/싫어요 — 같은 걸 다시 누르면 취소, 다른 걸 누르면 전환 (서버가 최신 상태를 돌려줌)
+async function submitBoardReaction(postId, type, itemEl) {
+    try {
+        const res = await fetch(`/api/student/posts/${postId}/reaction`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type }),
+        });
+        if (!res.ok) return;
+        const updated = await res.json();
+
+        const likeBtn = itemEl.querySelector('.board-reaction-btn[data-reaction="LIKE"]');
+        const dislikeBtn = itemEl.querySelector('.board-reaction-btn[data-reaction="DISLIKE"]');
+        if (likeBtn) {
+            likeBtn.querySelector("span:last-child").textContent = updated.likeCount;
+            likeBtn.classList.toggle("is-active", updated.myReaction === "LIKE");
+        }
+        if (dislikeBtn) {
+            dislikeBtn.querySelector("span:last-child").textContent = updated.dislikeCount;
+            dislikeBtn.classList.toggle("is-active", updated.myReaction === "DISLIKE");
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function toggleBoardComments(postId, panel) {
+    if (!panel) return;
+    if (!panel.hidden) {
+        panel.hidden = true;
+        return;
+    }
+    panel.hidden = false;
+    await loadBoardComments(postId, panel);
+}
+
+async function loadBoardComments(postId, panel) {
+    const listEl = panel.querySelector(".board-comments-list");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="board-comments-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/student/posts/${postId}/comments`);
+        if (!res.ok) return;
+        const comments = await res.json();
+
+        listEl.innerHTML = "";
+        if (comments.length === 0) {
+            listEl.innerHTML = `<p class="board-comments-hint">아직 댓글이 없어요. 첫 댓글을 남겨보세요!</p>`;
+            return;
+        }
+        comments.forEach((c) => {
+            const row = document.createElement("div");
+            row.className = c.isAdmin ? "board-comment-item board-comment-item--admin" : "board-comment-item";
+            const adminBadgeHtml = c.isAdmin ? `<span class="board-comment-admin-badge">관리자 댓글</span>` : "";
+            row.innerHTML = `
+        <span class="board-comment-name">${escapeHtmlForStudent(c.nickname)}</span>
+        ${adminBadgeHtml}
+        <span class="board-comment-text">${escapeHtmlForStudent(c.content)}</span>
+        <span class="board-comment-date">${c.createdAt}</span>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function submitBoardComment(postId, itemEl, inputEl, submitBtn) {
+    const content = inputEl.value.trim();
+    if (!content) return;
+
+    submitBtn.disabled = true;
+    try {
+        const res = await fetch(`/api/student/posts/${postId}/comments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+        });
+        if (!res.ok) return;
+
+        inputEl.value = "";
+        const panel = itemEl.querySelector(".board-comments");
+        await loadBoardComments(postId, panel);
+
+        const commentCountEl = itemEl.querySelector(".board-comment-toggle-btn span:last-child");
+        if (commentCountEl) commentCountEl.textContent = String(Number(commentCountEl.textContent || 0) + 1);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        submitBtn.disabled = false;
     }
 }
 
@@ -609,14 +998,28 @@ function updateBoardCategoryFieldVisibility() {
     if (field) field.hidden = topic === "computer";
 }
 
-function openBoardWriteModal() {
+// post가 주어지면 "수정" 모드로, 없으면 "새 글쓰기" 모드로 열려요.
+function openBoardWriteModal(post) {
     const modal = document.getElementById("boardWriteModal");
     if (!modal) return;
-    document.getElementById("boardFormTopic").value = currentBoardTopic;
-    document.getElementById("boardFormCategory").value = BOARD_CATEGORY_LABEL[currentBoardCategory] ? currentBoardCategory : "VOCAB";
-    document.getElementById("boardFormTitle").value = "";
-    document.getElementById("boardFormContent").value = "";
+
+    editingPostId = post ? post.id : null;
+
+    const titleEl = document.getElementById("boardModalTitle");
+    const topicEl = document.getElementById("boardFormTopic");
+    const submitBtn = document.getElementById("boardFormSubmitBtn");
+
+    topicEl.value = post ? post.topic : currentBoardTopic;
+    topicEl.disabled = !!post; // 수정할 때는 주제를 바꿀 수 없어요
+    document.getElementById("boardFormCategory").value = post
+        ? (BOARD_CATEGORY_LABEL[post.category] ? post.category : "VOCAB")
+        : (BOARD_CATEGORY_LABEL[currentBoardCategory] ? currentBoardCategory : "VOCAB");
+    document.getElementById("boardFormTitle").value = post ? post.title : "";
+    document.getElementById("boardFormContent").value = post ? post.content : "";
     document.getElementById("boardFormError").hidden = true;
+    if (titleEl) titleEl.textContent = post ? "글 수정" : "글쓰기";
+    if (submitBtn) submitBtn.textContent = post ? "수정하기" : "올리기";
+
     updateBoardCategoryFieldVisibility();
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
@@ -627,6 +1030,9 @@ function closeBoardWriteModal() {
     if (!modal) return;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
+    editingPostId = null;
+    const topicEl = document.getElementById("boardFormTopic");
+    if (topicEl) topicEl.disabled = false;
 }
 
 async function submitBoardPost() {
@@ -636,6 +1042,7 @@ async function submitBoardPost() {
     const content = document.getElementById("boardFormContent").value.trim();
     const errorEl = document.getElementById("boardFormError");
     const submitBtn = document.getElementById("boardFormSubmitBtn");
+    const isEditing = !!editingPostId;
 
     if (!title || !content) {
         errorEl.textContent = "제목과 내용을 모두 입력해주세요.";
@@ -644,26 +1051,34 @@ async function submitBoardPost() {
     }
     errorEl.hidden = true;
     submitBtn.disabled = true;
-    submitBtn.textContent = "올리는 중...";
+    submitBtn.textContent = isEditing ? "수정하는 중..." : "올리는 중...";
 
     try {
-        const res = await fetch("/api/student/posts", {
-            method: "POST",
+        const url = isEditing ? `/api/student/posts/${editingPostId}` : "/api/student/posts";
+        const method = isEditing ? "PUT" : "POST";
+        const body = isEditing ? { category, title, content } : { topic, category, title, content };
+
+        const res = await fetch(url, {
+            method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic, category, title, content }),
+            body: JSON.stringify(body),
         });
 
         if (!res.ok) {
-            errorEl.textContent = (await res.text()) || "글 등록에 실패했어요.";
+            errorEl.textContent = (await res.text()) || (isEditing ? "수정에 실패했어요." : "글 등록에 실패했어요.");
             errorEl.hidden = false;
             return;
         }
 
         closeBoardWriteModal();
 
-        const refreshCategory = topic === "computer" ? "ALL" : category;
-        if (topic === currentBoardTopic && refreshCategory === currentBoardCategory) {
-            loadBoardPosts(topic, refreshCategory);
+        if (isEditing) {
+            renderMyPosts();
+        } else {
+            const refreshCategory = topic === "computer" ? "ALL" : category;
+            if (topic === currentBoardTopic && refreshCategory === currentBoardCategory) {
+                loadBoardPosts(topic, refreshCategory);
+            }
         }
     } catch (err) {
         console.error(err);
@@ -671,7 +1086,61 @@ async function submitBoardPost() {
         errorEl.hidden = false;
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "올리기";
+        submitBtn.textContent = isEditing ? "수정하기" : "올리기";
+    }
+}
+
+// 마이페이지 "내가 쓴 글"
+async function renderMyPosts() {
+    const listEl = document.getElementById("mypagePostsList");
+    const emptyEl = document.getElementById("mypagePostsEmpty");
+    if (!listEl) return;
+
+    try {
+        const res = await fetch("/api/student/posts/mine");
+        if (!res.ok) return;
+        const posts = await res.json();
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = posts.length > 0;
+
+        posts.forEach((p) => {
+            const item = document.createElement("div");
+            item.className = "mypost-item";
+            item.innerHTML = `
+        <div class="mypost-item-head">
+          <span class="mypost-topic">${escapeHtmlForStudent(BOARD_TOPIC_LABEL[p.topic] || p.topic)}${p.category ? " · " + escapeHtmlForStudent(BOARD_CATEGORY_LABEL[p.category] || p.category) : ""}</span>
+          <span class="mypost-date">${p.createdAt}</span>
+        </div>
+        <p class="mypost-title">${escapeHtmlForStudent(p.title)}</p>
+        <p class="mypost-preview">${escapeHtmlForStudent(p.content)}</p>
+        <div class="mypost-actions">
+          <button type="button" class="mypost-action-btn" data-mypost-edit>수정</button>
+          <button type="button" class="mypost-action-btn mypost-action-btn--danger" data-mypost-delete>삭제</button>
+        </div>
+      `;
+            item.querySelector("[data-mypost-edit]").addEventListener("click", () => openBoardWriteModal(p));
+            item.querySelector("[data-mypost-delete]").addEventListener("click", () => deleteMyPost(p.id));
+            listEl.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function deleteMyPost(id) {
+    if (!confirm("이 글을 삭제할까요? 되돌릴 수 없어요.")) return;
+
+    try {
+        const res = await fetch(`/api/student/posts/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        renderMyPosts();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
     }
 }
 
@@ -748,10 +1217,13 @@ document.addEventListener("fragments:loaded", () => {
     setupHeroCarousel();
     setupPhotoBanners();
     renderBoardTopics();
+    if (document.getElementById("computerMaterialsList")) loadComputerMaterials("BASIC");
+    if (document.getElementById("videoMaterialsList")) loadVideoMaterials("korean");
+    if (document.getElementById("trialMaterialsList")) loadTrialMaterials("korean");
     syncKwzmFixedOffsets();
     window.addEventListener("resize", syncKwzmFixedOffsets);
 
-    document.getElementById("boardWriteBtn")?.addEventListener("click", openBoardWriteModal);
+    document.getElementById("boardWriteBtn")?.addEventListener("click", () => openBoardWriteModal());
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-board-modal-close]")) closeBoardWriteModal();
     });
@@ -842,13 +1314,10 @@ document.addEventListener("fragments:loaded", () => {
             t.classList.toggle("active", t === tab);
             t.setAttribute("aria-selected", t === tab ? "true" : "false");
         });
-        document.querySelectorAll("[data-video-panel]").forEach((p) => {
-            p.hidden = p.dataset.videoPanel !== key;
-            p.classList.toggle("active", p.dataset.videoPanel === key);
-        });
+        loadVideoMaterials(key);
     });
 
-    // "무료체험" 화면의 언어/컴퓨터 탭 전환
+    // "무료체험" 화면의 언어/컴퓨터/영상 탭 전환
     document.addEventListener("click", (e) => {
         const tab = e.target.closest("[data-trial-tab]");
         if (!tab) return;
@@ -858,10 +1327,7 @@ document.addEventListener("fragments:loaded", () => {
             t.classList.toggle("active", t === tab);
             t.setAttribute("aria-selected", t === tab ? "true" : "false");
         });
-        document.querySelectorAll("[data-trial-panel]").forEach((p) => {
-            p.hidden = p.dataset.trialPanel !== key;
-            p.classList.toggle("active", p.dataset.trialPanel === key);
-        });
+        loadTrialMaterials(key);
     });
 
     // "컴퓨터 자료" 화면의 프로그램별 탭 전환
@@ -874,10 +1340,7 @@ document.addEventListener("fragments:loaded", () => {
             t.classList.toggle("active", t === tab);
             t.setAttribute("aria-selected", t === tab ? "true" : "false");
         });
-        document.querySelectorAll("[data-computer-panel]").forEach((p) => {
-            p.hidden = p.dataset.computerPanel !== key;
-            p.classList.toggle("active", p.dataset.computerPanel === key);
-        });
+        loadComputerMaterials(key);
     });
 
     // "마이페이지"의 내 수강 정보/바로가기 탭 전환
@@ -894,6 +1357,8 @@ document.addEventListener("fragments:loaded", () => {
             p.hidden = p.dataset.mypagePanel !== key;
             p.classList.toggle("active", p.dataset.mypagePanel === key);
         });
+
+        if (key === "myposts") renderMyPosts();
     });
 
     // "합격증 다운로드" / "시험 보러가기" — 관리자가 나중에 보내주는 기능이라 지금은 안내만

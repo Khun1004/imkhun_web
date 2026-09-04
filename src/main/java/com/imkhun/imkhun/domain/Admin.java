@@ -59,6 +59,15 @@ public class Admin {
         this.paymentInfo = paymentInfo;
     }
 
+    public void updateInfo(String email, String phone) {
+        this.email = email;
+        this.phone = phone;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
     public void updateSessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
     }

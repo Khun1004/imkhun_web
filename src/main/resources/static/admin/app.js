@@ -122,6 +122,11 @@ function autoSelectFirstMaterials(prefix, scope) {
     firstLangPill.classList.add("active");
     const language = firstLangPill.dataset.lang;
 
+    if (scope === "VIDEO" || scope === "TRIAL") {
+        loadMaterials(language, scope, scope);
+        return;
+    }
+
     renderCategoryPills(prefix, scope, language);
 
     if (language !== "other") {
@@ -134,10 +139,10 @@ function autoSelectFirstMaterials(prefix, scope) {
 function autoSelectFirstMaterialsForActiveTab() {
     const activeTab = document.querySelector(".admin-maintab.active");
     const key = activeTab?.dataset.mainTab;
-    if (key !== "personal" && key !== "kwzm") return;
+    if (key !== "personal" && key !== "kwzm" && key !== "video" && key !== "trial") return;
 
-    const prefix = key === "kwzm" ? "kwzm" : "personal";
-    const scope = key === "kwzm" ? "KWZM" : "PERSONAL";
+    const scope = key === "kwzm" ? "KWZM" : key === "video" ? "VIDEO" : key === "trial" ? "TRIAL" : "PERSONAL";
+    const prefix = prefixForScope(scope);
     const langContainer = document.getElementById(`${prefix}LanguagePills`);
     if (langContainer && !langContainer.querySelector(".admin-pill.active")) {
         autoSelectFirstMaterials(prefix, scope);
@@ -170,7 +175,13 @@ async function logoutAdmin() {
 }
 
 const CATEGORY_LABEL = { GRAMMAR: "문법", READING: "읽기", WRITING: "쓰기", SPEAKING: "말하기", OTHER: "기타" };
-const LANGUAGE_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", other: "기타" };
+const COMPUTER_CATEGORY_LABEL = { BASIC: "Basic", WORD: "Word", EXCEL: "Excel", POWERPOINT: "PowerPoint", PAGEMAKER: "PageMaker", PHOTOSHOP: "Photoshop" };
+const LANGUAGE_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터", video: "영상", other: "기타" };
+
+// 언어에 따라 어떤 항목(카테고리) 라벨 세트를 쓸지 골라줌 — 언어는 문법/읽기/..., 컴퓨터는 Basic/Word/...
+function categoryLabelSetFor(language) {
+    return language === "computer" ? COMPUTER_CATEGORY_LABEL : CATEGORY_LABEL;
+}
 
 function escapeHtmlForAdminMaterial(text) {
     const div = document.createElement("div");
@@ -182,7 +193,10 @@ let currentMaterialScope = "PERSONAL";
 let editingMaterialScope = "PERSONAL";
 
 function materialsApiBase(scope) {
-    return scope === "KWZM" ? "/api/admin/kwzm-materials" : "/api/admin/materials";
+    if (scope === "KWZM") return "/api/admin/kwzm-materials";
+    if (scope === "VIDEO") return "/api/admin/video-materials";
+    if (scope === "TRIAL") return "/api/admin/trial-materials";
+    return "/api/admin/materials";
 }
 
 function renderCategoryPills(prefix, scope, language) {
@@ -201,7 +215,7 @@ function renderCategoryPills(prefix, scope, language) {
     if (viewEl) viewEl.hidden = true;
     catEl.innerHTML = "";
 
-    Object.entries(CATEGORY_LABEL).forEach(([key, label]) => {
+    Object.entries(categoryLabelSetFor(language)).forEach(([key, label]) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "admin-pill";
@@ -215,23 +229,44 @@ function renderCategoryPills(prefix, scope, language) {
     });
 }
 
+function prefixForScope(scope) {
+    if (scope === "KWZM") return "kwzm";
+    if (scope === "VIDEO") return "video";
+    if (scope === "TRIAL") return "trial";
+    return "personal";
+}
+
+function scopeLabel(scope) {
+    if (scope === "KWZM") return "KWZM 학생용";
+    if (scope === "VIDEO") return "온라인 영상";
+    if (scope === "TRIAL") return "무료체험";
+    return "개인용";
+}
+
+function inviteBtnIdForScope(scope) {
+    return scope === "VIDEO" ? "videoInviteBtn" : "adminInviteBtn";
+}
+
 async function loadMaterials(language, category, scope) {
     currentMaterialScope = scope || "PERSONAL";
-    const prefix = currentMaterialScope === "KWZM" ? "kwzm" : "personal";
+    const prefix = prefixForScope(currentMaterialScope);
     const emptyText = document.getElementById(`${prefix}MaterialsEmpty`);
     const list = document.getElementById(`${prefix}MaterialsList`);
     const heading = document.getElementById(`${prefix}MaterialsHeading`);
     const view = document.getElementById(`${prefix}MaterialsView`);
-    const inviteBtn = document.getElementById("adminInviteBtn");
+    const inviteBtn = document.getElementById(inviteBtnIdForScope(currentMaterialScope));
     if (!list) return;
 
     if (view) view.hidden = false;
-    heading.textContent = `${LANGUAGE_LABEL[language] || language} · ${CATEGORY_LABEL[category] || category}`;
+    heading.textContent = (currentMaterialScope === "VIDEO" || currentMaterialScope === "TRIAL")
+        ? `${LANGUAGE_LABEL[language] || language}`
+        : `${LANGUAGE_LABEL[language] || language} · ${categoryLabelSetFor(language)[category] || category}`;
 
     if (inviteBtn) {
-        if (currentMaterialScope === "KWZM") {
+        if (currentMaterialScope === "KWZM" || currentMaterialScope === "VIDEO") {
             inviteBtn.hidden = false;
             currentInviteLanguage = language;
+            currentInviteScope = currentMaterialScope;
             updateInviteCountBadge();
         } else {
             inviteBtn.hidden = true;
@@ -464,12 +499,13 @@ function renderExistingFiles() {
 }
 
 let currentInviteLanguage = null;
+let currentInviteScope = "KWZM";
 
 function openInviteModal(language) {
     currentInviteLanguage = language;
     const modal = document.getElementById("adminInviteModal");
     if (!modal) return;
-    document.getElementById("inviteModalTitle").textContent = `학생 초대 · ${LANGUAGE_LABEL[language] || language}`;
+    document.getElementById("inviteModalTitle").textContent = `학생 초대 · ${LANGUAGE_LABEL[language] || language} (${inviteContentType() === "VIDEO" ? "영상" : "자료"})`;
     document.getElementById("inviteStudentNumberInput").value = "";
     document.getElementById("inviteError").hidden = true;
     modal.classList.add("open");
@@ -484,6 +520,10 @@ function closeInviteModal() {
     modal.setAttribute("aria-hidden", "true");
 }
 
+function inviteContentType() {
+    return currentInviteScope === "VIDEO" ? "VIDEO" : "MATERIAL";
+}
+
 async function loadInvitedStudents() {
     const listEl = document.getElementById("adminInvitedList");
     const countEl = document.getElementById("inviteCount");
@@ -492,7 +532,7 @@ async function loadInvitedStudents() {
     listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
 
     try {
-        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}`);
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}&type=${inviteContentType()}`);
         if (!res.ok) throw new Error("불러오기 실패");
         const students = await res.json();
 
@@ -535,7 +575,7 @@ async function inviteStudentToLanguage() {
     errorEl.hidden = true;
 
     try {
-        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}`, {
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}&type=${inviteContentType()}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ studentNumber }),
@@ -557,7 +597,7 @@ async function inviteStudentToLanguage() {
 async function removeInvitedStudent(studentNumber) {
     if (!confirm("이 학생을 초대 목록에서 제거할까요?")) return;
     try {
-        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}&studentNumber=${encodeURIComponent(studentNumber)}`, {
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}&type=${inviteContentType()}&studentNumber=${encodeURIComponent(studentNumber)}`, {
             method: "DELETE",
         });
         if (!res.ok) {
@@ -572,14 +612,14 @@ async function removeInvitedStudent(studentNumber) {
 }
 
 async function updateInviteCountBadge(knownCount) {
-    const badge = document.getElementById("adminInviteCountBadge");
+    const badge = document.getElementById(currentInviteScope === "VIDEO" ? "videoInviteCountBadge" : "adminInviteCountBadge");
     if (!badge) return;
     if (knownCount !== undefined) {
         badge.textContent = knownCount;
         return;
     }
     try {
-        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}`);
+        const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}&type=${inviteContentType()}`);
         if (!res.ok) return;
         const students = await res.json();
         badge.textContent = students.length;
@@ -591,13 +631,15 @@ async function updateInviteCountBadge(knownCount) {
 function openEditModal(material) {
     openRegisterModal();
     editingMaterialScope = material.scope || "PERSONAL";
-    document.getElementById("registerModalTitle").textContent = `자료 수정 (${editingMaterialScope === "KWZM" ? "KWZM 학생용" : "개인용"})`;
+    document.getElementById("registerModalTitle").textContent = `자료 수정 (${scopeLabel(editingMaterialScope)})`;
     document.getElementById("registerSubmitBtn").textContent = "수정하기";
     document.getElementById("registerEditingId").value = material.id;
     document.getElementById("registerLanguageSelect").value = material.language;
     document.getElementById("registerTitleInput").value = material.title;
     document.getElementById("registerDescriptionInput").value = material.description || "";
-    document.querySelector(`input[name="registerCategory"][value="${material.category}"]`).checked = true;
+    const categoryRadioName = material.language === "computer" ? "registerComputerCategory" : "registerCategory";
+    const categoryRadio = document.querySelector(`input[name="${categoryRadioName}"][value="${material.category}"]`);
+    if (categoryRadio) categoryRadio.checked = true;
     document.querySelector(`input[name="registerScope"][value="${editingMaterialScope}"]`).checked = true;
     document.querySelectorAll('input[name="registerScope"]').forEach((r) => (r.disabled = true));
     updateCategoryFieldVisibility();
@@ -614,8 +656,12 @@ function openEditModal(material) {
 
 function updateCategoryFieldVisibility() {
     const language = document.getElementById("registerLanguageSelect").value;
+    const scope = document.querySelector('input[name="registerScope"]:checked')?.value;
+    const isCategoryless = scope === "VIDEO" || scope === "TRIAL";
     const categoryField = document.getElementById("registerCategoryField");
-    if (categoryField) categoryField.hidden = language === "other";
+    const computerCategoryField = document.getElementById("registerComputerCategoryField");
+    if (categoryField) categoryField.hidden = isCategoryless || language === "other" || language === "computer" || language === "video";
+    if (computerCategoryField) computerCategoryField.hidden = isCategoryless || language !== "computer";
 }
 
 async function deleteMaterial(id, language, category, scope) {
@@ -666,7 +712,7 @@ function closeRegisterModal() {
     renderExistingFiles();
     editingMaterialScope = currentMaterialScope;
 
-    document.getElementById("registerModalTitle").textContent = `자료 등록 (${currentMaterialScope === "KWZM" ? "KWZM 학생용" : "개인용"})`;
+    document.getElementById("registerModalTitle").textContent = `자료 등록 (${scopeLabel(currentMaterialScope)})`;
     document.getElementById("registerSubmitBtn").textContent = "등록하기";
     document.getElementById("registerEditingId").value = "";
 }
@@ -675,9 +721,13 @@ async function submitRegisterMaterial() {
     const editingId = document.getElementById("registerEditingId").value;
     const selectedScope = document.querySelector('input[name="registerScope"]:checked')?.value || "PERSONAL";
     const language = document.getElementById("registerLanguageSelect").value;
-    const category = language === "other"
-        ? "OTHER"
-        : document.querySelector('input[name="registerCategory"]:checked')?.value;
+    const category = (selectedScope === "VIDEO" || selectedScope === "TRIAL")
+        ? selectedScope
+        : language === "other"
+            ? "OTHER"
+            : language === "computer"
+                ? document.querySelector('input[name="registerComputerCategory"]:checked')?.value
+                : document.querySelector('input[name="registerCategory"]:checked')?.value;
     const title = document.getElementById("registerTitleInput").value.trim();
     const description = document.getElementById("registerDescriptionInput").value.trim();
     const fileInput = document.getElementById("registerFileInput");
@@ -755,10 +805,16 @@ async function submitRegisterMaterial() {
 
         closeRegisterModal();
 
-        const prefix = submitScope === "KWZM" ? "kwzm" : "personal";
+        const prefix = prefixForScope(submitScope);
         const activeLangPill = document.querySelector(`#${prefix}LanguagePills .admin-pill.active`);
+        if (submitScope === "VIDEO" || submitScope === "TRIAL") {
+            if (activeLangPill && activeLangPill.dataset.lang === language) {
+                loadMaterials(language, submitScope, submitScope);
+            }
+            return;
+        }
         const activeCatPill = document.querySelector(`#${prefix}CategoryPills .admin-pill.active`);
-        const activeCategory = language === "other" ? "OTHER" : activeCatPill?.textContent && Object.entries(CATEGORY_LABEL).find(([, v]) => v === activeCatPill.textContent)?.[0];
+        const activeCategory = language === "other" ? "OTHER" : activeCatPill?.textContent && Object.entries(categoryLabelSetFor(language)).find(([, v]) => v === activeCatPill.textContent)?.[0];
         if (activeLangPill && activeLangPill.dataset.lang === language && activeCategory === category) {
             loadMaterials(language, category, submitScope);
         }
@@ -785,13 +841,117 @@ async function loadAdminMe() {
         const data = await res.json();
 
         document.getElementById("adminMyUsername").textContent = data.username;
-        document.getElementById("adminMyEmail").textContent = data.email;
-        document.getElementById("adminMyPhone").textContent = data.phone;
+        const emailInput = document.getElementById("adminMyEmailInput");
+        const phoneInput = document.getElementById("adminMyPhoneInput");
+        if (emailInput) emailInput.value = data.email || "";
+        if (phoneInput) phoneInput.value = data.phone || "";
 
         const paymentTextarea = document.getElementById("adminPaymentTextarea");
         if (paymentTextarea) paymentTextarea.value = data.paymentInfo || "";
     } catch (err) {
         console.error(err);
+    }
+}
+
+async function saveAdminInfo() {
+    const emailInput = document.getElementById("adminMyEmailInput");
+    const phoneInput = document.getElementById("adminMyPhoneInput");
+    const errorEl = document.getElementById("adminInfoError");
+    const updatedEl = document.getElementById("adminInfoUpdated");
+    const saveBtn = document.getElementById("adminInfoSaveBtn");
+    if (!emailInput || !phoneInput) return;
+
+    const email = emailInput.value.trim();
+    const phone = phoneInput.value.trim();
+    if (!email || !phone) {
+        errorEl.textContent = "이메일과 전화번호를 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장 중...";
+
+    try {
+        const res = await fetch("/api/admin/info", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, phone }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        if (updatedEl) updatedEl.textContent = "저장됐어요.";
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "저장";
+    }
+}
+
+async function changeAdminPassword() {
+    const currentInput = document.getElementById("adminCurrentPasswordInput");
+    const newInput = document.getElementById("adminNewPasswordInput");
+    const confirmInput = document.getElementById("adminNewPasswordConfirmInput");
+    const errorEl = document.getElementById("adminPasswordError");
+    const updatedEl = document.getElementById("adminPasswordUpdated");
+    const saveBtn = document.getElementById("adminPasswordSaveBtn");
+    if (!currentInput || !newInput || !confirmInput) return;
+
+    const currentPassword = currentInput.value;
+    const newPassword = newInput.value;
+    const confirmPassword = confirmInput.value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        errorEl.textContent = "모든 항목을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    if (newPassword.length < 8) {
+        errorEl.textContent = "새 비밀번호는 8자 이상이어야 해요.";
+        errorEl.hidden = false;
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        errorEl.textContent = "새 비밀번호가 서로 달라요. 다시 확인해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "변경 중...";
+
+    try {
+        const res = await fetch("/api/admin/change-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ currentPassword, newPassword }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "비밀번호 변경에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        currentInput.value = "";
+        newInput.value = "";
+        confirmInput.value = "";
+        if (updatedEl) updatedEl.textContent = "비밀번호가 변경됐어요.";
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "비밀번호 변경";
     }
 }
 
@@ -851,6 +1011,7 @@ async function loadStudentList() {
           <p class="admin-student-name">${escapeHtmlForAdmin(app.nickname)} 님</p>
           ${app.memo ? `<p class="admin-student-memo">${escapeHtmlForAdmin(app.memo)}</p>` : ""}
         </div>
+        <p class="admin-student-email">${escapeHtmlForAdmin(app.email || "-")}</p>
         <p class="admin-student-course">${escapeHtmlForAdmin(app.courseName)}<span>${escapeHtmlForAdmin(studyTypeLabel[app.studyType] || app.studyType)}</span></p>
         <p class="admin-student-contact">${escapeHtmlForAdmin(app.contact)}</p>
         ${app.studentNumber ? `<span class="admin-student-number">${escapeHtmlForAdmin(app.studentNumber)}</span>` : `<span></span>`}
@@ -916,6 +1077,169 @@ async function loadAdminReviews() {
         });
     } catch (err) {
         console.error(err);
+    }
+}
+
+const BOARD_TOPIC_LABEL_ADMIN = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터" };
+const BOARD_CATEGORY_LABEL_ADMIN = { VOCAB: "어휘", GRAMMAR: "문법", WRITING: "쓰기", OTHER: "기타" };
+
+const ICON_LIKE_ADMIN = `<svg class="admin-post-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3Zm0 0 4.5-8a2 2 0 0 1 2.7 2.7L13 9h5.2a2 2 0 0 1 1.98 2.28l-1 7A2 2 0 0 1 17.2 20H10a3 3 0 0 1-3-3v-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const ICON_DISLIKE_ADMIN = `<svg class="admin-post-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 13V4h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-3Zm0 0-4.5 8a2 2 0 0 1-2.7-2.7L11 15H5.8a2 2 0 0 1-1.98-2.28l1-7A2 2 0 0 1 6.8 4H14a3 3 0 0 1 3 3v6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const ICON_COMMENT_ADMIN = `<svg class="admin-post-meta-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+
+async function loadAdminPosts() {
+    const list = document.getElementById("adminPostList");
+    const emptyText = document.getElementById("adminPostsEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/posts");
+        if (!res.ok) return;
+        const posts = await res.json();
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = posts.length > 0;
+
+        posts.forEach((p) => {
+            const initial = (p.nickname || "?").charAt(0);
+            const badgeHtml = p.category
+                ? `<span class="admin-post-badge">${escapeHtmlForAdmin(BOARD_CATEGORY_LABEL_ADMIN[p.category] || p.category)}</span>`
+                : "";
+
+            const item = document.createElement("div");
+            item.className = "admin-post-item";
+            item.innerHTML = `
+        <div class="admin-post-head">
+          <span class="admin-post-avatar">${escapeHtmlForAdmin(initial)}</span>
+          <span class="admin-post-name">${escapeHtmlForAdmin(p.nickname)}</span>
+          <span class="admin-post-topic">${escapeHtmlForAdmin(BOARD_TOPIC_LABEL_ADMIN[p.topic] || p.topic)}</span>
+          ${badgeHtml}
+          <span class="admin-post-date">${p.createdAt}</span>
+        </div>
+        <p class="admin-post-title">${escapeHtmlForAdmin(p.title)}</p>
+        <p class="admin-post-content">${escapeHtmlForAdmin(p.content)}</p>
+        <div class="admin-post-meta">
+          <span>${ICON_LIKE_ADMIN}${p.likeCount ?? 0}</span>
+          <span>${ICON_DISLIKE_ADMIN}${p.dislikeCount ?? 0}</span>
+          <button type="button" class="admin-post-comment-toggle">${ICON_COMMENT_ADMIN}<span data-comment-count>${p.commentCount ?? 0}</span></button>
+        </div>
+        <div class="admin-post-comments" hidden>
+          <div class="admin-post-comments-list"></div>
+          <div class="admin-post-comment-form">
+            <input type="text" class="admin-post-comment-input" placeholder="관리자 댓글을 남겨보세요">
+            <button type="button" class="admin-post-comment-submit">등록</button>
+          </div>
+        </div>
+        <div class="admin-post-actions">
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-post-id="${p.id}">삭제</button>
+        </div>
+      `;
+
+            const commentsPanel = item.querySelector(".admin-post-comments");
+            item.querySelector(".admin-post-comment-toggle").addEventListener("click", () => {
+                toggleAdminPostComments(p.id, commentsPanel);
+            });
+
+            const commentInput = item.querySelector(".admin-post-comment-input");
+            const commentSubmitBtn = item.querySelector(".admin-post-comment-submit");
+            const submitNewComment = () => submitAdminPostComment(p.id, item, commentInput, commentSubmitBtn);
+            commentSubmitBtn.addEventListener("click", submitNewComment);
+            commentInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") submitNewComment();
+            });
+
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function toggleAdminPostComments(postId, panel) {
+    if (!panel) return;
+    if (!panel.hidden) {
+        panel.hidden = true;
+        return;
+    }
+    panel.hidden = false;
+    await loadAdminPostComments(postId, panel);
+}
+
+async function loadAdminPostComments(postId, panel) {
+    const listEl = panel.querySelector(".admin-post-comments-list");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/posts/${postId}/comments`);
+        if (!res.ok) return;
+        const comments = await res.json();
+
+        listEl.innerHTML = "";
+        if (comments.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 댓글이 없어요.</p>`;
+            return;
+        }
+        comments.forEach((c) => {
+            const row = document.createElement("div");
+            row.className = c.isAdmin ? "admin-post-comment-item admin-post-comment-item--admin" : "admin-post-comment-item";
+            const adminBadge = c.isAdmin ? `<span class="admin-post-comment-badge">관리자</span>` : "";
+            row.innerHTML = `
+        <span class="admin-post-comment-name">${escapeHtmlForAdmin(c.nickname)}</span>
+        ${adminBadge}
+        <span class="admin-post-comment-text">${escapeHtmlForAdmin(c.content)}</span>
+        <span class="admin-post-comment-date">${c.createdAt}</span>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function submitAdminPostComment(postId, itemEl, inputEl, submitBtn) {
+    const content = inputEl.value.trim();
+    if (!content) return;
+
+    submitBtn.disabled = true;
+    try {
+        const res = await fetch(`/api/admin/posts/${postId}/comments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "댓글 등록에 실패했어요.");
+            return;
+        }
+
+        inputEl.value = "";
+        const panel = itemEl.querySelector(".admin-post-comments");
+        await loadAdminPostComments(postId, panel);
+
+        const countEl = itemEl.querySelector("[data-comment-count]");
+        if (countEl) countEl.textContent = String(Number(countEl.textContent || 0) + 1);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        submitBtn.disabled = false;
+    }
+}
+
+async function deleteAdminPost(id) {
+    if (!confirm("이 글을 삭제할까요? 되돌릴 수 없어요.")) return;
+
+    try {
+        const res = await fetch(`/api/admin/posts/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAdminPosts();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
     }
 }
 
@@ -990,10 +1314,15 @@ document.addEventListener("fragments:loaded", () => {
         pill.addEventListener("click", () => {
             const scope = pill.dataset.scope;
             const language = pill.dataset.lang;
-            const prefix = scope === "KWZM" ? "kwzm" : "personal";
+            const prefix = prefixForScope(scope);
 
             document.querySelectorAll(`#${prefix}LanguagePills .admin-pill`).forEach((p) => p.classList.remove("active"));
             pill.classList.add("active");
+
+            if (scope === "VIDEO" || scope === "TRIAL") {
+                loadMaterials(language, scope, scope);
+                return;
+            }
 
             renderCategoryPills(prefix, scope, language);
 
@@ -1022,10 +1351,10 @@ document.addEventListener("fragments:loaded", () => {
 
             updateHeroContent(key);
 
-            currentMaterialScope = key === "kwzm" ? "KWZM" : "PERSONAL";
+            currentMaterialScope = key === "kwzm" ? "KWZM" : key === "video" ? "VIDEO" : key === "trial" ? "TRIAL" : "PERSONAL";
 
-            if (key === "personal" || key === "kwzm") {
-                const prefix = key === "kwzm" ? "kwzm" : "personal";
+            if (key === "personal" || key === "kwzm" || key === "video" || key === "trial") {
+                const prefix = prefixForScope(currentMaterialScope);
                 const langContainer = document.getElementById(`${prefix}LanguagePills`);
                 if (langContainer && !langContainer.querySelector(".admin-pill.active")) {
                     autoSelectFirstMaterials(prefix, currentMaterialScope);
@@ -1035,25 +1364,35 @@ document.addEventListener("fragments:loaded", () => {
             if (key === "students") {
                 loadStudentList();
                 loadAdminReviews();
+                loadAdminPosts();
             }
             if (key === "my") loadAdminMe();
         });
     });
 
     document.getElementById("adminPaymentSaveBtn")?.addEventListener("click", saveAdminPayment);
+    document.getElementById("adminInfoSaveBtn")?.addEventListener("click", saveAdminInfo);
+    document.getElementById("adminPasswordSaveBtn")?.addEventListener("click", changeAdminPassword);
 
     document.querySelectorAll(".admin-inline-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
-            document.querySelectorAll(".admin-inline-tab").forEach((t) => {
+            // 탭 그룹(학생 관리 / 마이)마다 따로 동작하도록, 자기가 속한 nav 안에서만 active를 바꿔요
+            const group = tab.closest(".admin-inline-tabs");
+            const panelContainer = group?.parentElement;
+            if (!group || !panelContainer) return;
+
+            group.querySelectorAll(".admin-inline-tab").forEach((t) => {
                 t.classList.remove("active");
                 t.setAttribute("aria-selected", "false");
             });
-            document.querySelectorAll(".admin-inline-panel").forEach((p) => (p.hidden = true));
+            panelContainer.querySelectorAll(".admin-inline-panel").forEach((p) => (p.hidden = true));
 
             tab.classList.add("active");
             tab.setAttribute("aria-selected", "true");
 
-            const panel = document.querySelector(`.admin-inline-panel[data-students-panel="${tab.dataset.studentsTab}"]`);
+            const panelAttr = tab.dataset.studentsTab !== undefined ? "data-students-panel" : "data-my-panel";
+            const key = tab.dataset.studentsTab !== undefined ? tab.dataset.studentsTab : tab.dataset.myTab;
+            const panel = panelContainer.querySelector(`.admin-inline-panel[${panelAttr}="${key}"]`);
             if (panel) panel.hidden = false;
         });
     });
@@ -1064,6 +1403,7 @@ document.addEventListener("fragments:loaded", () => {
         document.querySelectorAll('input[name="registerScope"]').forEach((r) => (r.disabled = false));
         const preselect = document.querySelector(`input[name="registerScope"][value="${currentMaterialScope}"]`);
         if (preselect) preselect.checked = true;
+        updateCategoryFieldVisibility();
     });
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-register-close]")) closeRegisterModal();
@@ -1071,6 +1411,9 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("registerSubmitBtn")?.addEventListener("click", submitRegisterMaterial);
 
     document.getElementById("adminInviteBtn")?.addEventListener("click", () => {
+        if (currentInviteLanguage) openInviteModal(currentInviteLanguage);
+    });
+    document.getElementById("videoInviteBtn")?.addEventListener("click", () => {
         if (currentInviteLanguage) openInviteModal(currentInviteLanguage);
     });
     document.addEventListener("click", (e) => {
@@ -1086,6 +1429,9 @@ document.addEventListener("fragments:loaded", () => {
         removeInvitedStudent(removeBtn.dataset.removeStudent);
     });
     document.getElementById("registerLanguageSelect")?.addEventListener("change", updateCategoryFieldVisibility);
+    document.querySelectorAll('input[name="registerScope"]').forEach((radio) => {
+        radio.addEventListener("change", updateCategoryFieldVisibility);
+    });
     document.getElementById("registerFileInput")?.addEventListener("change", (e) => {
         const fileNameEl = document.getElementById("registerFileName");
         const files = Array.from(e.target.files || []);
@@ -1152,6 +1498,12 @@ document.addEventListener("fragments:loaded", () => {
             alert("서버에 연결할 수 없어요.");
             approveBtn.disabled = false;
         }
+    });
+
+    document.addEventListener("click", (e) => {
+        const deleteBtn = e.target.closest("[data-delete-post-id]");
+        if (!deleteBtn) return;
+        deleteAdminPost(deleteBtn.dataset.deletePostId);
     });
 
     document.addEventListener("click", async (e) => {

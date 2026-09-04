@@ -32,12 +32,12 @@
     background: var(--kwzm-ink-faint);
 }
 
-.computer-tab[data-computer-tab="basic"]::before { background: var(--kwzm-primary); }
-.computer-tab[data-computer-tab="word"]::before { background: #2b579a; }
-.computer-tab[data-computer-tab="excel"]::before { background: #1e7145; }
-.computer-tab[data-computer-tab="powerpoint"]::before { background: #c8401d; }
-.computer-tab[data-computer-tab="pagemaker"]::before { background: #5c5c66; }
-.computer-tab[data-computer-tab="photoshop"]::before { background: #1f7cc9; }
+.computer-tab[data-computer-tab="BASIC"]::before { background: var(--kwzm-primary); }
+.computer-tab[data-computer-tab="WORD"]::before { background: #2b579a; }
+.computer-tab[data-computer-tab="EXCEL"]::before { background: #1e7145; }
+.computer-tab[data-computer-tab="POWERPOINT"]::before { background: #c8401d; }
+.computer-tab[data-computer-tab="PAGEMAKER"]::before { background: #5c5c66; }
+.computer-tab[data-computer-tab="PHOTOSHOP"]::before { background: #1f7cc9; }
 
 .computer-tab:hover {
     color: var(--kwzm-ink);
@@ -54,16 +54,12 @@
     background: rgba(255, 255, 255, 0.85);
 }
 
-.computer-tab[data-computer-tab="basic"].active { background: var(--kwzm-primary); }
-.computer-tab[data-computer-tab="word"].active { background: #2b579a; }
-.computer-tab[data-computer-tab="excel"].active { background: #1e7145; }
-.computer-tab[data-computer-tab="powerpoint"].active { background: #c8401d; }
-.computer-tab[data-computer-tab="pagemaker"].active { background: #5c5c66; }
-.computer-tab[data-computer-tab="photoshop"].active { background: #1f7cc9; }
-
-.computer-tab-panel[hidden] {
-    display: none;
-}
+.computer-tab[data-computer-tab="BASIC"].active { background: var(--kwzm-primary); }
+.computer-tab[data-computer-tab="WORD"].active { background: #2b579a; }
+.computer-tab[data-computer-tab="EXCEL"].active { background: #1e7145; }
+.computer-tab[data-computer-tab="POWERPOINT"].active { background: #c8401d; }
+.computer-tab[data-computer-tab="PAGEMAKER"].active { background: #5c5c66; }
+.computer-tab[data-computer-tab="PHOTOSHOP"].active { background: #1f7cc9; }
 
 @media (max-width: 640px) {
     .computer-tabs {

@@ -8,9 +8,9 @@ import java.util.Optional;
 
 public interface KwzmLanguageInviteRepository extends JpaRepository<KwzmLanguageInvite, Long> {
 
-    List<KwzmLanguageInvite> findByLanguageOrderByInvitedAtDesc(String language);
+    List<KwzmLanguageInvite> findByLanguageAndContentTypeOrderByInvitedAtDesc(String language, String contentType);
 
-    Optional<KwzmLanguageInvite> findByLanguageAndStudentNumber(String language, String studentNumber);
+    Optional<KwzmLanguageInvite> findByLanguageAndContentTypeAndStudentNumber(String language, String contentType, String studentNumber);
 
-    boolean existsByLanguageAndStudentNumber(String language, String studentNumber);
+    boolean existsByLanguageAndContentTypeAndStudentNumber(String language, String contentType, String studentNumber);
 }

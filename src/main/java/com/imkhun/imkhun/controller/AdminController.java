@@ -9,6 +9,7 @@ import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.ReviewService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyNoteService;
+import com.imkhun.imkhun.service.StudyPostService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +28,19 @@ public class AdminController {
     private final StudyMaterialService studyMaterialService;
     private final ReviewService reviewService;
     private final KwzmInviteService kwzmInviteService;
+    private final StudyPostService studyPostService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
                            StudyMaterialService studyMaterialService, ReviewService reviewService,
-                           KwzmInviteService kwzmInviteService) {
+                           KwzmInviteService kwzmInviteService, StudyPostService studyPostService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
         this.applicationService = applicationService;
         this.studyMaterialService = studyMaterialService;
         this.reviewService = reviewService;
+        this.studyPostService = studyPostService;
         this.kwzmInviteService = kwzmInviteService;
     }
 
@@ -107,6 +110,35 @@ public class AdminController {
         admin.updatePaymentInfo(paymentRequest.paymentInfo());
         adminRepository.save(admin);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/info")
+    public ResponseEntity<?> updateInfo(HttpServletRequest request, @RequestBody UpdateAdminInfoRequest infoRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        if (infoRequest.email() == null || infoRequest.email().isBlank()
+                || infoRequest.phone() == null || infoRequest.phone().isBlank()) {
+            return ResponseEntity.badRequest().body("이메일과 전화번호를 모두 입력해주세요.");
+        }
+
+        String username = adminAuthService.getLoggedInUsername(request);
+        Admin admin = adminRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("관리자 정보를 찾을 수 없어요."));
+        admin.updateInfo(infoRequest.email(), infoRequest.phone());
+        adminRepository.save(admin);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(HttpServletRequest request, @RequestBody ChangePasswordRequest changeRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+
+        String username = adminAuthService.getLoggedInUsername(request);
+        try {
+            adminAuthService.changePassword(username, changeRequest.currentPassword(), changeRequest.newPassword());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // ---------- 학습 노트 (한국어/일본어/태국어/영어) ----------
@@ -253,20 +285,105 @@ public class AdminController {
         }
     }
 
-    // ---------- KWZM 자료를 볼 수 있는 학생 초대 (언어 단위) ----------
+    // ---------- 온라인 영상 (VIDEO) — 언어별 영상 링크. 학생 초대는 kwzm-invites를 그대로 쓰되 type=VIDEO로 자료 초대와 분리해요 ----------
+
+    @PostMapping("/video-materials")
+    public ResponseEntity<?> createVideoMaterial(HttpServletRequest request, @RequestBody CreateMaterialRequest materialRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(studyMaterialService.createMaterial(materialRequest, "VIDEO"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/video-materials")
+    public ResponseEntity<?> getVideoMaterials(HttpServletRequest request,
+                                               @RequestParam String language, @RequestParam String category) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "VIDEO"));
+    }
+
+    @PutMapping("/video-materials/{id}")
+    public ResponseEntity<?> updateVideoMaterial(HttpServletRequest request, @PathVariable Long id,
+                                                 @RequestBody CreateMaterialRequest materialRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(studyMaterialService.updateMaterial(id, materialRequest, "VIDEO"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/video-materials/{id}")
+    public ResponseEntity<?> deleteVideoMaterial(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            studyMaterialService.deleteMaterial(id, "VIDEO");
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 무료체험 (TRIAL) — 언어/컴퓨터/영상 체험용 자료. 초대 없이 로그인한 학생 누구나 볼 수 있어요 ----------
+
+    @PostMapping("/trial-materials")
+    public ResponseEntity<?> createTrialMaterial(HttpServletRequest request, @RequestBody CreateMaterialRequest materialRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(studyMaterialService.createMaterial(materialRequest, "TRIAL"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/trial-materials")
+    public ResponseEntity<?> getTrialMaterials(HttpServletRequest request,
+                                               @RequestParam String language, @RequestParam String category) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "TRIAL"));
+    }
+
+    @PutMapping("/trial-materials/{id}")
+    public ResponseEntity<?> updateTrialMaterial(HttpServletRequest request, @PathVariable Long id,
+                                                 @RequestBody CreateMaterialRequest materialRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(studyMaterialService.updateMaterial(id, materialRequest, "TRIAL"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/trial-materials/{id}")
+    public ResponseEntity<?> deleteTrialMaterial(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            studyMaterialService.deleteMaterial(id, "TRIAL");
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- KWZM 자료/영상을 볼 수 있는 학생 초대 (언어 + 종류 단위) ----------
+    // type: "MATERIAL"(자료) / "VIDEO"(영상) — 자료로 공부하는 학생과 영상으로 공부하는 학생은 서로 다를 수 있어서 완전히 분리해서 관리해요.
 
     @GetMapping("/kwzm-invites")
-    public ResponseEntity<?> getInvitedStudents(HttpServletRequest request, @RequestParam String language) {
+    public ResponseEntity<?> getInvitedStudents(HttpServletRequest request, @RequestParam String language,
+                                                @RequestParam(defaultValue = "MATERIAL") String type) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
-        return ResponseEntity.ok(kwzmInviteService.getInvitedStudents(language));
+        return ResponseEntity.ok(kwzmInviteService.getInvitedStudents(language, type));
     }
 
     @PostMapping("/kwzm-invites")
     public ResponseEntity<?> inviteStudent(HttpServletRequest request, @RequestParam String language,
+                                           @RequestParam(defaultValue = "MATERIAL") String type,
                                            @RequestBody InviteStudentRequest inviteRequest) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         try {
-            kwzmInviteService.inviteStudent(language, inviteRequest.studentNumber());
+            kwzmInviteService.inviteStudent(language, type, inviteRequest.studentNumber());
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -275,9 +392,48 @@ public class AdminController {
 
     @DeleteMapping("/kwzm-invites")
     public ResponseEntity<?> removeInvitedStudent(HttpServletRequest request, @RequestParam String language,
+                                                  @RequestParam(defaultValue = "MATERIAL") String type,
                                                   @RequestParam String studentNumber) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
-        kwzmInviteService.removeStudent(language, studentNumber);
+        kwzmInviteService.removeStudent(language, type, studentNumber);
         return ResponseEntity.ok().build();
+    }
+
+    // ---------- 학생 게시판 관리 (전체 글 조회, 문제 있는 글 삭제) ----------
+
+    @GetMapping("/posts")
+    public ResponseEntity<?> getAllPosts(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(studyPostService.getAllPostsForAdmin());
+    }
+
+    @DeleteMapping("/posts/{id}")
+    public ResponseEntity<?> deletePost(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            studyPostService.deletePostAsAdmin(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/posts/{id}/comments")
+    public ResponseEntity<?> getPostComments(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(studyPostService.getComments(id));
+    }
+
+    // 관리자가 학생 글에 댓글을 남겨요 — 학생 화면에는 "관리자 댓글"로 표시돼요.
+    @PostMapping("/posts/{id}/comments")
+    public ResponseEntity<?> addPostComment(HttpServletRequest request, @PathVariable Long id,
+                                            @RequestBody CommentRequest commentRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        String adminUsername = adminAuthService.getLoggedInUsername(request);
+        try {
+            return ResponseEntity.ok(studyPostService.addAdminComment(id, adminUsername, commentRequest.content()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

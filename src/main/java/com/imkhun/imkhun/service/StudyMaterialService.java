@@ -19,10 +19,14 @@ public class StudyMaterialService {
 
     private final StudyMaterialRepository studyMaterialRepository;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-    private static final Set<String> VALID_LANGUAGES = Set.of("korean", "japanese", "thai", "english", "other");
-    private static final Set<String> VALID_CATEGORIES = Set.of("GRAMMAR", "READING", "WRITING", "SPEAKING", "OTHER");
+    private static final Set<String> VALID_LANGUAGES = Set.of("korean", "japanese", "thai", "english", "other", "computer", "video");
+    private static final Set<String> VALID_CATEGORIES = Set.of(
+            "GRAMMAR", "READING", "WRITING", "SPEAKING", "OTHER",
+            "BASIC", "WORD", "EXCEL", "POWERPOINT", "PAGEMAKER", "PHOTOSHOP",
+            "VIDEO", "TRIAL"
+    );
 
-    private static final Set<String> VALID_SCOPES = Set.of("PERSONAL", "KWZM");
+    private static final Set<String> VALID_SCOPES = Set.of("PERSONAL", "KWZM", "VIDEO", "TRIAL");
 
     public StudyMaterialService(StudyMaterialRepository studyMaterialRepository) {
         this.studyMaterialRepository = studyMaterialRepository;

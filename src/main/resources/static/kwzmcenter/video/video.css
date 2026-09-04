@@ -62,10 +62,6 @@
 .video-tab[data-video-tab="english"].active { background: var(--kwzm-tag-english); }
 .video-tab[data-video-tab="computer"].active { background: var(--kwzm-tag-computer); }
 
-.video-tab-panel[hidden] {
-    display: none;
-}
-
 @media (max-width: 640px) {
     .video-tabs {
         gap: 8px;

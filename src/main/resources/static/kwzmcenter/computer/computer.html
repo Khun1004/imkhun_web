@@ -22,58 +22,23 @@
 
 <!-- 프로그램별 탭 -->
 <div class="computer-tabs" id="computerTabs" role="tablist" aria-label="컴퓨터 자료 카테고리">
-    <button type="button" class="computer-tab active" data-computer-tab="basic" role="tab" aria-selected="true">Basic</button>
-    <button type="button" class="computer-tab" data-computer-tab="word" role="tab" aria-selected="false">Word</button>
-    <button type="button" class="computer-tab" data-computer-tab="excel" role="tab" aria-selected="false">Excel</button>
-    <button type="button" class="computer-tab" data-computer-tab="powerpoint" role="tab" aria-selected="false">PowerPoint</button>
-    <button type="button" class="computer-tab" data-computer-tab="pagemaker" role="tab" aria-selected="false">PageMaker</button>
-    <button type="button" class="computer-tab" data-computer-tab="photoshop" role="tab" aria-selected="false">Photoshop</button>
+    <button type="button" class="computer-tab active" data-computer-tab="BASIC" role="tab" aria-selected="true">Basic</button>
+    <button type="button" class="computer-tab" data-computer-tab="WORD" role="tab" aria-selected="false">Word</button>
+    <button type="button" class="computer-tab" data-computer-tab="EXCEL" role="tab" aria-selected="false">Excel</button>
+    <button type="button" class="computer-tab" data-computer-tab="POWERPOINT" role="tab" aria-selected="false">PowerPoint</button>
+    <button type="button" class="computer-tab" data-computer-tab="PAGEMAKER" role="tab" aria-selected="false">PageMaker</button>
+    <button type="button" class="computer-tab" data-computer-tab="PHOTOSHOP" role="tab" aria-selected="false">Photoshop</button>
 </div>
 
-<div class="computer-tab-panel active" data-computer-panel="basic">
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">💻</span>
-        <p class="student-coming-soon-title">컴퓨터 기초 자료를 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 컴퓨터 기초(Basic) 자료를 만나보실 수 있어요.</p>
-    </div>
+<p class="student-materials-heading" id="computerMaterialsHeading"></p>
+
+<div class="student-materials-columns" aria-hidden="true">
+    <span></span>
+    <span>자료</span>
+    <span>유형</span>
+    <span>등록일</span>
 </div>
 
-<div class="computer-tab-panel" data-computer-panel="word" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">📄</span>
-        <p class="student-coming-soon-title">Word 자료를 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 Word 활용 자료를 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="computer-tab-panel" data-computer-panel="excel" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">📊</span>
-        <p class="student-coming-soon-title">Excel 자료를 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 Excel 활용 자료를 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="computer-tab-panel" data-computer-panel="powerpoint" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">📽</span>
-        <p class="student-coming-soon-title">PowerPoint 자료를 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 PowerPoint 활용 자료를 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="computer-tab-panel" data-computer-panel="pagemaker" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">🗞</span>
-        <p class="student-coming-soon-title">PageMaker 자료를 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 PageMaker 활용 자료를 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="computer-tab-panel" data-computer-panel="photoshop" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">🎨</span>
-        <p class="student-coming-soon-title">Photoshop 자료를 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 Photoshop 활용 자료를 만나보실 수 있어요.</p>
-    </div>
-</div>
+<p class="admin-empty-text" id="computerMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
+<p class="admin-empty-text" id="computerMaterialsLocked" hidden>아직 컴퓨터 수업을 신청/승인받지 못했어요. 선생님께 문의해주세요.</p>
+<div class="student-materials-grid" id="computerMaterialsList"></div>

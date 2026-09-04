@@ -1,6 +1,7 @@
 <nav class="admin-inline-tabs" role="tablist" aria-label="학생 관리 메뉴">
     <button type="button" class="admin-inline-tab active" data-students-tab="applications" role="tab" aria-selected="true">강의 신청 내역</button>
     <button type="button" class="admin-inline-tab" data-students-tab="reviews" role="tab" aria-selected="false">리뷰</button>
+    <button type="button" class="admin-inline-tab" data-students-tab="posts" role="tab" aria-selected="false">학생 게시판</button>
 </nav>
 
 <div class="admin-inline-panel active" data-students-panel="applications">
@@ -8,6 +9,7 @@
     <p class="admin-empty-text" id="adminStudentsEmpty" hidden>아직 신청 내역이 없어요.</p>
     <div class="admin-student-columns" aria-hidden="true">
         <span>학생</span>
+        <span>이메일</span>
         <span>강의정보</span>
         <span>연락처</span>
         <span>학생번호</span>
@@ -21,4 +23,10 @@
     <p class="admin-note-hint">학생들이 남긴 리뷰예요. 답글을 남기면 리뷰 화면에 같이 보여요.</p>
     <p class="admin-empty-text" id="adminReviewsEmpty" hidden>아직 리뷰가 없어요.</p>
     <div id="adminReviewList"></div>
+</div>
+
+<div class="admin-inline-panel" data-students-panel="posts" hidden>
+    <p class="admin-note-hint">학생들이 게시판에 쓴 글이에요. 문제가 있는 글은 삭제할 수 있어요.</p>
+    <p class="admin-empty-text" id="adminPostsEmpty" hidden>아직 등록된 글이 없어요.</p>
+    <div id="adminPostList" class="admin-post-list"></div>
 </div>

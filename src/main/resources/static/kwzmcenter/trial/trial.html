@@ -20,7 +20,7 @@
     </div>
 </div>
 
-<!-- 언어/컴퓨터 탭 -->
+<!-- 언어/컴퓨터/영상 탭 -->
 <div class="trial-tabs" id="trialTabs" role="tablist" aria-label="무료체험 카테고리">
     <button type="button" class="trial-tab active" data-trial-tab="korean" role="tab" aria-selected="true">한국어</button>
     <button type="button" class="trial-tab" data-trial-tab="english" role="tab" aria-selected="false">영어</button>
@@ -30,50 +30,14 @@
     <button type="button" class="trial-tab" data-trial-tab="video" role="tab" aria-selected="false">영상</button>
 </div>
 
-<div class="trial-tab-panel active" data-trial-panel="korean">
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">🎁</span>
-        <p class="student-coming-soon-title">한국어 무료체험 영상을 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 한국어 체험 영상을 만나보실 수 있어요.</p>
-    </div>
+<p class="student-materials-heading" id="trialMaterialsHeading"></p>
+
+<div class="student-materials-columns" aria-hidden="true">
+    <span></span>
+    <span>자료</span>
+    <span>유형</span>
+    <span>등록일</span>
 </div>
 
-<div class="trial-tab-panel" data-trial-panel="english" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">🎁</span>
-        <p class="student-coming-soon-title">영어 무료체험 영상을 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 영어 체험 영상을 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="trial-tab-panel" data-trial-panel="japanese" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">🎁</span>
-        <p class="student-coming-soon-title">일본어 무료체험 영상을 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 일본어 체험 영상을 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="trial-tab-panel" data-trial-panel="thai" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">🎁</span>
-        <p class="student-coming-soon-title">태국어 무료체험 영상을 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 태국어 체험 영상을 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="trial-tab-panel" data-trial-panel="computer" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">💻</span>
-        <p class="student-coming-soon-title">컴퓨터 무료체험 영상을 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 컴퓨터 활용 체험 영상을 만나보실 수 있어요.</p>
-    </div>
-</div>
-
-<div class="trial-tab-panel" data-trial-panel="video" hidden>
-    <div class="student-coming-soon">
-        <span class="student-coming-soon-icon" aria-hidden="true">▶</span>
-        <p class="student-coming-soon-title">체험 영상을 준비하고 있어요</p>
-        <p class="student-coming-soon-desc">곧 이곳에서 무료체험 영상을 만나보실 수 있어요.</p>
-    </div>
-</div>
+<p class="admin-empty-text" id="trialMaterialsEmpty" hidden>아직 등록된 체험 자료가 없어요.</p>
+<div class="student-materials-grid" id="trialMaterialsList"></div>

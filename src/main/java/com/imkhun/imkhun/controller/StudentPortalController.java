@@ -7,6 +7,7 @@ import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.StudentAuthService;
 import com.imkhun.imkhun.service.StudyMaterialService;
+import com.imkhun.imkhun.service.StudyPostService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +26,16 @@ public class StudentPortalController {
     private final ApplicationService applicationService;
     private final StudyMaterialService studyMaterialService;
     private final KwzmInviteService kwzmInviteService;
+    private final StudyPostService studyPostService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
-                                   StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService) {
+                                   StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
+                                   StudyPostService studyPostService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
+        this.studyPostService = studyPostService;
     }
 
     @PostMapping("/login")
@@ -81,22 +85,47 @@ public class StudentPortalController {
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         User user = userOpt.get();
 
-        if (!isInvitedForLanguage(user.getUsername(), language)) {
+        if (!isInvitedForLanguage(user.getUsername(), language, "MATERIAL")) {
             return ResponseEntity.status(403).body("아직 이 언어 자료를 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요.");
         }
 
         return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "KWZM"));
     }
 
-    // 이 학생의 승인된 신청서 중, 이 언어에 해당하는 학생번호가 초대 목록에 있는지 확인
-    private boolean isInvitedForLanguage(String username, String language) {
+    // 온라인 영상 — "언어 자료"와는 별도의 초대(type=VIDEO)로 관리해요.
+    // 자료로 공부하는 학생과 영상으로 공부하는 학생이 다를 수 있어서, 완전히 분리했어요.
+    // 항목(category) 구분이 없어서 늘 "VIDEO" 고정 카테고리로 저장/조회해요.
+    @GetMapping("/videos")
+    public ResponseEntity<?> getVideos(HttpServletRequest request, @RequestParam String topic) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        User user = userOpt.get();
+
+        if (!isInvitedForLanguage(user.getUsername(), topic, "VIDEO")) {
+            return ResponseEntity.status(403).body("아직 이 영상을 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요.");
+        }
+
+        return ResponseEntity.ok(studyMaterialService.getMaterials(topic, "VIDEO", "VIDEO"));
+    }
+
+    // 무료체험 — 수업을 듣기 전에 미리 볼 수 있는 체험용 자료라, 초대 없이 로그인한 학생이면 누구나 볼 수 있어요.
+    @GetMapping("/trial")
+    public ResponseEntity<?> getTrialMaterials(HttpServletRequest request, @RequestParam String topic) {
+        if (studentAuthService.getLoggedInUser(request).isEmpty()) {
+            return ResponseEntity.status(403).body("로그인이 필요해요.");
+        }
+        return ResponseEntity.ok(studyMaterialService.getMaterials(topic, "TRIAL", "TRIAL"));
+    }
+
+    // 이 학생의 승인된 신청서 중, 이 언어 + 종류(자료/영상)에 해당하는 학생번호가 초대 목록에 있는지 확인
+    private boolean isInvitedForLanguage(String username, String language, String contentType) {
         List<Application> approved = studentAuthService.getApprovedApplications(username);
         return approved.stream()
                 .filter(a -> language.equals(applicationService.extractLanguageCode(a.getCourseName())))
-                .anyMatch(a -> kwzmInviteService.isInvited(language, a.getStudentNumber()));
+                .anyMatch(a -> kwzmInviteService.isInvited(language, contentType, a.getStudentNumber()));
     }
 
-    // 홈 화면 "최근 등록된 자료" — 초대받은 언어들 중 최근 6개
+    // 홈 화면 "최근 등록된 자료" — 초대받은(자료) 언어들 중 최근 6개
     @GetMapping("/materials/recent")
     public ResponseEntity<?> getRecentMaterials(HttpServletRequest request) {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
@@ -106,10 +135,105 @@ public class StudentPortalController {
         List<Application> approved = studentAuthService.getApprovedApplications(user.getUsername());
         Set<String> invitedLanguages = approved.stream()
                 .map(a -> applicationService.extractLanguageCode(a.getCourseName()))
-                .filter(lang -> isInvitedForLanguage(user.getUsername(), lang))
+                .filter(lang -> isInvitedForLanguage(user.getUsername(), lang, "MATERIAL"))
                 .collect(java.util.stream.Collectors.toSet());
 
         List<MaterialResponse> materials = studyMaterialService.getRecentMaterials(invitedLanguages, 6);
         return ResponseEntity.ok(materials);
+    }
+
+    // ---- 게시판: 학생들이 언어/컴퓨터 관련 글을 서로 올리고 볼 수 있는 공간 ----
+
+    @GetMapping("/posts")
+    public ResponseEntity<?> getPosts(HttpServletRequest request,
+                                      @RequestParam String topic,
+                                      @RequestParam(required = false) String category) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(studyPostService.getPosts(topic, category, userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/posts")
+    public ResponseEntity<?> createPost(HttpServletRequest request, @RequestBody CreatePostRequest createPostRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        User user = userOpt.get();
+
+        try {
+            PostResponse post = studyPostService.createPost(createPostRequest, user.getUsername(), user.getNickname());
+            return ResponseEntity.ok(post);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 마이페이지 "내가 쓴 글"
+    @GetMapping("/posts/mine")
+    public ResponseEntity<?> getMyPosts(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(studyPostService.getMyPosts(userOpt.get().getUsername()));
+    }
+
+    @PutMapping("/posts/{id}")
+    public ResponseEntity<?> updatePost(HttpServletRequest request, @PathVariable Long id,
+                                        @RequestBody UpdatePostRequest updatePostRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+
+        try {
+            return ResponseEntity.ok(studyPostService.updatePost(id, updatePostRequest, userOpt.get().getUsername()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/posts/{id}")
+    public ResponseEntity<?> deletePost(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+
+        try {
+            studyPostService.deletePost(id, userOpt.get().getUsername());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 좋아요/싫어요 — 같은 걸 다시 누르면 취소, 다른 걸 누르면 전환
+    @PostMapping("/posts/{id}/reaction")
+    public ResponseEntity<?> reactToPost(HttpServletRequest request, @PathVariable Long id,
+                                         @RequestBody ReactionRequest reactionRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+
+        try {
+            return ResponseEntity.ok(studyPostService.toggleReaction(id, reactionRequest.type(), userOpt.get().getUsername()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/posts/{id}/comments")
+    public ResponseEntity<?> getComments(HttpServletRequest request, @PathVariable Long id) {
+        if (studentAuthService.getLoggedInUser(request).isEmpty()) {
+            return ResponseEntity.status(403).body("로그인이 필요해요.");
+        }
+        return ResponseEntity.ok(studyPostService.getComments(id));
+    }
+
+    @PostMapping("/posts/{id}/comments")
+    public ResponseEntity<?> addComment(HttpServletRequest request, @PathVariable Long id,
+                                        @RequestBody CommentRequest commentRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        User user = userOpt.get();
+
+        try {
+            return ResponseEntity.ok(studyPostService.addComment(id, commentRequest.content(), user.getUsername(), user.getNickname()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

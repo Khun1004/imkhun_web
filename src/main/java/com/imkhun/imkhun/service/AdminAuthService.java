@@ -91,6 +91,22 @@ public class AdminAuthService {
         setCookie(response, "", 0);
     }
 
+    // 현재 비밀번호를 확인한 뒤에만 새 비밀번호로 바꿔줌
+    public void changePassword(String username, String currentPassword, String newPassword) {
+        Admin admin = adminRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("관리자 정보를 찾을 수 없어요."));
+
+        if (currentPassword == null || !passwordEncoder.matches(currentPassword, admin.getPassword())) {
+            throw new IllegalStateException("현재 비밀번호가 올바르지 않아요.");
+        }
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalStateException("새 비밀번호는 8자 이상이어야 해요.");
+        }
+
+        admin.updatePassword(passwordEncoder.encode(newPassword));
+        adminRepository.save(admin);
+    }
+
     private String generateToken() {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);

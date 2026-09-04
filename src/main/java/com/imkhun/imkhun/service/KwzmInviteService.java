@@ -30,8 +30,8 @@ public class KwzmInviteService {
     }
 
     @Transactional(readOnly = true)
-    public List<InvitedStudentResponse> getInvitedStudents(String language) {
-        return inviteRepository.findByLanguageOrderByInvitedAtDesc(language)
+    public List<InvitedStudentResponse> getInvitedStudents(String language, String contentType) {
+        return inviteRepository.findByLanguageAndContentTypeOrderByInvitedAtDesc(language, contentType)
                 .stream()
                 .map(invite -> {
                     Application app = applicationRepository.findByStudentNumber(invite.getStudentNumber()).orElse(null);
@@ -52,7 +52,7 @@ public class KwzmInviteService {
     }
 
     @Transactional
-    public void inviteStudent(String language, String studentNumber) {
+    public void inviteStudent(String language, String contentType, String studentNumber) {
         if (studentNumber == null || studentNumber.isBlank()) {
             throw new IllegalStateException("학생번호를 입력해주세요.");
         }
@@ -61,20 +61,20 @@ public class KwzmInviteService {
         if (!"APPROVED".equals(app.getStatus())) {
             throw new IllegalStateException("승인된 학생만 초대할 수 있어요.");
         }
-        if (inviteRepository.existsByLanguageAndStudentNumber(language, studentNumber)) {
+        if (inviteRepository.existsByLanguageAndContentTypeAndStudentNumber(language, contentType, studentNumber)) {
             throw new IllegalStateException("이미 초대된 학생이에요.");
         }
-        inviteRepository.save(KwzmLanguageInvite.create(language, studentNumber));
+        inviteRepository.save(KwzmLanguageInvite.create(language, contentType, studentNumber));
     }
 
     @Transactional
-    public void removeStudent(String language, String studentNumber) {
-        inviteRepository.findByLanguageAndStudentNumber(language, studentNumber)
+    public void removeStudent(String language, String contentType, String studentNumber) {
+        inviteRepository.findByLanguageAndContentTypeAndStudentNumber(language, contentType, studentNumber)
                 .ifPresent(inviteRepository::delete);
     }
 
     @Transactional(readOnly = true)
-    public boolean isInvited(String language, String studentNumber) {
-        return inviteRepository.existsByLanguageAndStudentNumber(language, studentNumber);
+    public boolean isInvited(String language, String contentType, String studentNumber) {
+        return inviteRepository.existsByLanguageAndContentTypeAndStudentNumber(language, contentType, studentNumber);
     }
 }

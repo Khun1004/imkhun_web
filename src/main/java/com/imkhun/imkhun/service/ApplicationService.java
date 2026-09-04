@@ -57,16 +57,16 @@ public class ApplicationService {
                 .toList();
     }
 
-    // 관리자 - 전체 신청 목록 (누가 신청했는지 닉네임 포함)
+    // 관리자 - 전체 신청 목록 (누가 신청했는지 닉네임/이메일 포함)
     public List<AdminApplicationResponse> getAllApplicationsForAdmin() {
         return applicationRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(app -> {
-                    String nickname = userRepository.findByUsername(app.getUsername())
-                            .map(User::getNickname)
-                            .orElse(app.getUsername());
+                    User user = userRepository.findByUsername(app.getUsername()).orElse(null);
+                    String nickname = user != null ? user.getNickname() : app.getUsername();
+                    String email = user != null ? user.getEmail() : null;
                     return new AdminApplicationResponse(
-                            app.getId(), nickname, app.getStudyType(), app.getCourseName(),
+                            app.getId(), nickname, email, app.getStudyType(), app.getCourseName(),
                             app.getContact(), app.getMemo(), app.getStatus(),
                             app.getCreatedAt().format(DATE_FORMAT), app.getStudentNumber()
                     );
@@ -108,7 +108,8 @@ public class ApplicationService {
         if (courseName.startsWith("일본어")) return "japanese";
         if (courseName.startsWith("태국어")) return "thai";
         if (courseName.startsWith("영어")) return "english";
-        return "other"; // 컴퓨터 등 나머지는 "기타" 자료함으로 연결
+        if (courseName.startsWith("컴퓨터")) return "computer";
+        return "other";
     }
 
     private String extractLanguage(String courseName) {

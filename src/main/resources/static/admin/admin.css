@@ -35,6 +35,8 @@
     --tag-japanese: #2f6690;
     --tag-thai: #5c7a37;
     --tag-english: #bd7f1c;
+    --tag-computer: #6b5b95;
+    --tag-video: #c8401d;
     --tag-other: #6b6478;
 }
 
@@ -789,7 +791,9 @@ body.admin-standalone-body {
    like a folder rack next to the page you're reading */
 
 .admin-main-panel[data-main-panel="personal"]:not([hidden]),
-.admin-main-panel[data-main-panel="kwzm"]:not([hidden]) {
+.admin-main-panel[data-main-panel="kwzm"]:not([hidden]),
+.admin-main-panel[data-main-panel="video"]:not([hidden]),
+.admin-main-panel[data-main-panel="trial"]:not([hidden]) {
     display: grid;
     grid-template-columns: 208px minmax(0, 1fr);
     column-gap: 32px;
@@ -805,7 +809,9 @@ body.admin-standalone-body {
 
 @media (max-width: 720px) {
     .admin-main-panel[data-main-panel="personal"]:not([hidden]),
-    .admin-main-panel[data-main-panel="kwzm"]:not([hidden]) {
+    .admin-main-panel[data-main-panel="kwzm"]:not([hidden]),
+    .admin-main-panel[data-main-panel="video"]:not([hidden]),
+    .admin-main-panel[data-main-panel="trial"]:not([hidden]) {
         grid-template-columns: 1fr;
         grid-template-areas:
             "sidebar"
@@ -860,6 +866,8 @@ body.admin-standalone-body {
 .admin-language-pills .admin-pill[data-lang="japanese"]::before { background: var(--tag-japanese); }
 .admin-language-pills .admin-pill[data-lang="thai"]::before { background: var(--tag-thai); }
 .admin-language-pills .admin-pill[data-lang="english"]::before { background: var(--tag-english); }
+.admin-language-pills .admin-pill[data-lang="computer"]::before { background: var(--tag-computer); }
+.admin-language-pills .admin-pill[data-lang="video"]::before { background: var(--tag-video); }
 .admin-language-pills .admin-pill[data-lang="other"]::before { background: var(--tag-other); }
 
 .admin-language-pills .admin-pill:hover {
@@ -879,6 +887,8 @@ body.admin-standalone-body {
 .admin-language-pills .admin-pill[data-lang="japanese"].active { background: var(--tag-japanese); }
 .admin-language-pills .admin-pill[data-lang="thai"].active { background: var(--tag-thai); }
 .admin-language-pills .admin-pill[data-lang="english"].active { background: var(--tag-english); }
+.admin-language-pills .admin-pill[data-lang="computer"].active { background: var(--tag-computer); }
+.admin-language-pills .admin-pill[data-lang="video"].active { background: var(--tag-video); }
 .admin-language-pills .admin-pill[data-lang="other"].active { background: var(--tag-other); }
 
 @media (max-width: 720px) {
@@ -1749,7 +1759,7 @@ textarea.admin-note-textarea.admin-register-text {
 
 .admin-student-columns {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 170px 140px 140px 100px 140px;
+    grid-template-columns: minmax(0, 1fr) 160px 170px 140px 140px 100px 140px;
     gap: 14px;
     padding: 0 16px 8px;
     font-size: 11.5px;
@@ -1758,8 +1768,8 @@ textarea.admin-note-textarea.admin-register-text {
     font-family: "JetBrains Mono", monospace;
 }
 
-.admin-student-columns span:nth-child(5),
-.admin-student-columns span:nth-child(6) {
+.admin-student-columns span:nth-child(6),
+.admin-student-columns span:nth-child(7) {
     text-align: right;
 }
 
@@ -1774,7 +1784,7 @@ textarea.admin-note-textarea.admin-register-text {
 
 .admin-student-item {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 170px 140px 140px 100px 140px;
+    grid-template-columns: minmax(0, 1fr) 160px 170px 140px 140px 100px 140px;
     align-items: center;
     gap: 14px;
     padding: 14px 16px;
@@ -1834,6 +1844,16 @@ textarea.admin-note-textarea.admin-register-text {
 .admin-student-contact {
     font-size: 12.5px;
     color: var(--ink-soft);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-student-email {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-family: "JetBrains Mono", monospace;
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1914,6 +1934,7 @@ textarea.admin-note-textarea.admin-register-text {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas:
             "main    status"
+            "email   email"
             "course  course"
             "contact contact"
             "number  date";
@@ -1921,6 +1942,7 @@ textarea.admin-note-textarea.admin-register-text {
     }
 
     .admin-student-main { grid-area: main; }
+    .admin-student-email { grid-area: email; white-space: normal; }
     .admin-student-status { grid-area: status; flex-direction: row; align-items: center; }
     .admin-student-course { grid-area: course; white-space: normal; }
     .admin-student-contact { grid-area: contact; white-space: normal; }
@@ -2071,6 +2093,248 @@ textarea.admin-note-textarea.admin-register-text {
 
 .admin-review-reply-submit:hover {
     background: var(--teal-deep);
+}
+
+/* 학생 게시판 관리 */
+
+.admin-post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-post-item {
+    padding: 16px 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.admin-post-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.admin-post-avatar {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--teal-deep);
+    font-family: "Noto Serif KR", serif;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-post-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-post-topic {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--paper-2);
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.admin-post-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--teal-deep);
+    background: var(--teal-soft);
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.admin-post-date {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-family: "JetBrains Mono", monospace;
+    white-space: nowrap;
+}
+
+.admin-post-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 4px;
+}
+
+.admin-post-content {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin: 0 0 10px;
+    white-space: pre-wrap;
+}
+
+.admin-post-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 10px;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    font-family: "JetBrains Mono", monospace;
+}
+
+.admin-post-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 14px;
+}
+
+.admin-post-meta-icon {
+    width: 14px;
+    height: 14px;
+    color: currentColor;
+}
+
+.admin-post-comment-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--ink-faint);
+    font-size: 11.5px;
+    font-family: "JetBrains Mono", monospace;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.admin-post-comment-toggle:hover {
+    color: var(--teal-deep);
+}
+
+.admin-post-comments {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: var(--paper-2);
+    border-radius: 10px;
+}
+
+.admin-post-comments[hidden] {
+    display: none;
+}
+
+.admin-post-comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.admin-post-comment-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--card);
+    border-radius: 8px;
+}
+
+.admin-post-comment-item--admin {
+    background: var(--teal-soft);
+    border: 1px solid rgba(14, 111, 95, 0.25);
+}
+
+.admin-post-comment-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--teal);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.admin-post-comment-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    flex-shrink: 0;
+}
+
+.admin-post-comment-text {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-post-comment-date {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+    font-family: "JetBrains Mono", monospace;
+}
+
+.admin-post-comment-form {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-post-comment-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 12px;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 999px;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--card);
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.admin-post-comment-input:focus {
+    outline: none;
+    border-style: solid;
+    border-color: var(--teal);
+    background: var(--teal-soft);
+}
+
+.admin-post-comment-submit {
+    flex-shrink: 0;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 18px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.admin-post-comment-submit:hover {
+    background: var(--teal-deep);
+}
+
+.admin-post-actions {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1.5px dashed var(--line);
+    padding-top: 10px;
 }
 
 /* ============================================
