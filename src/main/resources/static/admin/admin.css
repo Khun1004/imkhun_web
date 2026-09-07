@@ -1996,6 +1996,97 @@ textarea.admin-note-textarea.admin-register-text {
     border-bottom: none;
 }
 
+.admin-student-actions-row {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    margin-top: 2px;
+    border-top: 1px dashed var(--line);
+}
+
+.admin-payment-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.admin-payment-status--waiting {
+    background: var(--paper-2);
+    color: var(--ink-faint);
+}
+
+.admin-payment-status--done {
+    background: var(--teal-soft);
+    color: var(--teal-deep);
+}
+
+.admin-payment-status--done svg {
+    width: 12px;
+    height: 12px;
+}
+
+.admin-payment-confirm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 14px;
+    background: #a87c22;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.admin-payment-confirm-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+.admin-payment-confirm-btn:hover {
+    background: #8f6a1c;
+}
+
+.admin-payment-confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-receipt-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 14px;
+    background: none;
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.admin-receipt-view-btn svg {
+    width: 13px;
+    height: 13px;
+}
+
+.admin-receipt-view-btn:hover {
+    border-color: var(--teal);
+    color: var(--teal-deep);
+    background: var(--teal-soft);
+}
+
 .admin-student-item:hover {
     background: var(--paper-2);
 }
@@ -2185,7 +2276,8 @@ textarea.admin-note-textarea.admin-register-text {
             "email   email"
             "course  course"
             "contact contact"
-            "number  date";
+            "number  date"
+            "actions actions";
         row-gap: 6px;
     }
 
@@ -2196,6 +2288,7 @@ textarea.admin-note-textarea.admin-register-text {
     .admin-student-contact { grid-area: contact; white-space: normal; }
     .admin-student-number { grid-area: number; justify-self: start; }
     .admin-student-date { grid-area: date; justify-self: end; text-align: right; }
+    .admin-student-actions-row { grid-area: actions; flex-wrap: wrap; }
     .admin-student-name, .admin-student-memo { white-space: normal; }
 }
 

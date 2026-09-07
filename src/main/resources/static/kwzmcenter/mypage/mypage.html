@@ -50,3 +50,20 @@
         </div>
     </div>
 </div>
+
+<!-- "내 수강 정보" 카드를 누르면 뜨는 자료 목록 오버레이 -->
+<div class="course-materials-modal" id="courseMaterialsModal" aria-hidden="true">
+    <div class="course-materials-backdrop" data-course-materials-close></div>
+    <div class="course-materials-panel" role="dialog" aria-modal="true">
+        <div class="course-materials-head">
+            <div>
+                <p class="course-materials-eyebrow">Materials</p>
+                <h3 id="courseMaterialsModalTitle">강의 자료</h3>
+            </div>
+            <button type="button" class="auth-modal-close" data-course-materials-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="course-materials-body" id="courseMaterialsModalBody"></div>
+    </div>
+</div>

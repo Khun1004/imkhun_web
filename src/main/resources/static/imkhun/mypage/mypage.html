@@ -119,3 +119,78 @@
         </div>
     </div>
 </div>
+
+<!-- ===================== 결제 확인 (마이페이지 위에 뜨는 모달) ===================== -->
+<div class="payment-confirm-modal" id="paymentConfirmModal" aria-hidden="true">
+    <div class="payment-confirm-backdrop" data-payment-confirm-close></div>
+    <div class="payment-confirm-panel" role="dialog" aria-modal="true">
+        <div class="payment-confirm-head">
+            <div>
+                <p class="payment-confirm-eyebrow">Payment</p>
+                <h3>결제 확인</h3>
+                <p class="payment-confirm-course" id="paymentConfirmCourse"></p>
+            </div>
+            <button type="button" class="auth-modal-close" data-payment-confirm-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+
+        <div class="payment-confirm-body">
+            <div class="payment-confirm-section payment-confirm-section--highlight">
+                <p class="payment-confirm-label">보내야 하는 금액</p>
+                <p class="payment-confirm-amount" id="paymentConfirmAmount"></p>
+            </div>
+
+            <div class="payment-confirm-section">
+                <p class="payment-confirm-label">결제 수단</p>
+                <p class="payment-confirm-value" id="paymentConfirmMethod"></p>
+            </div>
+
+            <div class="payment-confirm-section">
+                <p class="payment-confirm-label">왜 이 금액인가요?</p>
+                <p class="payment-confirm-value" id="paymentConfirmReason"></p>
+            </div>
+
+            <div class="payment-confirm-section">
+                <p class="payment-confirm-label">자료는 어떻게 받나요?</p>
+                <p class="payment-confirm-value" id="paymentConfirmMaterial"></p>
+            </div>
+
+            <div class="payment-confirm-section">
+                <p class="payment-confirm-label">수업 안내</p>
+                <p class="payment-confirm-value" id="paymentConfirmClass"></p>
+            </div>
+
+            <div class="payment-confirm-footer" id="paymentConfirmFooter">
+                <input type="hidden" id="paymentConfirmApplicationId">
+
+                <div class="payment-receipt-upload" id="paymentReceiptUpload">
+                    <label for="paymentReceiptInput" class="payment-receipt-upload-label">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M4 16.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2.5M7 9l5-5 5 5M12 4v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span id="paymentReceiptUploadText">영수증 이미지 첨부하기 <em>(선택)</em></span>
+                    </label>
+                    <input type="file" id="paymentReceiptInput" accept="image/*" hidden>
+                    <div class="payment-receipt-preview" id="paymentReceiptPreview" hidden>
+                        <img id="paymentReceiptPreviewImg" alt="영수증 미리보기">
+                        <button type="button" class="payment-receipt-remove-btn" id="paymentReceiptRemoveBtn" aria-label="영수증 제거">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" class="payment-confirm-btn" id="paymentConfirmBtn">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    입금했어요
+                </button>
+                <p class="payment-confirm-status payment-confirm-status--pending" id="paymentConfirmPendingStatus" hidden>
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    입금 확인 요청 중이에요. 선생님이 확인하면 알려드릴게요.
+                </p>
+                <p class="payment-confirm-status payment-confirm-status--done" id="paymentConfirmDoneStatus" hidden>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    결제가 확인됐어요. 감사합니다!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

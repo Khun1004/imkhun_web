@@ -95,6 +95,20 @@ public class StudentPortalController {
         return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "KWZM"));
     }
 
+    // "내 수강 정보" 카드를 눌렀을 때 — 그 강의(언어)의 자료를 항목 구분 없이 한 번에 다 보여줘요
+    @GetMapping("/materials/by-course")
+    public ResponseEntity<?> getMaterialsByCourse(HttpServletRequest request, @RequestParam String language) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        User user = userOpt.get();
+
+        if (!isInvitedForLanguage(user.getUsername(), language, "MATERIAL")) {
+            return ResponseEntity.status(403).body("아직 이 언어 자료를 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요.");
+        }
+
+        return ResponseEntity.ok(studyMaterialService.getAllMaterialsForLanguage(language, "KWZM"));
+    }
+
     // 온라인 영상 — "언어 자료"와는 별도의 초대(type=VIDEO)로 관리해요.
     // 자료로 공부하는 학생과 영상으로 공부하는 학생이 다를 수 있어서, 완전히 분리했어요.
     // 항목(category) 구분이 없어서 늘 "VIDEO" 고정 카테고리로 저장/조회해요.

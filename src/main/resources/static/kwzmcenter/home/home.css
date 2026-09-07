@@ -81,6 +81,7 @@
     border: 1px solid var(--kwzm-line);
     border-radius: 16px;
     overflow: hidden;
+    cursor: pointer;
     box-shadow: 0 4px 16px -10px rgba(23, 20, 15, 0.15);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -364,6 +365,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.student-info-panel-item--clickable {
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s, padding-left 0.15s;
+}
+
+.student-info-panel-item--clickable:hover {
+    background: rgba(255, 255, 255, 0.08);
+    padding-left: 6px;
 }
 
 .student-info-panel-date {

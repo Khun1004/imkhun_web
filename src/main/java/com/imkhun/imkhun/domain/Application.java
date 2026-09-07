@@ -45,6 +45,34 @@ public class Application {
     @Column
     private String studentNumber;
 
+    // ---- 결제 안내 (관리자가 승인된 학생에게 등록해줌) — 하나라도 등록되면 학생 마이페이지에 "결제 확인" 버튼이 떠요 ----
+    @Column(name = "payment_method", columnDefinition = "CLOB")
+    private String paymentMethod;
+
+    @Column
+    private String amount;
+
+    @Column(name = "amount_reason", columnDefinition = "CLOB")
+    private String amountReason;
+
+    @Column(name = "material_guide", columnDefinition = "CLOB")
+    private String materialGuide;
+
+    @Column(name = "class_guide", columnDefinition = "CLOB")
+    private String classGuide;
+
+    // 학생이 "입금했어요" 눌렀을 때 (null이면 아직 안 눌렀다는 뜻)
+    @Column(name = "payment_confirmed_by_student_at")
+    private LocalDateTime paymentConfirmedByStudentAt;
+
+    // 관리자가 입금을 확인해줬을 때
+    @Column(name = "payment_confirmed_by_admin_at")
+    private LocalDateTime paymentConfirmedByAdminAt;
+
+    // 학생이 "입금했어요" 누를 때 같이 첨부한 영수증 이미지 (base64 데이터 URI) — 없으면 null
+    @Column(name = "receipt_image", columnDefinition = "CLOB")
+    private String receiptImage;
+
     protected Application() {
         // JPA 기본 생성자
     }
@@ -67,6 +95,36 @@ public class Application {
 
     public void assignStudentNumber(String studentNumber) {
         this.studentNumber = studentNumber;
+    }
+
+    // 관리자가 강의(과목/학습방식)를 바꿔줄 때 씀 — 학생은 직접 바꿀 수 없음
+    public void changeCourse(String studyType, String courseName) {
+        this.studyType = studyType;
+        this.courseName = courseName;
+    }
+
+    public void updatePaymentInfo(String paymentMethod, String amount, String amountReason,
+                                  String materialGuide, String classGuide) {
+        this.paymentMethod = paymentMethod;
+        this.amount = amount;
+        this.amountReason = amountReason;
+        this.materialGuide = materialGuide;
+        this.classGuide = classGuide;
+    }
+
+    // 5개 항목 중 하나라도 채워져 있으면 "결제 안내가 등록됐다"고 봐요
+    public boolean hasPaymentInfo() {
+        return paymentMethod != null || amount != null || amountReason != null
+                || materialGuide != null || classGuide != null;
+    }
+
+    public void confirmPaymentByStudent(String receiptImage) {
+        this.paymentConfirmedByStudentAt = LocalDateTime.now();
+        this.receiptImage = receiptImage;
+    }
+
+    public void confirmPaymentByAdmin() {
+        this.paymentConfirmedByAdminAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -103,5 +161,37 @@ public class Application {
 
     public String getStudentNumber() {
         return studentNumber;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public String getAmount() {
+        return amount;
+    }
+
+    public String getAmountReason() {
+        return amountReason;
+    }
+
+    public String getMaterialGuide() {
+        return materialGuide;
+    }
+
+    public String getClassGuide() {
+        return classGuide;
+    }
+
+    public LocalDateTime getPaymentConfirmedByStudentAt() {
+        return paymentConfirmedByStudentAt;
+    }
+
+    public LocalDateTime getPaymentConfirmedByAdminAt() {
+        return paymentConfirmedByAdminAt;
+    }
+
+    public String getReceiptImage() {
+        return receiptImage;
     }
 }

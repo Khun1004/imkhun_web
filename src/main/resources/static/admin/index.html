@@ -421,6 +421,116 @@
     </div>
 </div>
 
+<!-- ===================== 강의 변경 (관리자 전용) ===================== -->
+<div class="admin-invite-modal" id="courseChangeModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-course-change-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3>강의 변경</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-course-change-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <p class="admin-note-hint">학생은 직접 강의를 바꿀 수 없어요 — 관리자가 대신 바꿔줄 수 있어요. 과목이 바뀌면 학생번호도 새로 배정되고, 기존 KWZM 초대는 새 번호로 자동으로 옮겨져요.</p>
+
+            <input type="hidden" id="courseChangeApplicationId">
+
+            <div class="auth-form-field">
+                <label>학습 방식</label>
+                <div class="admin-category-grid">
+                    <label class="admin-category-chip">
+                        <input type="radio" name="courseChangeStudyType" value="TOGETHER" checked>
+                        <span>실시간으로 함께 배우기</span>
+                    </label>
+                    <label class="admin-category-chip">
+                        <input type="radio" name="courseChangeStudyType" value="VIDEO">
+                        <span>언제든 영상으로 배우기</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="courseChangeSelect">과목</label>
+                <select class="apply-select" id="courseChangeSelect">
+                    <optgroup label="한국어">
+                        <option value="한국어 기초">한국어 기초</option>
+                        <option value="한국어 1급">한국어 1급</option>
+                        <option value="한국어 2급">한국어 2급</option>
+                        <option value="한국어 3급">한국어 3급</option>
+                        <option value="한국어 4급">한국어 4급</option>
+                    </optgroup>
+                    <optgroup label="컴퓨터">
+                        <option value="컴퓨터 기초">컴퓨터 기초</option>
+                        <option value="컴퓨터 Word">Word</option>
+                        <option value="컴퓨터 Excel">Excel</option>
+                        <option value="컴퓨터 PowerPoint">PowerPoint</option>
+                        <option value="컴퓨터 페이지메이커">페이지메이커</option>
+                        <option value="컴퓨터 포토샵">포토샵</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <p class="auth-form-error" id="courseChangeError" hidden></p>
+
+            <div class="admin-note-footer">
+                <span></span>
+                <button type="button" class="admin-note-save-btn" id="courseChangeSaveBtn">변경하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== 결제 안내 등록 (관리자 전용) ===================== -->
+<div class="admin-invite-modal" id="paymentInfoModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-payment-info-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3>결제 안내 등록</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-payment-info-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <p class="admin-note-hint">여기 등록한 내용은 학생 마이페이지의 "결제 확인"에 그대로 보여요.</p>
+
+            <input type="hidden" id="paymentInfoApplicationId">
+
+            <div class="auth-form-field">
+                <label for="paymentInfoMethodInput">결제 수단</label>
+                <textarea class="admin-note-textarea" id="paymentInfoMethodInput" placeholder="예: 국민은행 123456-78-901234 (예금주: 쿤산와이)"></textarea>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="paymentInfoAmountInput">보내야 하는 금액</label>
+                <input type="text" id="paymentInfoAmountInput" placeholder="예: 150,000원">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="paymentInfoReasonInput">왜 이 금액인지 설명</label>
+                <textarea class="admin-note-textarea" id="paymentInfoReasonInput" placeholder="예: 8주 과정, 주 2회 수업 기준이에요."></textarea>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="paymentInfoMaterialInput">자료를 어떻게 받는지 설명</label>
+                <textarea class="admin-note-textarea" id="paymentInfoMaterialInput" placeholder="예: 결제 확인 후 KWZM Center에서 자료를 받으실 수 있어요."></textarea>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="paymentInfoClassInput">수업 설명</label>
+                <textarea class="admin-note-textarea" id="paymentInfoClassInput" placeholder="예: 매주 화/목 저녁 8시, 줌으로 진행돼요."></textarea>
+            </div>
+
+            <p class="auth-form-error" id="paymentInfoError" hidden></p>
+
+            <div class="admin-note-footer">
+                <span></span>
+                <button type="button" class="admin-note-save-btn" id="paymentInfoSaveBtn">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ===================== 라이트박스 ===================== -->
 <div class="admin-lightbox" id="adminLightbox" aria-hidden="true">
     <div class="admin-lightbox-backdrop" data-lightbox-close></div>

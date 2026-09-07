@@ -4,7 +4,9 @@ import com.imkhun.imkhun.domain.Application;
 import com.imkhun.imkhun.domain.User;
 import com.imkhun.imkhun.dto.AdminApplicationResponse;
 import com.imkhun.imkhun.dto.ApplicationResponse;
+import com.imkhun.imkhun.dto.ChangeCourseRequest;
 import com.imkhun.imkhun.dto.CreateApplicationRequest;
+import com.imkhun.imkhun.dto.UpdateApplicationPaymentRequest;
 import com.imkhun.imkhun.repository.ApplicationRepository;
 import com.imkhun.imkhun.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -20,15 +22,17 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final KwzmInviteService kwzmInviteService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final Set<String> VALID_STUDY_TYPES = Set.of("TOGETHER", "VIDEO");
     private static final Set<String> VALID_STATUSES = Set.of("PENDING", "APPROVED");
 
     public ApplicationService(ApplicationRepository applicationRepository, UserRepository userRepository,
-                              NotificationService notificationService) {
+                              NotificationService notificationService, KwzmInviteService kwzmInviteService) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.kwzmInviteService = kwzmInviteService;
     }
 
     public ApplicationResponse createApplication(String username, CreateApplicationRequest request) {
@@ -76,7 +80,12 @@ public class ApplicationService {
                     return new AdminApplicationResponse(
                             app.getId(), nickname, email, app.getStudyType(), app.getCourseName(),
                             app.getContact(), app.getMemo(), app.getStatus(),
-                            app.getCreatedAt().format(DATE_FORMAT), app.getStudentNumber()
+                            app.getCreatedAt().format(DATE_FORMAT), app.getStudentNumber(),
+                            app.hasPaymentInfo(), app.getPaymentMethod(), app.getAmount(),
+                            app.getAmountReason(), app.getMaterialGuide(), app.getClassGuide(),
+                            app.getPaymentConfirmedByStudentAt() != null, app.getPaymentConfirmedByAdminAt() != null,
+                            app.getPaymentConfirmedByStudentAt() != null ? app.getPaymentConfirmedByStudentAt().format(DATE_FORMAT) : null,
+                            app.getReceiptImage()
                     );
                 })
                 .toList();
@@ -102,6 +111,96 @@ public class ApplicationService {
             notificationService.notifyStudent(application.getUsername(), "APPLICATION_APPROVED",
                     "신청하신 " + application.getCourseName() + " 강의가 승인됐어요!", null);
         }
+    }
+
+    // 관리자 - 강의(과목/학습방식) 변경. 학생번호가 이미 있었다면 새로 발급하고, 기존 KWZM 초대들을 새 번호로 옮겨줌
+    public void changeCourse(Long applicationId, ChangeCourseRequest request) {
+        if (request.studyType() == null || !VALID_STUDY_TYPES.contains(request.studyType())) {
+            throw new IllegalStateException("학습 방식을 선택해주세요.");
+        }
+        if (request.courseName() == null || request.courseName().isBlank()) {
+            throw new IllegalStateException("과목을 선택해주세요.");
+        }
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+
+        String oldStudentNumber = application.getStudentNumber();
+        boolean courseActuallyChanged = !request.courseName().equals(application.getCourseName());
+        application.changeCourse(request.studyType(), request.courseName());
+
+        if (oldStudentNumber != null && courseActuallyChanged) {
+            String newStudentNumber = generateStudentNumber(request.courseName());
+            application.assignStudentNumber(newStudentNumber);
+            kwzmInviteService.migrateStudentNumber(oldStudentNumber, newStudentNumber);
+            applicationRepository.save(application);
+
+            notificationService.notifyStudent(application.getUsername(), "COURSE_CHANGED",
+                    "신청하신 강의가 " + request.courseName() + "(으)로 변경됐어요. 학생번호도 " + newStudentNumber + "(으)로 새로 배정됐어요.", null);
+        } else {
+            applicationRepository.save(application);
+            if (courseActuallyChanged) {
+                notificationService.notifyStudent(application.getUsername(), "COURSE_CHANGED",
+                        "신청하신 강의가 " + request.courseName() + "(으)로 변경됐어요.", null);
+            }
+        }
+    }
+
+    // 관리자 - 결제 안내 등록/수정 (승인된 학생에게만)
+    public void updatePaymentInfo(Long applicationId, UpdateApplicationPaymentRequest request) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+        if (!"APPROVED".equals(application.getStatus())) {
+            throw new IllegalStateException("승인된 학생에게만 결제 안내를 등록할 수 있어요.");
+        }
+
+        boolean hadPaymentInfoBefore = application.hasPaymentInfo();
+        application.updatePaymentInfo(request.paymentMethod(), request.amount(), request.amountReason(),
+                request.materialGuide(), request.classGuide());
+        applicationRepository.save(application);
+
+        if (!hadPaymentInfoBefore && application.hasPaymentInfo()) {
+            notificationService.notifyStudent(application.getUsername(), "PAYMENT_INFO_REGISTERED",
+                    "결제 안내가 등록됐어요. 마이페이지에서 확인해주세요.", null);
+        }
+    }
+
+    // 학생 - "입금했어요" 버튼. 본인 신청 내역에만 누를 수 있어요. 영수증 이미지는 선택이에요.
+    public void confirmPaymentByStudent(Long applicationId, String username, String receiptImage) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+        if (!application.getUsername().equals(username)) {
+            throw new IllegalStateException("본인 신청 내역만 확인할 수 있어요.");
+        }
+        if (!application.hasPaymentInfo()) {
+            throw new IllegalStateException("아직 등록된 결제 안내가 없어요.");
+        }
+        if (application.getPaymentConfirmedByStudentAt() != null) {
+            return;
+        }
+
+        application.confirmPaymentByStudent(receiptImage);
+        applicationRepository.save(application);
+
+        String nickname = userRepository.findByUsername(username).map(User::getNickname).orElse(username);
+        String receiptNote = receiptImage != null && !receiptImage.isBlank() ? " (영수증 첨부됨)" : "";
+        notificationService.notifyAdmin("PAYMENT_CONFIRMED_BY_STUDENT",
+                nickname + "님이 " + application.getCourseName() + " 결제를 완료했다고 알려왔어요." + receiptNote, null);
+    }
+
+    // 관리자 - 입금 확인. 학생에게 확인됐다는 알림을 보내줌
+    public void confirmPaymentByAdmin(Long applicationId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+        if (application.getPaymentConfirmedByAdminAt() != null) {
+            return;
+        }
+
+        application.confirmPaymentByAdmin();
+        applicationRepository.save(application);
+
+        notificationService.notifyStudent(application.getUsername(), "PAYMENT_CONFIRMED_BY_ADMIN",
+                application.getCourseName() + " 입금이 확인됐어요. 감사합니다!", null);
     }
 
     // 예: "일본어 1급" -> "2026_Japanese_Level1_01"
@@ -157,7 +256,15 @@ public class ApplicationService {
                 application.getMemo(),
                 application.getStatus(),
                 application.getCreatedAt().format(DATE_FORMAT),
-                application.getStudentNumber()
+                application.getStudentNumber(),
+                application.hasPaymentInfo(),
+                application.getPaymentMethod(),
+                application.getAmount(),
+                application.getAmountReason(),
+                application.getMaterialGuide(),
+                application.getClassGuide(),
+                application.getPaymentConfirmedByStudentAt() != null,
+                application.getPaymentConfirmedByAdminAt() != null
         );
     }
 }

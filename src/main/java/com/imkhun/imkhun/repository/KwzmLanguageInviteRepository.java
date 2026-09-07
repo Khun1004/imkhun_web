@@ -13,4 +13,6 @@ public interface KwzmLanguageInviteRepository extends JpaRepository<KwzmLanguage
     Optional<KwzmLanguageInvite> findByLanguageAndContentTypeAndStudentNumber(String language, String contentType, String studentNumber);
 
     boolean existsByLanguageAndContentTypeAndStudentNumber(String language, String contentType, String studentNumber);
+
+    List<KwzmLanguageInvite> findByStudentNumber(String studentNumber);
 }

@@ -77,4 +77,14 @@ public class KwzmInviteService {
     public boolean isInvited(String language, String contentType, String studentNumber) {
         return inviteRepository.existsByLanguageAndContentTypeAndStudentNumber(language, contentType, studentNumber);
     }
+
+    // 관리자가 학생의 강의를 바꿔서 학생번호가 새로 바뀔 때, 그 번호로 걸려있던 초대들을 전부 새 번호로 옮겨줌
+    @Transactional
+    public void migrateStudentNumber(String oldStudentNumber, String newStudentNumber) {
+        if (oldStudentNumber == null || newStudentNumber == null || oldStudentNumber.equals(newStudentNumber)) {
+            return;
+        }
+        inviteRepository.findByStudentNumber(oldStudentNumber)
+                .forEach(invite -> invite.updateStudentNumber(newStudentNumber));
+    }
 }

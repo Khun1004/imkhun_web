@@ -10,6 +10,8 @@ public interface StudyMaterialRepository extends JpaRepository<StudyMaterial, Lo
 
     List<StudyMaterial> findByLanguageAndCategoryAndScopeOrderByCreatedAtDesc(String language, String category, String scope);
 
+    List<StudyMaterial> findByLanguageAndScopeOrderByCreatedAtDesc(String language, String scope);
+
     // 학생 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중에서 최근 것부터 (KWZM 자료만)
     List<StudyMaterial> findByLanguageInAndScopeOrderByCreatedAtDesc(Collection<String> languages, String scope);
 }

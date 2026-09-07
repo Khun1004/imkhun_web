@@ -188,6 +188,44 @@ public class AdminController {
         }
     }
 
+    // 학생은 직접 강의를 바꿀 수 없고, 관리자만 바꿔줄 수 있어요. 학생번호가 있었다면 새로 발급되고 KWZM 초대도 같이 옮겨져요.
+    @PostMapping("/applications/{id}/course")
+    public ResponseEntity<?> changeCourse(HttpServletRequest request, @PathVariable Long id,
+                                          @RequestBody ChangeCourseRequest courseRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            applicationService.changeCourse(id, courseRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 결제 안내 등록/수정 (승인된 학생에게만) — 학생 마이페이지의 "결제 확인"에 그대로 보여요.
+    @PostMapping("/applications/{id}/payment-info")
+    public ResponseEntity<?> updateApplicationPaymentInfo(HttpServletRequest request, @PathVariable Long id,
+                                                          @RequestBody UpdateApplicationPaymentRequest paymentRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            applicationService.updatePaymentInfo(id, paymentRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 학생이 "입금했어요"라고 알려온 걸 관리자가 최종 확인 — 학생에게 확인됐다는 알림이 가요
+    @PostMapping("/applications/{id}/confirm-payment-received")
+    public ResponseEntity<?> confirmPaymentReceived(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            applicationService.confirmPaymentByAdmin(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     // 학생들이 남긴 리뷰 전체 목록 (답글 달기용)
     @GetMapping("/reviews")
     public ResponseEntity<?> getAllReviews(HttpServletRequest request) {

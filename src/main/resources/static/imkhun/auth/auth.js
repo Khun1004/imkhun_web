@@ -204,6 +204,7 @@ async function loadMyApplications() {
             return;
         }
         const applications = await res.json();
+        myApplicationsCache = applications;
 
         list.innerHTML = "";
         emptyText.hidden = applications.length > 0;
@@ -224,6 +225,7 @@ async function loadMyApplications() {
               </button>
             </span>
           ` : ""}
+          ${app.hasPaymentInfo ? `<button type="button" class="mypage-payment-confirm-btn" data-payment-confirm-id="${app.id}">결제 확인</button>` : ""}
         </div>
         <span class="mypage-badge ${statusClass[app.status] || ""}">${statusLabel[app.status] || app.status}</span>
       `;
@@ -236,6 +238,128 @@ async function loadMyApplications() {
     }
 }
 
+let myApplicationsCache = [];
+
+function openPaymentConfirmModal(applicationId) {
+    const app = myApplicationsCache.find((a) => String(a.id) === String(applicationId));
+    if (!app) return;
+
+    const modal = document.getElementById("paymentConfirmModal");
+    if (!modal) return;
+
+    document.getElementById("paymentConfirmCourse").textContent = app.courseName;
+    document.getElementById("paymentConfirmMethod").textContent = app.paymentMethod || "-";
+    document.getElementById("paymentConfirmAmount").textContent = app.amount || "-";
+    document.getElementById("paymentConfirmReason").textContent = app.amountReason || "-";
+    document.getElementById("paymentConfirmMaterial").textContent = app.materialGuide || "-";
+    document.getElementById("paymentConfirmClass").textContent = app.classGuide || "-";
+    document.getElementById("paymentConfirmApplicationId").value = app.id;
+
+    // 영수증 첨부 UI 초기화
+    selectedReceiptDataUri = null;
+    const receiptInput = document.getElementById("paymentReceiptInput");
+    if (receiptInput) receiptInput.value = "";
+    const receiptPreview = document.getElementById("paymentReceiptPreview");
+    if (receiptPreview) receiptPreview.hidden = true;
+    const receiptUploadLabel = document.getElementById("paymentReceiptUpload");
+    if (receiptUploadLabel) receiptUploadLabel.querySelector(".payment-receipt-upload-label").hidden = false;
+
+    updatePaymentConfirmFooter(app.paymentConfirmedByStudent, app.paymentConfirmedByAdmin);
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+let selectedReceiptDataUri = null;
+
+function handleReceiptFileSelected(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        selectedReceiptDataUri = reader.result;
+        const previewImg = document.getElementById("paymentReceiptPreviewImg");
+        const previewBox = document.getElementById("paymentReceiptPreview");
+        const uploadLabel = document.querySelector("#paymentReceiptUpload .payment-receipt-upload-label");
+        if (previewImg) previewImg.src = selectedReceiptDataUri;
+        if (previewBox) previewBox.hidden = false;
+        if (uploadLabel) uploadLabel.hidden = true;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeReceiptPreview() {
+    selectedReceiptDataUri = null;
+    const receiptInput = document.getElementById("paymentReceiptInput");
+    if (receiptInput) receiptInput.value = "";
+    const previewBox = document.getElementById("paymentReceiptPreview");
+    if (previewBox) previewBox.hidden = true;
+    const uploadLabel = document.querySelector("#paymentReceiptUpload .payment-receipt-upload-label");
+    if (uploadLabel) uploadLabel.hidden = false;
+}
+
+function updatePaymentConfirmFooter(confirmedByStudent, confirmedByAdmin) {
+    const btn = document.getElementById("paymentConfirmBtn");
+    const pendingStatus = document.getElementById("paymentConfirmPendingStatus");
+    const doneStatus = document.getElementById("paymentConfirmDoneStatus");
+    const uploadEl = document.getElementById("paymentReceiptUpload");
+    if (!btn || !pendingStatus || !doneStatus) return;
+
+    if (confirmedByAdmin) {
+        btn.hidden = true;
+        pendingStatus.hidden = true;
+        doneStatus.hidden = false;
+        if (uploadEl) uploadEl.hidden = true;
+    } else if (confirmedByStudent) {
+        btn.hidden = true;
+        pendingStatus.hidden = false;
+        doneStatus.hidden = true;
+        if (uploadEl) uploadEl.hidden = true;
+    } else {
+        btn.hidden = false;
+        pendingStatus.hidden = true;
+        doneStatus.hidden = true;
+        if (uploadEl) uploadEl.hidden = false;
+    }
+}
+
+async function submitPaymentConfirm() {
+    const applicationId = document.getElementById("paymentConfirmApplicationId").value;
+    const btn = document.getElementById("paymentConfirmBtn");
+    if (!applicationId || !btn) return;
+
+    btn.disabled = true;
+    try {
+        const res = await fetch(`/api/applications/${applicationId}/confirm-payment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ receiptImage: selectedReceiptDataUri }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "확인 처리에 실패했어요.");
+            return;
+        }
+
+        const cached = myApplicationsCache.find((a) => String(a.id) === String(applicationId));
+        if (cached) cached.paymentConfirmedByStudent = true;
+        updatePaymentConfirmFooter(true, cached ? cached.paymentConfirmedByAdmin : false);
+
+        const uploadEl = document.getElementById("paymentReceiptUpload");
+        if (uploadEl) uploadEl.hidden = true;
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function closePaymentConfirmModal() {
+    const modal = document.getElementById("paymentConfirmModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
 // ---------- fragment가 실제로 로드된 뒤에만 연결해야 하는 것들 ----------
 
 document.addEventListener("fragments:loaded", () => {
@@ -244,6 +368,22 @@ document.addEventListener("fragments:loaded", () => {
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-auth-close]")) closeAuthModal();
         if (e.target.closest("[data-mypage-close]")) closeMypageModal();
+        if (e.target.closest("[data-payment-confirm-close]")) closePaymentConfirmModal();
+    });
+
+    // "결제 확인" 버튼 (동적으로 생기므로 위임 처리)
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-payment-confirm-id]");
+        if (btn) openPaymentConfirmModal(btn.dataset.paymentConfirmId);
+    });
+
+    document.getElementById("paymentConfirmBtn")?.addEventListener("click", submitPaymentConfirm);
+    document.getElementById("paymentReceiptInput")?.addEventListener("change", (e) => {
+        handleReceiptFileSelected(e.target.files[0]);
+    });
+    document.getElementById("paymentReceiptRemoveBtn")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        removeReceiptPreview();
     });
 
     // 학생번호 복사 버튼 (동적으로 생기므로 위임 처리)

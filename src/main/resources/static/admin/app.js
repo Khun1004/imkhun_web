@@ -156,6 +156,7 @@ async function checkAdminSessionOnLoad() {
         if (data.isAdmin) {
             showAdminScreen();
             loadAdminNotifUnreadCount();
+            loadAdminMe();
             if (!adminNotifPollTimer) {
                 adminNotifPollTimer = setInterval(loadAdminNotifUnreadCount, 30000);
             }
@@ -539,6 +540,155 @@ function inviteContentType() {
     return currentInviteScope === "VIDEO" ? "VIDEO" : "MATERIAL";
 }
 
+async function confirmPaymentReceived(applicationId, btn) {
+    if (!confirm("입금을 확인하셨나요? 학생에게 확인 알림이 가요.")) return;
+
+    if (btn) btn.disabled = true;
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/confirm-payment-received`, { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "처리에 실패했어요.");
+            return;
+        }
+        loadStudentList();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+// ---- 강의 변경 (관리자 전용) ----
+
+function openCourseChangeModal(applicationId) {
+    const app = studentApplicationsCache.find((a) => String(a.id) === String(applicationId));
+    if (!app) return;
+
+    const modal = document.getElementById("courseChangeModal");
+    if (!modal) return;
+
+    document.getElementById("courseChangeApplicationId").value = applicationId;
+    const studyTypeRadio = document.querySelector(`input[name="courseChangeStudyType"][value="${app.studyType}"]`);
+    if (studyTypeRadio) studyTypeRadio.checked = true;
+    const courseSelect = document.getElementById("courseChangeSelect");
+    if (courseSelect) courseSelect.value = app.courseName;
+    document.getElementById("courseChangeError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeCourseChangeModal() {
+    const modal = document.getElementById("courseChangeModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitCourseChange() {
+    const applicationId = document.getElementById("courseChangeApplicationId").value;
+    const studyType = document.querySelector('input[name="courseChangeStudyType"]:checked')?.value;
+    const courseName = document.getElementById("courseChangeSelect").value;
+    const errorEl = document.getElementById("courseChangeError");
+    const saveBtn = document.getElementById("courseChangeSaveBtn");
+
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "변경하는 중...";
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/course`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ studyType, courseName }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "변경에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeCourseChangeModal();
+        loadStudentList();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "변경하기";
+    }
+}
+
+// ---- 결제 안내 등록 (관리자 전용) ----
+
+function openPaymentInfoModal(applicationId) {
+    const app = studentApplicationsCache.find((a) => String(a.id) === String(applicationId));
+    if (!app) return;
+
+    const modal = document.getElementById("paymentInfoModal");
+    if (!modal) return;
+
+    document.getElementById("paymentInfoApplicationId").value = applicationId;
+    document.getElementById("paymentInfoMethodInput").value = app.paymentMethod || adminPaymentDefault || "";
+    document.getElementById("paymentInfoAmountInput").value = app.amount || "";
+    document.getElementById("paymentInfoReasonInput").value = app.amountReason || "";
+    document.getElementById("paymentInfoMaterialInput").value = app.materialGuide || "";
+    document.getElementById("paymentInfoClassInput").value = app.classGuide || "";
+    document.getElementById("paymentInfoError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closePaymentInfoModal() {
+    const modal = document.getElementById("paymentInfoModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitPaymentInfo() {
+    const applicationId = document.getElementById("paymentInfoApplicationId").value;
+    const paymentMethod = document.getElementById("paymentInfoMethodInput").value.trim();
+    const amount = document.getElementById("paymentInfoAmountInput").value.trim();
+    const amountReason = document.getElementById("paymentInfoReasonInput").value.trim();
+    const materialGuide = document.getElementById("paymentInfoMaterialInput").value.trim();
+    const classGuide = document.getElementById("paymentInfoClassInput").value.trim();
+    const errorEl = document.getElementById("paymentInfoError");
+    const saveBtn = document.getElementById("paymentInfoSaveBtn");
+
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장 중...";
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/payment-info`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentMethod, amount, amountReason, materialGuide, classGuide }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closePaymentInfoModal();
+        loadStudentList();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "저장";
+    }
+}
+
 async function loadInvitedStudents() {
     const listEl = document.getElementById("adminInvitedList");
     const countEl = document.getElementById("inviteCount");
@@ -849,6 +999,8 @@ function escapeHtmlForAdmin(text) {
     return div.innerHTML;
 }
 
+let adminPaymentDefault = "";
+
 async function loadAdminMe() {
     try {
         const res = await fetch("/api/admin/me");
@@ -861,6 +1013,7 @@ async function loadAdminMe() {
         if (emailInput) emailInput.value = data.email || "";
         if (phoneInput) phoneInput.value = data.phone || "";
 
+        adminPaymentDefault = data.paymentInfo || "";
         const paymentTextarea = document.getElementById("adminPaymentTextarea");
         if (paymentTextarea) paymentTextarea.value = data.paymentInfo || "";
     } catch (err) {
@@ -1001,6 +1154,22 @@ async function saveAdminPayment() {
     }
 }
 
+let studentApplicationsCache = [];
+
+function paymentStatusHtml(app) {
+    if (!app.hasPaymentInfo) return "";
+    if (app.paymentConfirmedByAdmin) {
+        return `<span class="admin-payment-status admin-payment-status--done">${ICON_CHECK} 결제 완료</span>`;
+    }
+    if (app.paymentConfirmedByStudent) {
+        const receiptBtn = app.receiptImage
+            ? `<button type="button" class="admin-receipt-view-btn" data-view-receipt-id="${app.id}"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> 영수증 보기</button>`
+            : "";
+        return `${receiptBtn}<button type="button" class="admin-payment-confirm-btn" data-confirm-payment-id="${app.id}">${ICON_CHECK} 입금 확인하기 (${app.paymentConfirmedByStudentAt || ""})</button>`;
+    }
+    return `<span class="admin-payment-status admin-payment-status--waiting">학생 입금 대기 중</span>`;
+}
+
 async function loadStudentList() {
     const list = document.getElementById("adminStudentList");
     const emptyText = document.getElementById("adminStudentsEmpty");
@@ -1014,6 +1183,7 @@ async function loadStudentList() {
         const res = await fetch("/api/admin/applications");
         if (!res.ok) return;
         const applications = await res.json();
+        studentApplicationsCache = applications;
 
         list.innerHTML = "";
         emptyText.hidden = applications.length > 0;
@@ -1034,6 +1204,11 @@ async function loadStudentList() {
         <div class="admin-student-status">
           <span class="mypage-badge ${statusClass[app.status] || ""}">${statusLabel[app.status] || app.status}</span>
           ${app.status === "PENDING" ? `<button type="button" class="admin-approve-btn" data-approve-id="${app.id}">승인하기</button>` : ""}
+        </div>
+        <div class="admin-student-actions-row">
+          <button type="button" class="admin-material-action-btn" data-change-course-id="${app.id}">강의 변경</button>
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-payment-info-id="${app.id}">${app.hasPaymentInfo ? "결제 안내 수정" : "결제 안내 등록"}</button>` : ""}
+          ${paymentStatusHtml(app)}
         </div>
       `;
             list.appendChild(item);
@@ -1627,7 +1802,26 @@ document.addEventListener("fragments:loaded", () => {
     });
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-invite-close]")) closeInviteModal();
+        if (e.target.closest("[data-course-change-close]")) closeCourseChangeModal();
+        if (e.target.closest("[data-payment-info-close]")) closePaymentInfoModal();
+
+        const changeCourseBtn = e.target.closest("[data-change-course-id]");
+        if (changeCourseBtn) openCourseChangeModal(changeCourseBtn.dataset.changeCourseId);
+
+        const paymentInfoBtn = e.target.closest("[data-payment-info-id]");
+        if (paymentInfoBtn) openPaymentInfoModal(paymentInfoBtn.dataset.paymentInfoId);
+
+        const confirmPaymentBtn = e.target.closest("[data-confirm-payment-id]");
+        if (confirmPaymentBtn) confirmPaymentReceived(confirmPaymentBtn.dataset.confirmPaymentId, confirmPaymentBtn);
+
+        const viewReceiptBtn = e.target.closest("[data-view-receipt-id]");
+        if (viewReceiptBtn) {
+            const app = studentApplicationsCache.find((a) => String(a.id) === viewReceiptBtn.dataset.viewReceiptId);
+            if (app && app.receiptImage) openLightbox([{ fileData: app.receiptImage }]);
+        }
     });
+    document.getElementById("courseChangeSaveBtn")?.addEventListener("click", submitCourseChange);
+    document.getElementById("paymentInfoSaveBtn")?.addEventListener("click", submitPaymentInfo);
     document.getElementById("inviteAddBtn")?.addEventListener("click", inviteStudentToLanguage);
     document.getElementById("inviteStudentNumberInput")?.addEventListener("keydown", (e) => {
         if (e.key === "Enter") inviteStudentToLanguage();

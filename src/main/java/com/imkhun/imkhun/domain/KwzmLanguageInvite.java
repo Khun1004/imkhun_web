@@ -42,6 +42,11 @@ public class KwzmLanguageInvite {
         return invite;
     }
 
+    // 관리자가 학생의 강의(과목)를 바꿔서 학생번호가 새로 발급될 때, 기존 초대가 끊기지 않도록 옮겨줌
+    public void updateStudentNumber(String studentNumber) {
+        this.studentNumber = studentNumber;
+    }
+
     public Long getId() {
         return id;
     }

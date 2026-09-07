@@ -152,6 +152,7 @@ function renderStudentHome(nickname) {
         <p class="student-home-course-name">${escapeHtmlForStudent(c.courseName)}</p>
         <p class="student-home-course-number">${escapeHtmlForStudent(c.studentNumber)}</p>
       `;
+            card.addEventListener("click", () => openCourseMaterialsModal(c.language, c.courseName));
             el.appendChild(card);
         });
     };
@@ -168,9 +169,88 @@ function renderStudentHome(nickname) {
     }
     studentCourses.forEach((c) => {
         const li = document.createElement("li");
+        li.className = "student-info-panel-item--clickable";
         li.innerHTML = `<span class="student-info-panel-date">${escapeHtmlForStudent(STUDENT_LANGUAGE_LABEL[c.language] || c.language)}</span><span>${escapeHtmlForStudent(c.courseName)} · ${escapeHtmlForStudent(c.studentNumber)}</span>`;
+        li.addEventListener("click", () => openCourseMaterialsModal(c.language, c.courseName));
         listEl.appendChild(li);
     });
+}
+
+const COURSE_MATERIAL_ICON_LINK = `<svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5l5-5M8 10l-1.5 1.5a3.5 3.5 0 0 0 5 5L13 15M16 14l1.5-1.5a3.5 3.5 0 0 0-5-5L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const COURSE_MATERIAL_ICON_TEXT = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+const COURSE_MATERIAL_ICON_FILE = `<svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const COURSE_MATERIAL_ICON_NONE = `<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>`;
+
+// 카드를 누르면 그 강의(언어)의 자료를 오버레이로 예쁘게 보여줘요
+async function openCourseMaterialsModal(language, courseName) {
+    const modal = document.getElementById("courseMaterialsModal");
+    const titleEl = document.getElementById("courseMaterialsModalTitle");
+    const bodyEl = document.getElementById("courseMaterialsModalBody");
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.textContent = courseName || "강의 자료";
+    bodyEl.innerHTML = `<p class="course-materials-hint">불러오는 중...</p>`;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    try {
+        const res = await fetch(`/api/student/materials/by-course?language=${language}`);
+        if (!res.ok) {
+            bodyEl.innerHTML = `<p class="course-materials-hint">${res.status === 403 ? "아직 이 자료를 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요." : "자료를 불러오지 못했어요."}</p>`;
+            return;
+        }
+        const materials = await res.json();
+
+        if (materials.length === 0) {
+            bodyEl.innerHTML = `<p class="course-materials-hint">아직 등록된 자료가 없어요.</p>`;
+            return;
+        }
+
+        bodyEl.innerHTML = "";
+        materials.forEach((m) => {
+            const files = m.files || [];
+            const first = files[0];
+            const firstIsImage = first && first.fileType && first.fileType.startsWith("image/");
+            const firstIsLink = first && first.linkUrl;
+            const firstIsText = first && first.textContent && !first.linkUrl && !first.fileData;
+            const fileExt = (first?.fileName || "").split(".").pop()?.toUpperCase().slice(0, 4) || "FILE";
+
+            const thumbHtml = firstIsImage
+                ? `<img src="${first.fileData}" alt="">`
+                : firstIsLink
+                    ? `<div class="course-material-thumb-icon">${COURSE_MATERIAL_ICON_LINK}</div>`
+                    : firstIsText
+                        ? `<div class="course-material-thumb-icon">${COURSE_MATERIAL_ICON_TEXT}</div>`
+                        : first
+                            ? `<div class="course-material-thumb-icon"><span class="course-material-thumb-ext">${escapeHtmlForStudent(fileExt)}</span></div>`
+                            : `<div class="course-material-thumb-icon">${COURSE_MATERIAL_ICON_NONE}</div>`;
+
+            const card = document.createElement("div");
+            card.className = "course-material-card";
+            card.innerHTML = `
+        <div class="course-material-thumb">${thumbHtml}</div>
+        <div class="course-material-info">
+          <p class="course-material-title">${escapeHtmlForStudent(m.title)}</p>
+          <p class="course-material-desc">${m.description ? escapeHtmlForStudent(m.description) : "설명 없음"}</p>
+          <p class="course-material-date">${m.createdAt}</p>
+        </div>
+      `;
+            card.addEventListener("click", () => handleStudentViewMaterial(m));
+            bodyEl.appendChild(card);
+        });
+    } catch (err) {
+        console.error(err);
+        bodyEl.innerHTML = `<p class="course-materials-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+function closeCourseMaterialsModal() {
+    const modal = document.getElementById("courseMaterialsModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
 }
 
 const STUDENT_LANGUAGE_ICON = { korean: "가", japanese: "あ", thai: "ก", english: "A", other: "＋" };
@@ -1422,6 +1502,7 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("boardWriteBtn")?.addEventListener("click", () => openBoardWriteModal());
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-board-modal-close]")) closeBoardWriteModal();
+        if (e.target.closest("[data-course-materials-close]")) closeCourseMaterialsModal();
     });
     document.getElementById("boardFormSubmitBtn")?.addEventListener("click", submitBoardPost);
     document.getElementById("boardFormTopic")?.addEventListener("change", updateBoardCategoryFieldVisibility);

@@ -51,6 +51,15 @@ public class StudyMaterialService {
                 .toList();
     }
 
+    // "내 수강 정보" 카드를 눌렀을 때 — 항목(category) 구분 없이 그 언어의 자료를 전부 보여줌
+    @Transactional(readOnly = true)
+    public List<MaterialResponse> getAllMaterialsForLanguage(String language, String scope) {
+        return studyMaterialRepository.findByLanguageAndScopeOrderByCreatedAtDesc(language, scope)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     // 학생 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중 최근 N개 (항상 KWZM 자료만)
     @Transactional(readOnly = true)
     public List<MaterialResponse> getRecentMaterials(Set<String> languages, int limit) {
