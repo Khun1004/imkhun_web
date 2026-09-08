@@ -1131,6 +1131,137 @@ body.admin-standalone-body {
     margin: 0;
 }
 
+/* 대시보드 */
+
+.admin-dashboard-heading {
+    margin-bottom: 16px;
+}
+
+.admin-dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.admin-dashboard-card {
+    position: relative;
+    padding: 20px 22px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    overflow: hidden;
+}
+
+.admin-dashboard-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    margin-bottom: 14px;
+    color: #fff;
+}
+
+.admin-dashboard-card-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.admin-dashboard-card--warm .admin-dashboard-card-icon { background: #b8446a; }
+.admin-dashboard-card--gold .admin-dashboard-card-icon { background: #a87c22; }
+.admin-dashboard-card--teal .admin-dashboard-card-icon { background: var(--teal); }
+.admin-dashboard-card--ink .admin-dashboard-card-icon { background: var(--ink); }
+
+.admin-dashboard-card-value {
+    font-family: "Noto Serif KR", serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 4px;
+    line-height: 1;
+}
+
+.admin-dashboard-card-label {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 0;
+}
+
+.admin-dashboard-card-link {
+    display: block;
+    margin-top: 12px;
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--teal-deep);
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-dashboard-card-link:hover {
+    text-decoration: underline;
+}
+
+.admin-dashboard-recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.admin-dashboard-recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.admin-dashboard-recent-topic {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--paper-2);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.admin-dashboard-recent-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-dashboard-recent-name {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+}
+
+.admin-dashboard-recent-date {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-family: "JetBrains Mono", monospace;
+}
+
+@media (max-width: 640px) {
+    .admin-dashboard-recent-item {
+        flex-wrap: wrap;
+    }
+}
+
 .admin-invite-btn {
     flex-shrink: 0;
     display: flex;
@@ -2790,6 +2921,176 @@ textarea.admin-note-textarea.admin-register-text {
     display: flex;
     justify-content: flex-end;
     border-top: 1.5px dashed var(--line);
+    padding-top: 10px;
+}
+
+/* 공지사항 관리 */
+
+.admin-notice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-notice-item {
+    padding: 16px 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.admin-notice-item-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.admin-notice-item-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+}
+
+.admin-notice-item-date {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-family: "JetBrains Mono", monospace;
+}
+
+.admin-notice-item-content {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    margin: 0 0 12px;
+}
+
+.admin-notice-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+}
+
+/* 강의 시간표 관리 */
+
+.admin-timetable-time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.admin-timetable-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-timetable-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.admin-timetable-day {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.admin-timetable-day--korean { background: var(--tag-korean, #b8446a); }
+.admin-timetable-day--computer { background: var(--tag-computer, #6b5b95); }
+.admin-timetable-day--other { background: var(--ink-faint); }
+
+.admin-timetable-time {
+    flex-shrink: 0;
+    width: 120px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-family: "JetBrains Mono", monospace;
+}
+
+.admin-timetable-course {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-timetable-color-tag {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    background: var(--paper-2);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.admin-timetable-item-actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+}
+
+/* FAQ 관리 */
+
+.admin-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-faq-item {
+    padding: 16px 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.admin-faq-item-question {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 8px;
+}
+
+.admin-faq-item-answer {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    margin: 0 0 12px;
+}
+
+.admin-faq-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px dashed var(--line);
     padding-top: 10px;
 }
 

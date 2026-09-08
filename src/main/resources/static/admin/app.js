@@ -39,11 +39,17 @@ function showAdminScreen() {
     if (screen) screen.hidden = false;
     window.scrollTo({ top: 0, behavior: "instant" });
     autoSelectFirstMaterialsForActiveTab();
-    updateHeroContent("personal");
+    updateHeroContent("dashboard");
+    loadDashboard();
 }
 
 // 상단 배너에 탭마다 다른 제목/설명을 보여줘요.
 const HERO_CONTENT = {
+    dashboard: {
+        eyebrow: "한눈에 보기",
+        title: "대시보드",
+        desc: "오늘 확인해야 할 것들을 한 화면에서 볼 수 있어요.",
+    },
     personal: {
         eyebrow: "개인 보관함",
         title: "개인용 자료",
@@ -538,6 +544,380 @@ function closeInviteModal() {
 
 function inviteContentType() {
     return currentInviteScope === "VIDEO" ? "VIDEO" : "MATERIAL";
+}
+
+// ---- 공지사항 관리 ----
+
+let adminNoticesCache = [];
+
+async function loadAdminNotices() {
+    const list = document.getElementById("adminNoticeList");
+    const emptyText = document.getElementById("adminNoticesEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/notices");
+        if (!res.ok) return;
+        const notices = await res.json();
+        adminNoticesCache = notices;
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = notices.length > 0;
+
+        notices.forEach((n) => {
+            const item = document.createElement("div");
+            item.className = "admin-notice-item";
+            item.innerHTML = `
+        <div class="admin-notice-item-head">
+          <p class="admin-notice-item-title">${escapeHtmlForAdmin(n.title)}</p>
+          <span class="admin-notice-item-date">${n.createdAt}</span>
+        </div>
+        <p class="admin-notice-item-content">${escapeHtmlForAdmin(n.content)}</p>
+        <div class="admin-notice-item-actions">
+          <button type="button" class="admin-material-action-btn" data-edit-notice-id="${n.id}">수정</button>
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-notice-id="${n.id}">삭제</button>
+        </div>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function openNoticeModal(noticeId) {
+    const modal = document.getElementById("noticeModal");
+    if (!modal) return;
+
+    const notice = noticeId ? adminNoticesCache.find((n) => String(n.id) === String(noticeId)) : null;
+
+    document.getElementById("noticeModalTitle").textContent = notice ? "공지 수정" : "새 공지 작성";
+    document.getElementById("noticeSaveBtn").textContent = notice ? "수정하기" : "등록하기";
+    document.getElementById("noticeEditingId").value = notice ? notice.id : "";
+    document.getElementById("noticeTitleInput").value = notice ? notice.title : "";
+    document.getElementById("noticeContentInput").value = notice ? notice.content : "";
+    document.getElementById("noticeError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeNoticeModal() {
+    const modal = document.getElementById("noticeModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitNotice() {
+    const editingId = document.getElementById("noticeEditingId").value;
+    const title = document.getElementById("noticeTitleInput").value.trim();
+    const content = document.getElementById("noticeContentInput").value.trim();
+    const errorEl = document.getElementById("noticeError");
+    const saveBtn = document.getElementById("noticeSaveBtn");
+    const isEditing = !!editingId;
+
+    if (!title || !content) {
+        errorEl.textContent = "제목과 내용을 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = isEditing ? "수정하는 중..." : "등록하는 중...";
+
+    try {
+        const url = isEditing ? `/api/admin/notices/${editingId}` : "/api/admin/notices";
+        const method = isEditing ? "PUT" : "POST";
+        const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, content }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeNoticeModal();
+        loadAdminNotices();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = isEditing ? "수정하기" : "등록하기";
+    }
+}
+
+async function deleteNotice(id) {
+    if (!confirm("이 공지를 삭제할까요? 되돌릴 수 없어요.")) return;
+
+    try {
+        const res = await fetch(`/api/admin/notices/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAdminNotices();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---- 강의 시간표 관리 ----
+
+let adminTimetableCache = [];
+const TIMETABLE_DAY_LABEL = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI: "금" };
+const TIMETABLE_COLOR_LABEL = { korean: "한국어", computer: "컴퓨터", other: "기타" };
+
+async function loadAdminTimetable() {
+    const list = document.getElementById("adminTimetableList");
+    const emptyText = document.getElementById("adminTimetableEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/timetable");
+        if (!res.ok) return;
+        const entries = await res.json();
+        adminTimetableCache = entries;
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = entries.length > 0;
+
+        entries.forEach((entry) => {
+            const item = document.createElement("div");
+            item.className = "admin-timetable-item";
+            item.innerHTML = `
+        <span class="admin-timetable-day admin-timetable-day--${entry.colorType}">${TIMETABLE_DAY_LABEL[entry.day] || entry.day}</span>
+        <span class="admin-timetable-time">${escapeHtmlForAdmin(entry.startTime)} - ${escapeHtmlForAdmin(entry.endTime)}</span>
+        <span class="admin-timetable-course">${escapeHtmlForAdmin(entry.courseName)}</span>
+        <span class="admin-timetable-color-tag">${TIMETABLE_COLOR_LABEL[entry.colorType] || entry.colorType}</span>
+        <div class="admin-timetable-item-actions">
+          <button type="button" class="admin-material-action-btn" data-edit-timetable-id="${entry.id}">수정</button>
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-timetable-id="${entry.id}">삭제</button>
+        </div>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function openTimetableModal(entryId) {
+    const modal = document.getElementById("timetableModal");
+    if (!modal) return;
+
+    const entry = entryId ? adminTimetableCache.find((e) => String(e.id) === String(entryId)) : null;
+
+    document.getElementById("timetableModalTitle").textContent = entry ? "시간표 항목 수정" : "시간표 항목 추가";
+    document.getElementById("timetableSaveBtn").textContent = entry ? "수정하기" : "추가하기";
+    document.getElementById("timetableEditingId").value = entry ? entry.id : "";
+    document.getElementById("timetableDaySelect").value = entry ? entry.day : "MON";
+    document.getElementById("timetableStartInput").value = entry ? entry.startTime : "";
+    document.getElementById("timetableEndInput").value = entry ? entry.endTime : "";
+    document.getElementById("timetableCourseInput").value = entry ? entry.courseName : "";
+    const colorRadio = document.querySelector(`input[name="timetableColorType"][value="${entry ? entry.colorType : "korean"}"]`);
+    if (colorRadio) colorRadio.checked = true;
+    document.getElementById("timetableError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeTimetableModal() {
+    const modal = document.getElementById("timetableModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitTimetableEntry() {
+    const editingId = document.getElementById("timetableEditingId").value;
+    const day = document.getElementById("timetableDaySelect").value;
+    const startTime = document.getElementById("timetableStartInput").value.trim();
+    const endTime = document.getElementById("timetableEndInput").value.trim();
+    const courseName = document.getElementById("timetableCourseInput").value.trim();
+    const colorType = document.querySelector('input[name="timetableColorType"]:checked')?.value;
+    const errorEl = document.getElementById("timetableError");
+    const saveBtn = document.getElementById("timetableSaveBtn");
+    const isEditing = !!editingId;
+
+    if (!startTime || !endTime || !courseName) {
+        errorEl.textContent = "시간과 과목명을 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = isEditing ? "수정하는 중..." : "추가하는 중...";
+
+    try {
+        const url = isEditing ? `/api/admin/timetable/${editingId}` : "/api/admin/timetable";
+        const method = isEditing ? "PUT" : "POST";
+        const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ day, startTime, endTime, courseName, colorType }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeTimetableModal();
+        loadAdminTimetable();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = isEditing ? "수정하기" : "추가하기";
+    }
+}
+
+async function deleteTimetableEntry(id) {
+    if (!confirm("이 시간표 항목을 삭제할까요?")) return;
+
+    try {
+        const res = await fetch(`/api/admin/timetable/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAdminTimetable();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---- FAQ 관리 ----
+
+let adminFaqsCache = [];
+
+async function loadAdminFaqs() {
+    const list = document.getElementById("adminFaqList");
+    const emptyText = document.getElementById("adminFaqEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/faqs");
+        if (!res.ok) return;
+        const faqs = await res.json();
+        adminFaqsCache = faqs;
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = faqs.length > 0;
+
+        faqs.forEach((faq) => {
+            const item = document.createElement("div");
+            item.className = "admin-faq-item";
+            item.innerHTML = `
+        <p class="admin-faq-item-question">${escapeHtmlForAdmin(faq.question)}</p>
+        <p class="admin-faq-item-answer">${escapeHtmlForAdmin(faq.answer)}</p>
+        <div class="admin-faq-item-actions">
+          <button type="button" class="admin-material-action-btn" data-edit-faq-id="${faq.id}">수정</button>
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-faq-id="${faq.id}">삭제</button>
+        </div>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function openFaqModal(faqId) {
+    const modal = document.getElementById("faqModal");
+    if (!modal) return;
+
+    const faq = faqId ? adminFaqsCache.find((f) => String(f.id) === String(faqId)) : null;
+
+    document.getElementById("faqModalTitle").textContent = faq ? "질문 수정" : "질문 추가";
+    document.getElementById("faqSaveBtn").textContent = faq ? "수정하기" : "추가하기";
+    document.getElementById("faqEditingId").value = faq ? faq.id : "";
+    document.getElementById("faqQuestionInput").value = faq ? faq.question : "";
+    document.getElementById("faqAnswerInput").value = faq ? faq.answer : "";
+    document.getElementById("faqError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeFaqModal() {
+    const modal = document.getElementById("faqModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitFaq() {
+    const editingId = document.getElementById("faqEditingId").value;
+    const question = document.getElementById("faqQuestionInput").value.trim();
+    const answer = document.getElementById("faqAnswerInput").value.trim();
+    const errorEl = document.getElementById("faqError");
+    const saveBtn = document.getElementById("faqSaveBtn");
+    const isEditing = !!editingId;
+
+    if (!question || !answer) {
+        errorEl.textContent = "질문과 답변을 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = isEditing ? "수정하는 중..." : "추가하는 중...";
+
+    try {
+        const url = isEditing ? `/api/admin/faqs/${editingId}` : "/api/admin/faqs";
+        const method = isEditing ? "PUT" : "POST";
+        const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question, answer }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeFaqModal();
+        loadAdminFaqs();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = isEditing ? "수정하기" : "추가하기";
+    }
+}
+
+async function deleteFaq(id) {
+    if (!confirm("이 질문을 삭제할까요?")) return;
+
+    try {
+        const res = await fetch(`/api/admin/faqs/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAdminFaqs();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
 }
 
 async function confirmPaymentReceived(applicationId, btn) {
@@ -1372,6 +1752,45 @@ async function markAllAdminNotifsRead() {
     }
 }
 
+async function loadDashboard() {
+    try {
+        const res = await fetch("/api/admin/dashboard");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const pendingEl = document.getElementById("dashboardPendingCount");
+        const paymentEl = document.getElementById("dashboardPaymentPendingCount");
+        const newThisMonthEl = document.getElementById("dashboardNewThisMonthCount");
+        const unreadEl = document.getElementById("dashboardUnreadNotifCount");
+        if (pendingEl) pendingEl.textContent = data.pendingApplicationsCount;
+        if (paymentEl) paymentEl.textContent = data.paymentPendingConfirmCount;
+        if (newThisMonthEl) newThisMonthEl.textContent = data.newApplicationsThisMonth;
+        if (unreadEl) unreadEl.textContent = data.unreadNotificationsCount;
+
+        const list = document.getElementById("dashboardRecentList");
+        const emptyText = document.getElementById("dashboardRecentEmpty");
+        if (!list) return;
+
+        list.innerHTML = "";
+        const recentPosts = data.recentPosts || [];
+        if (emptyText) emptyText.hidden = recentPosts.length > 0;
+
+        recentPosts.forEach((p) => {
+            const item = document.createElement("div");
+            item.className = "admin-dashboard-recent-item";
+            item.innerHTML = `
+        <span class="admin-dashboard-recent-topic">${escapeHtmlForAdmin(BOARD_TOPIC_LABEL_ADMIN[p.topic] || p.topic)}</span>
+        <span class="admin-dashboard-recent-title">${escapeHtmlForAdmin(p.title)}</span>
+        <span class="admin-dashboard-recent-name">${escapeHtmlForAdmin(p.nickname)}</span>
+        <span class="admin-dashboard-recent-date">${p.createdAt}</span>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 async function loadAdminPosts() {
     const list = document.getElementById("adminPostList");
     const emptyText = document.getElementById("adminPostsEmpty");
@@ -1751,6 +2170,8 @@ document.addEventListener("fragments:loaded", () => {
                 loadAdminPosts();
             }
             if (key === "my") loadAdminMe();
+            if (key === "notices") loadAdminNotices();
+            if (key === "dashboard") loadDashboard();
         });
     });
 
@@ -1760,10 +2181,16 @@ document.addEventListener("fragments:loaded", () => {
 
     document.querySelectorAll(".admin-inline-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
-            // 탭 그룹(학생 관리 / 마이)마다 따로 동작하도록, 자기가 속한 nav 안에서만 active를 바꿔요
+            // 탭 그룹(학생 관리 / 마이 / 공지사항 관리 등)마다 따로 동작하도록, 자기가 속한 nav 안에서만 active를 바꿔요
             const group = tab.closest(".admin-inline-tabs");
             const panelContainer = group?.parentElement;
             if (!group || !panelContainer) return;
+
+            // data-xxx-tab 형태의 속성 이름을 그대로 찾아서, 그에 맞는 data-xxx-panel로 매칭해요
+            const tabAttr = [...tab.attributes].map((a) => a.name).find((n) => n.startsWith("data-") && n.endsWith("-tab"));
+            if (!tabAttr) return;
+            const panelAttr = tabAttr.replace(/-tab$/, "-panel");
+            const key = tab.getAttribute(tabAttr);
 
             group.querySelectorAll(".admin-inline-tab").forEach((t) => {
                 t.classList.remove("active");
@@ -1774,10 +2201,13 @@ document.addEventListener("fragments:loaded", () => {
             tab.classList.add("active");
             tab.setAttribute("aria-selected", "true");
 
-            const panelAttr = tab.dataset.studentsTab !== undefined ? "data-students-panel" : "data-my-panel";
-            const key = tab.dataset.studentsTab !== undefined ? tab.dataset.studentsTab : tab.dataset.myTab;
             const panel = panelContainer.querySelector(`.admin-inline-panel[${panelAttr}="${key}"]`);
             if (panel) panel.hidden = false;
+
+            if (tabAttr === "data-notice-tab") {
+                if (key === "timetable") loadAdminTimetable();
+                if (key === "faq") loadAdminFaqs();
+            }
         });
     });
 
@@ -1804,6 +2234,7 @@ document.addEventListener("fragments:loaded", () => {
         if (e.target.closest("[data-invite-close]")) closeInviteModal();
         if (e.target.closest("[data-course-change-close]")) closeCourseChangeModal();
         if (e.target.closest("[data-payment-info-close]")) closePaymentInfoModal();
+        if (e.target.closest("[data-notice-modal-close]")) closeNoticeModal();
 
         const changeCourseBtn = e.target.closest("[data-change-course-id]");
         if (changeCourseBtn) openCourseChangeModal(changeCourseBtn.dataset.changeCourseId);
@@ -1819,9 +2250,38 @@ document.addEventListener("fragments:loaded", () => {
             const app = studentApplicationsCache.find((a) => String(a.id) === viewReceiptBtn.dataset.viewReceiptId);
             if (app && app.receiptImage) openLightbox([{ fileData: app.receiptImage }]);
         }
+
+        const editNoticeBtn = e.target.closest("[data-edit-notice-id]");
+        if (editNoticeBtn) openNoticeModal(editNoticeBtn.dataset.editNoticeId);
+
+        const deleteNoticeBtn = e.target.closest("[data-delete-notice-id]");
+        if (deleteNoticeBtn) deleteNotice(deleteNoticeBtn.dataset.deleteNoticeId);
+
+        if (e.target.closest("[data-timetable-modal-close]")) closeTimetableModal();
+        const editTimetableBtn = e.target.closest("[data-edit-timetable-id]");
+        if (editTimetableBtn) openTimetableModal(editTimetableBtn.dataset.editTimetableId);
+        const deleteTimetableBtn = e.target.closest("[data-delete-timetable-id]");
+        if (deleteTimetableBtn) deleteTimetableEntry(deleteTimetableBtn.dataset.deleteTimetableId);
+
+        if (e.target.closest("[data-faq-modal-close]")) closeFaqModal();
+        const editFaqBtn = e.target.closest("[data-edit-faq-id]");
+        if (editFaqBtn) openFaqModal(editFaqBtn.dataset.editFaqId);
+        const deleteFaqBtn = e.target.closest("[data-delete-faq-id]");
+        if (deleteFaqBtn) deleteFaq(deleteFaqBtn.dataset.deleteFaqId);
+
+        const dashboardGotoBtn = e.target.closest("[data-dashboard-goto]");
+        if (dashboardGotoBtn) {
+            document.querySelector(`[data-main-tab="${dashboardGotoBtn.dataset.dashboardGoto}"]`)?.click();
+        }
     });
     document.getElementById("courseChangeSaveBtn")?.addEventListener("click", submitCourseChange);
     document.getElementById("paymentInfoSaveBtn")?.addEventListener("click", submitPaymentInfo);
+    document.getElementById("adminNoticeNewBtn")?.addEventListener("click", () => openNoticeModal());
+    document.getElementById("noticeSaveBtn")?.addEventListener("click", submitNotice);
+    document.getElementById("adminTimetableNewBtn")?.addEventListener("click", () => openTimetableModal());
+    document.getElementById("timetableSaveBtn")?.addEventListener("click", submitTimetableEntry);
+    document.getElementById("adminFaqNewBtn")?.addEventListener("click", () => openFaqModal());
+    document.getElementById("faqSaveBtn")?.addEventListener("click", submitFaq);
     document.getElementById("inviteAddBtn")?.addEventListener("click", inviteStudentToLanguage);
     document.getElementById("inviteStudentNumberInput")?.addEventListener("keydown", (e) => {
         if (e.key === "Enter") inviteStudentToLanguage();

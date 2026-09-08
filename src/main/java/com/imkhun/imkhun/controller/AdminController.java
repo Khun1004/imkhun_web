@@ -5,12 +5,16 @@ import com.imkhun.imkhun.dto.*;
 import com.imkhun.imkhun.repository.AdminRepository;
 import com.imkhun.imkhun.service.AdminAuthService;
 import com.imkhun.imkhun.service.ApplicationService;
+import com.imkhun.imkhun.service.DashboardService;
+import com.imkhun.imkhun.service.FaqService;
 import com.imkhun.imkhun.service.KwzmInviteService;
+import com.imkhun.imkhun.service.NoticeService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.ReviewService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyNoteService;
 import com.imkhun.imkhun.service.StudyPostService;
+import com.imkhun.imkhun.service.TimetableService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -31,12 +35,17 @@ public class AdminController {
     private final KwzmInviteService kwzmInviteService;
     private final StudyPostService studyPostService;
     private final NotificationService notificationService;
+    private final NoticeService noticeService;
+    private final TimetableService timetableService;
+    private final FaqService faqService;
+    private final DashboardService dashboardService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
                            StudyMaterialService studyMaterialService, ReviewService reviewService,
                            KwzmInviteService kwzmInviteService, StudyPostService studyPostService,
-                           NotificationService notificationService) {
+                           NotificationService notificationService, NoticeService noticeService,
+                           TimetableService timetableService, FaqService faqService, DashboardService dashboardService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -46,6 +55,10 @@ public class AdminController {
         this.studyPostService = studyPostService;
         this.kwzmInviteService = kwzmInviteService;
         this.notificationService = notificationService;
+        this.noticeService = noticeService;
+        this.timetableService = timetableService;
+        this.faqService = faqService;
+        this.dashboardService = dashboardService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -519,5 +532,133 @@ public class AdminController {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         notificationService.markAllReadForAdmin();
         return ResponseEntity.ok().build();
+    }
+
+    // ---------- 공지사항 관리 ----------
+
+    @GetMapping("/notices")
+    public ResponseEntity<?> getNotices(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(noticeService.getAllNotices());
+    }
+
+    @PostMapping("/notices")
+    public ResponseEntity<?> createNotice(HttpServletRequest request, @RequestBody CreateNoticeRequest noticeRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(noticeService.createNotice(noticeRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/notices/{id}")
+    public ResponseEntity<?> updateNotice(HttpServletRequest request, @PathVariable Long id,
+                                          @RequestBody CreateNoticeRequest noticeRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(noticeService.updateNotice(id, noticeRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/notices/{id}")
+    public ResponseEntity<?> deleteNotice(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            noticeService.deleteNotice(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 강의 시간표 관리 ----------
+
+    @GetMapping("/timetable")
+    public ResponseEntity<?> getTimetable(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(timetableService.getAllEntries());
+    }
+
+    @PostMapping("/timetable")
+    public ResponseEntity<?> createTimetableEntry(HttpServletRequest request, @RequestBody CreateTimetableEntryRequest entryRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(timetableService.createEntry(entryRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/timetable/{id}")
+    public ResponseEntity<?> updateTimetableEntry(HttpServletRequest request, @PathVariable Long id,
+                                                  @RequestBody CreateTimetableEntryRequest entryRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(timetableService.updateEntry(id, entryRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/timetable/{id}")
+    public ResponseEntity<?> deleteTimetableEntry(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            timetableService.deleteEntry(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- FAQ 관리 ----------
+
+    @GetMapping("/faqs")
+    public ResponseEntity<?> getFaqs(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(faqService.getAllFaqs());
+    }
+
+    @PostMapping("/faqs")
+    public ResponseEntity<?> createFaq(HttpServletRequest request, @RequestBody CreateFaqRequest faqRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(faqService.createFaq(faqRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/faqs/{id}")
+    public ResponseEntity<?> updateFaq(HttpServletRequest request, @PathVariable Long id,
+                                       @RequestBody CreateFaqRequest faqRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(faqService.updateFaq(id, faqRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/faqs/{id}")
+    public ResponseEntity<?> deleteFaq(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            faqService.deleteFaq(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 대시보드 ----------
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<?> getDashboard(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(dashboardService.getSummary());
     }
 }
