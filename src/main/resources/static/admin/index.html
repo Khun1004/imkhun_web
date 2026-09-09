@@ -98,15 +98,23 @@
             </div>
         </div>
 
-        <nav class="admin-maintabs" role="tablist" aria-label="나만의 공부 화면 메뉴">
+        <nav class="admin-grouptabs" role="tablist" aria-label="관리 그룹">
+            <button type="button" class="admin-grouptab active" data-group-tab="personal" role="tab" aria-selected="true">나만의 공부화면</button>
+            <button type="button" class="admin-grouptab" data-group-tab="kwzm" role="tab" aria-selected="false">KWZM Center 관리</button>
+            <button type="button" class="admin-grouptab" data-group-tab="imkhun" role="tab" aria-selected="false">IMKhun 관리</button>
+            <button type="button" class="admin-grouptab" data-group-tab="students" role="tab" aria-selected="false">학생 관리</button>
+        </nav>
+
+        <nav class="admin-subtabs" id="adminSubtabsPersonal" role="tablist" aria-label="나만의 공부화면 메뉴">
             <button type="button" class="admin-maintab active" data-main-tab="dashboard" role="tab" aria-selected="true">대시보드</button>
             <button type="button" class="admin-maintab" data-main-tab="personal" role="tab" aria-selected="false">개인용 자료</button>
+            <button type="button" class="admin-maintab" data-main-tab="my" role="tab" aria-selected="false">마이</button>
+        </nav>
+
+        <nav class="admin-subtabs" id="adminSubtabsKwzm" role="tablist" aria-label="KWZM Center 관리 메뉴" hidden>
             <button type="button" class="admin-maintab" data-main-tab="kwzm" role="tab" aria-selected="false">KWZM 학생 자료</button>
             <button type="button" class="admin-maintab" data-main-tab="video" role="tab" aria-selected="false">온라인 영상</button>
             <button type="button" class="admin-maintab" data-main-tab="trial" role="tab" aria-selected="false">무료체험</button>
-            <button type="button" class="admin-maintab" data-main-tab="notices" role="tab" aria-selected="false">공지사항</button>
-            <button type="button" class="admin-maintab" data-main-tab="students" role="tab" aria-selected="false">학생 관리</button>
-            <button type="button" class="admin-maintab" data-main-tab="my" role="tab" aria-selected="false">마이</button>
         </nav>
     </header>
 
@@ -182,20 +190,22 @@
                 <button type="button" class="admin-pill" data-lang="computer" data-scope="PERSONAL">컴퓨터</button>
                 <button type="button" class="admin-pill" data-lang="other" data-scope="PERSONAL">기타</button>
             </div>
-            <div class="admin-category-pills" id="personalCategoryPills" hidden></div>
-            <div class="admin-materials-view" id="personalMaterialsView" hidden>
-                <div class="admin-materials-head-row">
-                    <p class="admin-materials-heading" id="personalMaterialsHeading"></p>
+            <div class="admin-materials-col">
+                <div class="admin-category-pills" id="personalCategoryPills" hidden></div>
+                <div class="admin-materials-view" id="personalMaterialsView" hidden>
+                    <div class="admin-materials-head-row">
+                        <p class="admin-materials-heading" id="personalMaterialsHeading"></p>
+                    </div>
+                    <div class="admin-materials-columns" aria-hidden="true">
+                        <span></span>
+                        <span>제목</span>
+                        <span>유형</span>
+                        <span>작성일</span>
+                        <span>관리</span>
+                    </div>
+                    <p class="admin-empty-text" id="personalMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
+                    <div class="admin-materials-grid" id="personalMaterialsList"></div>
                 </div>
-                <div class="admin-materials-columns" aria-hidden="true">
-                    <span></span>
-                    <span>제목</span>
-                    <span>유형</span>
-                    <span>작성일</span>
-                    <span>관리</span>
-                </div>
-                <p class="admin-empty-text" id="personalMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
-                <div class="admin-materials-grid" id="personalMaterialsList"></div>
             </div>
         </section>
 
@@ -209,24 +219,26 @@
                 <button type="button" class="admin-pill" data-lang="computer" data-scope="KWZM">컴퓨터</button>
                 <button type="button" class="admin-pill" data-lang="other" data-scope="KWZM">기타</button>
             </div>
-            <div class="admin-category-pills" id="kwzmCategoryPills" hidden></div>
-            <div class="admin-materials-view" id="kwzmMaterialsView" hidden>
-                <div class="admin-materials-head-row">
-                    <p class="admin-materials-heading" id="kwzmMaterialsHeading"></p>
-                    <button type="button" class="admin-invite-btn" id="adminInviteBtn" hidden>
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        학생 초대 관리 <span id="adminInviteCountBadge"></span>
-                    </button>
+            <div class="admin-materials-col">
+                <div class="admin-category-pills" id="kwzmCategoryPills" hidden></div>
+                <div class="admin-materials-view" id="kwzmMaterialsView" hidden>
+                    <div class="admin-materials-head-row">
+                        <p class="admin-materials-heading" id="kwzmMaterialsHeading"></p>
+                        <button type="button" class="admin-invite-btn" id="adminInviteBtn" hidden>
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            학생 초대 관리 <span id="adminInviteCountBadge"></span>
+                        </button>
+                    </div>
+                    <div class="admin-materials-columns" aria-hidden="true">
+                        <span></span>
+                        <span>제목</span>
+                        <span>유형</span>
+                        <span>작성일</span>
+                        <span>관리</span>
+                    </div>
+                    <p class="admin-empty-text" id="kwzmMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
+                    <div class="admin-materials-grid" id="kwzmMaterialsList"></div>
                 </div>
-                <div class="admin-materials-columns" aria-hidden="true">
-                    <span></span>
-                    <span>제목</span>
-                    <span>유형</span>
-                    <span>작성일</span>
-                    <span>관리</span>
-                </div>
-                <p class="admin-empty-text" id="kwzmMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
-                <div class="admin-materials-grid" id="kwzmMaterialsList"></div>
             </div>
         </section>
 
@@ -239,23 +251,25 @@
                 <button type="button" class="admin-pill" data-lang="english" data-scope="VIDEO">영어</button>
                 <button type="button" class="admin-pill" data-lang="computer" data-scope="VIDEO">컴퓨터</button>
             </div>
-            <div class="admin-materials-view" id="videoMaterialsView" hidden>
-                <div class="admin-materials-head-row">
-                    <p class="admin-materials-heading" id="videoMaterialsHeading"></p>
-                    <button type="button" class="admin-invite-btn" id="videoInviteBtn" hidden>
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        학생 초대 관리 <span id="videoInviteCountBadge"></span>
-                    </button>
+            <div class="admin-materials-col">
+                <div class="admin-materials-view" id="videoMaterialsView" hidden>
+                    <div class="admin-materials-head-row">
+                        <p class="admin-materials-heading" id="videoMaterialsHeading"></p>
+                        <button type="button" class="admin-invite-btn" id="videoInviteBtn" hidden>
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            학생 초대 관리 <span id="videoInviteCountBadge"></span>
+                        </button>
+                    </div>
+                    <div class="admin-materials-columns" aria-hidden="true">
+                        <span></span>
+                        <span>제목</span>
+                        <span>유형</span>
+                        <span>작성일</span>
+                        <span>관리</span>
+                    </div>
+                    <p class="admin-empty-text" id="videoMaterialsEmpty" hidden>아직 등록된 영상이 없어요.</p>
+                    <div class="admin-materials-grid" id="videoMaterialsList"></div>
                 </div>
-                <div class="admin-materials-columns" aria-hidden="true">
-                    <span></span>
-                    <span>제목</span>
-                    <span>유형</span>
-                    <span>작성일</span>
-                    <span>관리</span>
-                </div>
-                <p class="admin-empty-text" id="videoMaterialsEmpty" hidden>아직 등록된 영상이 없어요.</p>
-                <div class="admin-materials-grid" id="videoMaterialsList"></div>
             </div>
         </section>
 
@@ -269,19 +283,21 @@
                 <button type="button" class="admin-pill" data-lang="computer" data-scope="TRIAL">컴퓨터</button>
                 <button type="button" class="admin-pill" data-lang="video" data-scope="TRIAL">영상</button>
             </div>
-            <div class="admin-materials-view" id="trialMaterialsView" hidden>
-                <div class="admin-materials-head-row">
-                    <p class="admin-materials-heading" id="trialMaterialsHeading"></p>
+            <div class="admin-materials-col">
+                <div class="admin-materials-view" id="trialMaterialsView" hidden>
+                    <div class="admin-materials-head-row">
+                        <p class="admin-materials-heading" id="trialMaterialsHeading"></p>
+                    </div>
+                    <div class="admin-materials-columns" aria-hidden="true">
+                        <span></span>
+                        <span>제목</span>
+                        <span>유형</span>
+                        <span>작성일</span>
+                        <span>관리</span>
+                    </div>
+                    <p class="admin-empty-text" id="trialMaterialsEmpty" hidden>아직 등록된 체험 자료가 없어요.</p>
+                    <div class="admin-materials-grid" id="trialMaterialsList"></div>
                 </div>
-                <div class="admin-materials-columns" aria-hidden="true">
-                    <span></span>
-                    <span>제목</span>
-                    <span>유형</span>
-                    <span>작성일</span>
-                    <span>관리</span>
-                </div>
-                <p class="admin-empty-text" id="trialMaterialsEmpty" hidden>아직 등록된 체험 자료가 없어요.</p>
-                <div class="admin-materials-grid" id="trialMaterialsList"></div>
             </div>
         </section>
 
@@ -493,6 +509,16 @@
                     <button type="button" class="admin-invite-add-btn" id="inviteAddBtn">초대</button>
                 </div>
                 <p class="auth-form-error" id="inviteError" hidden></p>
+                <button type="button" class="admin-bulk-invite-toggle" id="bulkInviteToggleBtn">여러 명 한 번에 초대하기</button>
+            </div>
+
+            <div class="auth-form-field" id="bulkInviteField" hidden>
+                <label for="bulkInviteTextarea">학생번호 여러 개 (줄바꿈 또는 쉼표로 구분)</label>
+                <textarea class="admin-note-textarea" id="bulkInviteTextarea" placeholder="2026_Korean_Level1_01&#10;2026_Korean_Level1_02&#10;2026_Korean_Level1_03"></textarea>
+                <div class="admin-note-footer">
+                    <span id="bulkInviteResult"></span>
+                    <button type="button" class="admin-note-save-btn" id="bulkInviteSubmitBtn">일괄 초대하기</button>
+                </div>
             </div>
 
             <div class="auth-form-field">
@@ -685,7 +711,24 @@
 
             <div class="auth-form-field">
                 <label for="timetableCourseInput">과목명</label>
-                <input type="text" id="timetableCourseInput" placeholder="예: 한국어 1급">
+                <select class="apply-select" id="timetableCourseInput">
+                    <option value="" disabled selected>과목을 선택해주세요</option>
+                    <optgroup label="한국어">
+                        <option value="한국어 기초">한국어 기초</option>
+                        <option value="한국어 1급">한국어 1급</option>
+                        <option value="한국어 2급">한국어 2급</option>
+                        <option value="한국어 3급">한국어 3급</option>
+                        <option value="한국어 4급">한국어 4급</option>
+                    </optgroup>
+                    <optgroup label="컴퓨터">
+                        <option value="컴퓨터 기초">컴퓨터 기초</option>
+                        <option value="컴퓨터 Word">Word</option>
+                        <option value="컴퓨터 Excel">Excel</option>
+                        <option value="컴퓨터 PowerPoint">PowerPoint</option>
+                        <option value="컴퓨터 페이지메이커">페이지메이커</option>
+                        <option value="컴퓨터 포토샵">포토샵</option>
+                    </optgroup>
+                </select>
             </div>
 
             <div class="auth-form-field">
@@ -744,6 +787,138 @@
             <div class="admin-note-footer">
                 <span></span>
                 <button type="button" class="admin-note-save-btn" id="faqSaveBtn">추가하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== 출석부 (관리자 전용) ===================== -->
+<div class="admin-invite-modal" id="attendanceModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-attendance-modal-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3 id="attendanceModalTitle">출석부</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-attendance-modal-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <input type="hidden" id="attendanceApplicationId">
+
+            <div class="admin-attendance-summary" id="attendanceSummary"></div>
+
+            <div class="auth-form-field">
+                <label>새 출석 기록 추가</label>
+                <div class="admin-attendance-add-row">
+                    <input type="date" id="attendanceDateInput">
+                    <select class="apply-select" id="attendanceStatusSelect">
+                        <option value="PRESENT">출석</option>
+                        <option value="ABSENT">결석</option>
+                        <option value="MAKEUP">보강</option>
+                    </select>
+                </div>
+                <input type="text" id="attendanceNoteInput" placeholder="메모 (선택)" style="margin-top: 8px;">
+                <p class="auth-form-error" id="attendanceError" hidden></p>
+                <div class="admin-note-footer">
+                    <span></span>
+                    <button type="button" class="admin-note-save-btn" id="attendanceSaveBtn">추가하기</button>
+                </div>
+            </div>
+
+            <div class="auth-form-field">
+                <label>전체 기록</label>
+                <div class="admin-attendance-list" id="attendanceList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== 파일 보내기 (자격증/시험 자료, 관리자 전용) ===================== -->
+<div class="admin-invite-modal" id="sendFileModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-send-file-modal-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3 id="sendFileModalTitle">파일 보내기</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-send-file-modal-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <input type="hidden" id="sendFileApplicationId">
+            <p class="admin-note-hint">여기서 보낸 파일은 학생 마이페이지 "바로가기"에서 바로 다운로드할 수 있어요.</p>
+
+            <div class="auth-form-field">
+                <label>종류</label>
+                <div class="admin-category-grid">
+                    <label class="admin-category-chip">
+                        <input type="radio" name="sendFileCategory" value="CERTIFICATE" checked>
+                        <span>자격증</span>
+                    </label>
+                    <label class="admin-category-chip">
+                        <input type="radio" name="sendFileCategory" value="EXAM">
+                        <span>시험 자료</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="sendFileInput">파일 선택</label>
+                <input type="file" id="sendFileInput">
+            </div>
+
+            <p class="auth-form-error" id="sendFileError" hidden></p>
+
+            <div class="admin-note-footer">
+                <span></span>
+                <button type="button" class="admin-note-save-btn" id="sendFileSubmitBtn">보내기</button>
+            </div>
+
+            <div class="auth-form-field">
+                <label>보낸 파일 목록</label>
+                <p class="admin-empty-text" id="sentFilesEmpty" hidden>아직 보낸 파일이 없어요.</p>
+                <div class="admin-sent-files-list" id="sentFilesList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== 수업 시간 설정 (관리자 전용) ===================== -->
+<div class="admin-invite-modal" id="scheduleModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-schedule-modal-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3 id="scheduleModalTitle">수업 시간 설정</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-schedule-modal-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <input type="hidden" id="scheduleApplicationId">
+            <p class="admin-note-hint">여기서 등록한 요일·시간에 맞춰 "오늘 출석 체크" 화면과 학생의 출석 버튼이 자동으로 동작해요.</p>
+
+            <div class="auth-form-field">
+                <label>수업 요일 (여러 개 선택 가능)</label>
+                <div class="admin-category-grid">
+                    <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="MON"><span>월</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="TUE"><span>화</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="WED"><span>수</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="THU"><span>목</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="FRI"><span>금</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="SAT"><span>토</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="SUN"><span>일</span></label>
+                </div>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="scheduleTimeInput">수업 시작 시간</label>
+                <input type="time" id="scheduleTimeInput">
+            </div>
+
+            <p class="auth-form-error" id="scheduleError" hidden></p>
+
+            <div class="admin-note-footer">
+                <span></span>
+                <button type="button" class="admin-note-save-btn" id="scheduleSaveBtn">저장하기</button>
             </div>
         </div>
     </div>

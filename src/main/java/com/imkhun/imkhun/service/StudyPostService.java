@@ -75,6 +75,15 @@ public class StudyPostService {
                 .toList();
     }
 
+    // 검색 — 제목/내용에 검색어가 들어간 글
+    @Transactional(readOnly = true)
+    public List<PostResponse> searchPosts(String keyword, String viewerUsername) {
+        return studyPostRepository.search(keyword)
+                .stream()
+                .map(p -> toResponse(p, viewerUsername))
+                .toList();
+    }
+
     @Transactional
     public PostResponse updatePost(Long id, UpdatePostRequest request, String username) {
         StudyPost post = findOwnedPost(id, username, "본인이 쓴 글만 수정할 수 있어요.");

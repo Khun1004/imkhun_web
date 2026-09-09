@@ -20,6 +20,8 @@
 </head>
 <body>
 
+<div class="site-toast-container" id="siteToastContainer"></div>
+
 <div class="chat-widget">
     <div class="chat-panel" id="chatMenu" role="menu" aria-hidden="true">
         <div class="chat-panel-header">
@@ -79,6 +81,20 @@
     <div class="masthead">
         <div class="wordmark">I'm Khun</div>
         <div class="auth-actions">
+            <div class="site-notif-wrap">
+                <button type="button" class="site-notif-btn" id="siteNotifBtn" aria-haspopup="true" aria-expanded="false" aria-label="알림">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v.6a6 6 0 0 1 5 5.9v3l1.6 2.6a1 1 0 0 1-.85 1.5H5.25a1 1 0 0 1-.85-1.5L6 13.5v-3a6 6 0 0 1 5-5.9V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    <span class="site-notif-badge" id="siteNotifBadge" hidden>0</span>
+                </button>
+                <div class="site-notif-panel" id="siteNotifPanel" hidden>
+                    <div class="site-notif-panel-head">
+                        <span>알림</span>
+                        <button type="button" class="site-notif-readall-btn" id="siteNotifReadAllBtn" hidden>모두 읽음</button>
+                    </div>
+                    <div class="site-notif-list" id="siteNotifList"></div>
+                </div>
+            </div>
+
             <div class="auth-guest" id="authGuest">
                 <button type="button" class="btn-ghost" id="signupOpenBtn">회원가입</button>
                 <button type="button" class="btn-ghost" id="loginOpenBtn">로그인</button>

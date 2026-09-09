@@ -60,6 +60,15 @@ public class StudyMaterialService {
                 .toList();
     }
 
+    // 검색 — 제목/설명에 검색어가 들어간 자료 (같은 scope 안에서만)
+    @Transactional(readOnly = true)
+    public List<MaterialResponse> searchMaterials(String keyword, String scope) {
+        return studyMaterialRepository.searchByScope(scope, keyword)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     // 학생 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중 최근 N개 (항상 KWZM 자료만)
     @Transactional(readOnly = true)
     public List<MaterialResponse> getRecentMaterials(Set<String> languages, int limit) {

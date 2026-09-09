@@ -216,3 +216,56 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* 희망 수업 요일·시간 */
+
+.apply-schedule-hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin: -4px 0 10px;
+}
+
+.apply-schedule-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.apply-slot-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 10px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper-3);
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.apply-slot-chip strong {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.apply-slot-chip span {
+    font-size: 11px;
+    color: var(--ink-faint);
+}
+
+.apply-slot-chip:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.apply-slot-chip.active {
+    background: var(--gradient-main);
+    border-color: transparent;
+    color: #fff;
+}
+
+.apply-slot-chip.active span {
+    color: rgba(255, 255, 255, 0.85);
+}

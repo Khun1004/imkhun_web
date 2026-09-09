@@ -114,6 +114,7 @@ async function loadStudentPortalData() {
 
         const nameEl = document.getElementById("studentTopheaderName");
         if (nameEl) nameEl.textContent = `${data.nickname} 님`;
+        studentNicknameForCheckin = data.nickname;
 
         studentCourses = data.courses || [];
         renderStudentHome(data.nickname);
@@ -124,8 +125,95 @@ async function loadStudentPortalData() {
         if (!studentNotifPollTimer) {
             studentNotifPollTimer = setInterval(loadStudentNotifUnreadCount, 30000);
         }
+        loadCheckinOptions();
+        if (!checkinPollTimer) {
+            checkinPollTimer = setInterval(loadCheckinOptions, 60000);
+        }
     } catch (err) {
         console.error(err);
+    }
+}
+
+let checkinPollTimer = null;
+let studentNicknameForCheckin = "";
+
+async function loadCheckinOptions() {
+    const banner = document.getElementById("studentCheckinBanner");
+    if (!banner) return;
+
+    try {
+        const res = await fetch("/api/student/attendance/check-in-options");
+        if (!res.ok) return;
+        const data = await res.json();
+        const options = data.checkableNow || [];
+
+        if (!data.hasClassToday) {
+            banner.hidden = false;
+            banner.innerHTML = `
+        <div class="student-checkin-card student-checkin-card--none">
+          <span class="student-checkin-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span class="student-checkin-text">
+            <strong>${escapeHtmlForStudent(studentNicknameForCheckin || "")}님의 수업은 오늘에 없습니다.</strong>
+            <span>편히 쉬시고, 다음 수업 때 만나요!</span>
+          </span>
+        </div>
+      `;
+            return;
+        }
+
+        if (options.length === 0) {
+            banner.hidden = true;
+            banner.innerHTML = "";
+            return;
+        }
+
+        banner.hidden = false;
+        banner.innerHTML = "";
+        options.forEach((opt) => {
+            const card = document.createElement("div");
+            card.className = "student-checkin-card";
+            card.innerHTML = `
+        <span class="student-checkin-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="student-checkin-text">
+          <span class="student-checkin-eyebrow"><span class="student-checkin-eyebrow-dot" aria-hidden="true"></span>NOW</span>
+          <strong>지금 수업 시간이에요!</strong>
+          <span>${escapeHtmlForStudent(opt.courseName)} · ${opt.classTime ? opt.classTime.slice(0, 5) : ""}</span>
+        </span>
+        <button type="button" class="student-checkin-btn" data-checkin-id="${opt.applicationId}">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          출석하기
+        </button>
+      `;
+            banner.appendChild(card);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function submitCheckin(applicationId, btn) {
+    btn.disabled = true;
+    btn.textContent = "체크하는 중...";
+    try {
+        const res = await fetch(`/api/student/applications/${applicationId}/check-in`, { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "출석 체크에 실패했어요.");
+            btn.disabled = false;
+            btn.textContent = "출석하기";
+            return;
+        }
+        const data = await res.json();
+        alert(data.status === "LATE" ? "지각으로 체크됐어요." : "출석 체크됐어요!");
+        loadCheckinOptions();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+        btn.disabled = false;
+        btn.textContent = "출석하기";
     }
 }
 
@@ -306,6 +394,108 @@ async function toggleStudentNotifPanel() {
     panel.hidden = !willOpen;
     btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
     if (willOpen) await loadStudentNotifList();
+}
+
+function toggleStudentSearchPanel() {
+    const panel = document.getElementById("studentSearchPanel");
+    const btn = document.getElementById("studentSearchBtn");
+    if (!panel || !btn) return;
+
+    const willOpen = panel.hidden;
+    if (willOpen) {
+        const rect = btn.getBoundingClientRect();
+        panel.style.top = `${rect.bottom + 10}px`;
+        panel.style.right = `${window.innerWidth - rect.right}px`;
+    }
+    panel.hidden = !willOpen;
+    btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    if (willOpen) document.getElementById("studentSearchInput")?.focus();
+}
+
+function closeStudentSearchPanel() {
+    const panel = document.getElementById("studentSearchPanel");
+    const btn = document.getElementById("studentSearchBtn");
+    if (panel) panel.hidden = true;
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+
+let studentSearchDebounce = null;
+
+function handleStudentSearchInput(value) {
+    clearTimeout(studentSearchDebounce);
+    const resultsEl = document.getElementById("studentSearchResults");
+    const keyword = value.trim();
+
+    if (!keyword) {
+        if (resultsEl) resultsEl.innerHTML = "";
+        return;
+    }
+    studentSearchDebounce = setTimeout(() => runStudentSearch(keyword), 350);
+}
+
+async function runStudentSearch(keyword) {
+    const resultsEl = document.getElementById("studentSearchResults");
+    if (!resultsEl) return;
+    resultsEl.innerHTML = `<p class="student-search-hint">검색하는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/student/search?q=${encodeURIComponent(keyword)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const materials = data.materials || [];
+        const posts = data.posts || [];
+
+        if (materials.length === 0 && posts.length === 0) {
+            resultsEl.innerHTML = `<p class="student-search-hint">"${escapeHtmlForStudent(keyword)}"에 대한 결과가 없어요.</p>`;
+            return;
+        }
+
+        resultsEl.innerHTML = "";
+
+        if (materials.length > 0) {
+            const section = document.createElement("div");
+            section.className = "student-search-section";
+            section.innerHTML = `<p class="student-search-section-label">자료 ${materials.length}개</p>`;
+            materials.forEach((m) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "student-search-item";
+                item.innerHTML = `
+          <span class="student-search-item-badge">${escapeHtmlForStudent(STUDENT_LANGUAGE_LABEL[m.language] || m.language)}</span>
+          <span class="student-search-item-title">${escapeHtmlForStudent(m.title)}</span>
+        `;
+                item.addEventListener("click", () => {
+                    closeStudentSearchPanel();
+                    handleStudentViewMaterial(m);
+                });
+                section.appendChild(item);
+            });
+            resultsEl.appendChild(section);
+        }
+
+        if (posts.length > 0) {
+            const section = document.createElement("div");
+            section.className = "student-search-section";
+            section.innerHTML = `<p class="student-search-section-label">게시판 글 ${posts.length}개</p>`;
+            posts.forEach((p) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "student-search-item";
+                item.innerHTML = `
+          <span class="student-search-item-badge">${escapeHtmlForStudent(BOARD_TOPIC_LABEL[p.topic] || p.topic)}</span>
+          <span class="student-search-item-title">${escapeHtmlForStudent(p.title)}</span>
+        `;
+                item.addEventListener("click", () => {
+                    closeStudentSearchPanel();
+                    switchStudentMainTab("post");
+                });
+                section.appendChild(item);
+            });
+            resultsEl.appendChild(section);
+        }
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 function closeStudentNotifPanel() {
@@ -1367,6 +1557,46 @@ async function submitBoardPost() {
 }
 
 // 마이페이지 "내가 쓴 글"
+const SENT_FILE_CATEGORY_LABEL_STUDENT = { CERTIFICATE: "자격증", EXAM: "시험 자료" };
+
+async function loadMypageFiles() {
+    const list = document.getElementById("mypageFilesList");
+    const emptyText = document.getElementById("mypageFilesEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/student/files");
+        if (!res.ok) return;
+        const files = await res.json();
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = files.length > 0;
+
+        files.forEach((f) => {
+            const item = document.createElement("a");
+            item.className = "mypage-file-item";
+            item.href = f.fileData;
+            item.download = f.fileName;
+            item.innerHTML = `
+        <span class="mypage-file-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="mypage-file-info">
+          <span class="mypage-file-category">${SENT_FILE_CATEGORY_LABEL_STUDENT[f.category] || f.category} · ${escapeHtmlForStudent(f.courseName || "")}</span>
+          <span class="mypage-file-name">${escapeHtmlForStudent(f.fileName)}</span>
+          <span class="mypage-file-date">${f.createdAt}</span>
+        </span>
+        <span class="mypage-file-download" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 async function renderMyPosts() {
     const listEl = document.getElementById("mypagePostsList");
     const emptyEl = document.getElementById("mypagePostsEmpty");
@@ -1503,6 +1733,9 @@ document.addEventListener("fragments:loaded", () => {
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-board-modal-close]")) closeBoardWriteModal();
         if (e.target.closest("[data-course-materials-close]")) closeCourseMaterialsModal();
+
+        const checkinBtn = e.target.closest("[data-checkin-id]");
+        if (checkinBtn) submitCheckin(checkinBtn.dataset.checkinId, checkinBtn);
     });
     document.getElementById("boardFormSubmitBtn")?.addEventListener("click", submitBoardPost);
     document.getElementById("boardFormTopic")?.addEventListener("change", updateBoardCategoryFieldVisibility);
@@ -1528,6 +1761,20 @@ document.addEventListener("fragments:loaded", () => {
     document.addEventListener("click", (e) => {
         const wrap = document.getElementById("studentNotifBtn")?.closest(".student-notif-wrap");
         if (wrap && !wrap.contains(e.target)) closeStudentNotifPanel();
+    });
+
+    // 검색 아이콘
+    document.getElementById("studentSearchBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleStudentSearchPanel();
+    });
+    document.getElementById("studentSearchInput")?.addEventListener("input", (e) => {
+        handleStudentSearchInput(e.target.value);
+    });
+    document.getElementById("studentSearchPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", (e) => {
+        const wrap = document.getElementById("studentSearchBtn")?.closest(".student-search-wrap");
+        if (wrap && !wrap.contains(e.target)) closeStudentSearchPanel();
     });
 
     document.getElementById("toggleStudentLoginPwBtn")?.addEventListener("click", () => {
@@ -1651,18 +1898,7 @@ document.addEventListener("fragments:loaded", () => {
         });
 
         if (key === "myposts") renderMyPosts();
-    });
-
-    // "합격증 다운로드" / "시험 보러가기" — 관리자가 나중에 보내주는 기능이라 지금은 안내만
-    document.addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-mypage-action]");
-        if (!btn) return;
-        const action = btn.dataset.mypageAction;
-        if (action === "certificate") {
-            alert("합격증은 관리자가 발급하면 여기에서 다운로드할 수 있어요.");
-        } else if (action === "exam") {
-            alert("시험은 관리자가 열어주면 여기에서 볼 수 있어요.");
-        }
+        if (key === "shortcuts") loadMypageFiles();
     });
 
     document.addEventListener("keydown", (e) => {

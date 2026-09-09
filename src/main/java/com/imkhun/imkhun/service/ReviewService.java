@@ -17,11 +17,14 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
-    public ReviewService(ReviewRepository reviewRepository, UserRepository userRepository) {
+    public ReviewService(ReviewRepository reviewRepository, UserRepository userRepository,
+                         NotificationService notificationService) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public ReviewResponse createReview(String username, CreateReviewRequest request) {
@@ -44,6 +47,10 @@ public class ReviewService {
                 request.content()
         );
         Review saved = reviewRepository.save(review);
+
+        notificationService.notifyAdmin("NEW_REVIEW",
+                user.getNickname() + "님이 " + request.courseName() + " 강의에 리뷰를 남겼어요. (별점 " + request.rating() + ")", null);
+
         return toResponse(saved);
     }
 
@@ -69,8 +76,15 @@ public class ReviewService {
         }
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalStateException("리뷰를 찾을 수 없어요."));
+        boolean isFirstReply = review.getAdminReply() == null;
         review.updateReply(reply);
         Review saved = reviewRepository.save(review);
+
+        if (isFirstReply) {
+            notificationService.notifyStudent(review.getUsername(), "REVIEW_REPLY",
+                    "남기신 리뷰에 답글이 달렸어요.", null);
+        }
+
         return toResponse(saved);
     }
 

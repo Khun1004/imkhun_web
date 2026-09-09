@@ -7,6 +7,7 @@ import com.imkhun.imkhun.dto.ApplicationResponse;
 import com.imkhun.imkhun.dto.ChangeCourseRequest;
 import com.imkhun.imkhun.dto.CreateApplicationRequest;
 import com.imkhun.imkhun.dto.UpdateApplicationPaymentRequest;
+import com.imkhun.imkhun.dto.UpdateScheduleRequest;
 import com.imkhun.imkhun.repository.ApplicationRepository;
 import com.imkhun.imkhun.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,10 @@ public class ApplicationService {
                 request.contact(),
                 request.memo()
         );
+        if (request.classDays() != null && !request.classDays().isBlank()
+                && request.classTime() != null && !request.classTime().isBlank()) {
+            application.updateSchedule(request.classDays(), request.classTime());
+        }
         Application saved = applicationRepository.save(application);
 
         String nickname = userRepository.findByUsername(username).map(User::getNickname).orElse(username);
@@ -85,7 +90,7 @@ public class ApplicationService {
                             app.getAmountReason(), app.getMaterialGuide(), app.getClassGuide(),
                             app.getPaymentConfirmedByStudentAt() != null, app.getPaymentConfirmedByAdminAt() != null,
                             app.getPaymentConfirmedByStudentAt() != null ? app.getPaymentConfirmedByStudentAt().format(DATE_FORMAT) : null,
-                            app.getReceiptImage()
+                            app.getReceiptImage(), app.getClassDays(), app.getClassTime()
                     );
                 })
                 .toList();
@@ -201,6 +206,14 @@ public class ApplicationService {
 
         notificationService.notifyStudent(application.getUsername(), "PAYMENT_CONFIRMED_BY_ADMIN",
                 application.getCourseName() + " 입금이 확인됐어요. 감사합니다!", null);
+    }
+
+    // 출석 체크용 — 이 강의가 몇 요일, 몇 시에 진행되는지 등록
+    public void updateSchedule(Long applicationId, UpdateScheduleRequest request) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+        application.updateSchedule(request.classDays(), request.classTime());
+        applicationRepository.save(application);
     }
 
     // 예: "일본어 1급" -> "2026_Japanese_Level1_01"

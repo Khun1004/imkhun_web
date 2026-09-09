@@ -4,6 +4,7 @@ import com.imkhun.imkhun.dto.ApplicationResponse;
 import com.imkhun.imkhun.dto.ConfirmPaymentRequest;
 import com.imkhun.imkhun.dto.CreateApplicationRequest;
 import com.imkhun.imkhun.service.ApplicationService;
+import com.imkhun.imkhun.service.AttendanceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,11 @@ import java.util.List;
 public class ApplicationController {
 
     private final ApplicationService applicationService;
+    private final AttendanceService attendanceService;
 
-    public ApplicationController(ApplicationService applicationService) {
+    public ApplicationController(ApplicationService applicationService, AttendanceService attendanceService) {
         this.applicationService = applicationService;
+        this.attendanceService = attendanceService;
     }
 
     private boolean notLoggedIn(Authentication authentication) {
@@ -60,6 +63,19 @@ public class ApplicationController {
             String receiptImage = request != null ? request.receiptImage() : null;
             applicationService.confirmPaymentByStudent(id, authentication.getName(), receiptImage);
             return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 출석 현황 (본인 신청 내역만 확인 가능)
+    @GetMapping("/{id}/attendance")
+    public ResponseEntity<?> getAttendance(Authentication authentication, @PathVariable Long id) {
+        if (notLoggedIn(authentication)) {
+            return ResponseEntity.status(401).body("로그인이 필요해요.");
+        }
+        try {
+            return ResponseEntity.ok(attendanceService.getSummaryForStudent(id, authentication.getName()));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

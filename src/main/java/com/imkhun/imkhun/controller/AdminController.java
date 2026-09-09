@@ -4,7 +4,9 @@ import com.imkhun.imkhun.domain.Admin;
 import com.imkhun.imkhun.dto.*;
 import com.imkhun.imkhun.repository.AdminRepository;
 import com.imkhun.imkhun.service.AdminAuthService;
+import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
+import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.DashboardService;
 import com.imkhun.imkhun.service.FaqService;
 import com.imkhun.imkhun.service.KwzmInviteService;
@@ -39,13 +41,16 @@ public class AdminController {
     private final TimetableService timetableService;
     private final FaqService faqService;
     private final DashboardService dashboardService;
+    private final AttendanceService attendanceService;
+    private final AdminFileService adminFileService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
                            StudyMaterialService studyMaterialService, ReviewService reviewService,
                            KwzmInviteService kwzmInviteService, StudyPostService studyPostService,
                            NotificationService notificationService, NoticeService noticeService,
-                           TimetableService timetableService, FaqService faqService, DashboardService dashboardService) {
+                           TimetableService timetableService, FaqService faqService, DashboardService dashboardService,
+                           AttendanceService attendanceService, AdminFileService adminFileService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -59,6 +64,8 @@ public class AdminController {
         this.timetableService = timetableService;
         this.faqService = faqService;
         this.dashboardService = dashboardService;
+        this.attendanceService = attendanceService;
+        this.adminFileService = adminFileService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -660,5 +667,121 @@ public class AdminController {
     public ResponseEntity<?> getDashboard(HttpServletRequest request) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         return ResponseEntity.ok(dashboardService.getSummary());
+    }
+
+    // ---------- 출석 관리 ----------
+
+    @GetMapping("/applications/{id}/attendance")
+    public ResponseEntity<?> getAttendance(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(attendanceService.getSummary(id));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/applications/{id}/attendance")
+    public ResponseEntity<?> addAttendanceRecord(HttpServletRequest request, @PathVariable Long id,
+                                                 @RequestBody CreateAttendanceRecordRequest attendanceRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(attendanceService.addRecord(id, attendanceRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/attendance/{id}")
+    public ResponseEntity<?> deleteAttendanceRecord(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            attendanceService.deleteRecord(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 강의 요일/시간 등록 (출석 체크에 씀)
+    @PostMapping("/applications/{id}/schedule")
+    public ResponseEntity<?> updateSchedule(HttpServletRequest request, @PathVariable Long id,
+                                            @RequestBody UpdateScheduleRequest scheduleRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            applicationService.updateSchedule(id, scheduleRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 오늘(또는 고른 날짜) 출석 체크 화면 — 그날 수업 있는 학생들만 자동으로 걸러서 보여줌
+    @GetMapping("/attendance/today")
+    public ResponseEntity<?> getTodayRoster(HttpServletRequest request, @RequestParam String date) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(attendanceService.getRosterForDate(java.time.LocalDate.parse(date)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("날짜 형식이 올바르지 않아요.");
+        }
+    }
+
+    @PostMapping("/attendance/today")
+    public ResponseEntity<?> setTodayStatus(HttpServletRequest request, @RequestParam String date,
+                                            @RequestBody SetAttendanceRequest setRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            attendanceService.setStatusForDate(setRequest.applicationId(), java.time.LocalDate.parse(date), setRequest.status());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // "나머지 전부 결석 처리" 버튼
+    @PostMapping("/attendance/today/mark-rest-absent")
+    public ResponseEntity<?> markRestAbsent(HttpServletRequest request, @RequestParam String date) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            int count = attendanceService.markRestAbsent(java.time.LocalDate.parse(date));
+            return ResponseEntity.ok(count);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 자격증/시험 자료 파일 보내기 ----------
+
+    @GetMapping("/applications/{id}/files")
+    public ResponseEntity<?> getSentFiles(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(adminFileService.getFilesForApplication(id));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/applications/{id}/files")
+    public ResponseEntity<?> sendFile(HttpServletRequest request, @PathVariable Long id,
+                                      @RequestBody SendFileRequest fileRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(adminFileService.sendFile(id, fileRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/files/{id}")
+    public ResponseEntity<?> deleteSentFile(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            adminFileService.deleteFile(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

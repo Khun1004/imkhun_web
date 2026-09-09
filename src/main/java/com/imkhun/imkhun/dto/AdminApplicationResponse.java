@@ -5,5 +5,6 @@ public record AdminApplicationResponse(Long id, String nickname, String email, S
                                        String studentNumber, boolean hasPaymentInfo, String paymentMethod,
                                        String amount, String amountReason, String materialGuide, String classGuide,
                                        boolean paymentConfirmedByStudent, boolean paymentConfirmedByAdmin,
-                                       String paymentConfirmedByStudentAt, String receiptImage) {
+                                       String paymentConfirmedByStudentAt, String receiptImage,
+                                       String classDays, String classTime) {
 }

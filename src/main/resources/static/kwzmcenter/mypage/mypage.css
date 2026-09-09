@@ -381,3 +381,92 @@
         padding: 16px 16px 22px;
     }
 }
+
+/* "바로가기" 탭 — 관리자가 보내준 파일(자격증/시험 자료) 목록 */
+
+.mypage-files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.mypage-file-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 14px;
+    background: var(--kwzm-bg-3);
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.mypage-file-item:hover {
+    border-color: var(--kwzm-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -18px rgba(15, 37, 71, 0.3);
+}
+
+.mypage-file-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-accent-2);
+}
+
+.mypage-file-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.mypage-file-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mypage-file-category {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--kwzm-accent-2);
+}
+
+.mypage-file-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--kwzm-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mypage-file-date {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+}
+
+.mypage-file-download {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--kwzm-primary);
+    color: #fff;
+}
+
+.mypage-file-download svg {
+    width: 15px;
+    height: 15px;
+}

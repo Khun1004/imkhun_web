@@ -73,6 +73,14 @@ public class Application {
     @Column(name = "receipt_image", columnDefinition = "CLOB")
     private String receiptImage;
 
+    // 출석 체크에 쓰는 수업 요일·시간. classDays는 "TUE,WED"처럼 쉼표로 구분된 요일 코드,
+    // classTime은 "10:00"처럼 자유 형식. 둘 다 관리자가 나중에 채워줌 (null이면 아직 미설정)
+    @Column(name = "class_days")
+    private String classDays;
+
+    @Column(name = "class_time")
+    private String classTime;
+
     protected Application() {
         // JPA 기본 생성자
     }
@@ -125,6 +133,11 @@ public class Application {
 
     public void confirmPaymentByAdmin() {
         this.paymentConfirmedByAdminAt = LocalDateTime.now();
+    }
+
+    public void updateSchedule(String classDays, String classTime) {
+        this.classDays = classDays;
+        this.classTime = classTime;
     }
 
     public Long getId() {
@@ -193,5 +206,13 @@ public class Application {
 
     public String getReceiptImage() {
         return receiptImage;
+    }
+
+    public String getClassDays() {
+        return classDays;
+    }
+
+    public String getClassTime() {
+        return classTime;
     }
 }

@@ -3,7 +3,9 @@ package com.imkhun.imkhun.controller;
 import com.imkhun.imkhun.domain.Application;
 import com.imkhun.imkhun.domain.User;
 import com.imkhun.imkhun.dto.*;
+import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
+import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.StudentAuthService;
@@ -29,13 +31,18 @@ public class StudentPortalController {
     private final KwzmInviteService kwzmInviteService;
     private final StudyPostService studyPostService;
     private final NotificationService notificationService;
+    private final AdminFileService adminFileService;
+    private final AttendanceService attendanceService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
-                                   StudyPostService studyPostService, NotificationService notificationService) {
+                                   StudyPostService studyPostService, NotificationService notificationService,
+                                   AdminFileService adminFileService, AttendanceService attendanceService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
+        this.adminFileService = adminFileService;
+        this.attendanceService = attendanceService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -157,6 +164,31 @@ public class StudentPortalController {
 
         List<MaterialResponse> materials = studyMaterialService.getRecentMaterials(invitedLanguages, 6);
         return ResponseEntity.ok(materials);
+    }
+
+    // 검색 — 자료(내가 초대받은 언어만) + 게시판 글, 제목/내용에 검색어가 들어간 것들을 같이 보여줘요
+    @GetMapping("/search")
+    public ResponseEntity<?> search(HttpServletRequest request, @RequestParam String q) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        User user = userOpt.get();
+
+        if (q == null || q.isBlank()) {
+            return ResponseEntity.ok(new SearchResultResponse(List.of(), List.of()));
+        }
+
+        List<Application> approved = studentAuthService.getApprovedApplications(user.getUsername());
+        Set<String> invitedLanguages = approved.stream()
+                .map(a -> applicationService.extractLanguageCode(a.getCourseName()))
+                .filter(lang -> isInvitedForLanguage(user.getUsername(), lang, "MATERIAL"))
+                .collect(java.util.stream.Collectors.toSet());
+
+        List<MaterialResponse> materials = studyMaterialService.searchMaterials(q, "KWZM").stream()
+                .filter(m -> invitedLanguages.contains(m.language()))
+                .toList();
+        List<PostResponse> posts = studyPostService.searchPosts(q, user.getUsername());
+
+        return ResponseEntity.ok(new SearchResultResponse(materials, posts));
     }
 
     // ---- 게시판: 학생들이 언어/컴퓨터 관련 글을 서로 올리고 볼 수 있는 공간 ----
@@ -300,5 +332,34 @@ public class StudentPortalController {
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         notificationService.markAllReadForStudent(userOpt.get().getUsername());
         return ResponseEntity.ok().build();
+    }
+
+    // 관리자가 보내준 파일 (자격증, 시험 자료) — 마이페이지 "바로가기"에서 확인
+    @GetMapping("/files")
+    public ResponseEntity<?> getMyFiles(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(adminFileService.getFilesForStudent(userOpt.get().getUsername()));
+    }
+
+    // 지금 출석 체크할 수 있는 강의가 있는지 (홈 화면에 "출석하기" 버튼을 보여줄지 판단용)
+    @GetMapping("/attendance/check-in-options")
+    public ResponseEntity<?> getCheckInOptions(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(attendanceService.getCheckinStatusForStudent(userOpt.get().getUsername()));
+    }
+
+    // 학생 스스로 출석 체크
+    @PostMapping("/applications/{id}/check-in")
+    public ResponseEntity<?> checkIn(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            String status = attendanceService.checkInSelf(id, userOpt.get().getUsername());
+            return ResponseEntity.ok(java.util.Map.of("status", status));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

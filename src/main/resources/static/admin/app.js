@@ -60,6 +60,21 @@ const HERO_CONTENT = {
         title: "KWZM 학생 자료",
         desc: "학생들에게 공유할 자료를 언어별로 관리하고 초대해요.",
     },
+    video: {
+        eyebrow: "KWZM 학생 공간",
+        title: "온라인 영상",
+        desc: "학생들에게 공유할 영상 자료를 관리하고 초대해요.",
+    },
+    trial: {
+        eyebrow: "무료체험",
+        title: "무료체험 자료",
+        desc: "누구나 볼 수 있는 체험용 자료를 관리해요.",
+    },
+    notices: {
+        eyebrow: "IMKhun 공개 사이트",
+        title: "공지사항",
+        desc: "공지 글, 강의 시간표, FAQ를 관리해요.",
+    },
     students: {
         eyebrow: "학생 관리",
         title: "학생 관리",
@@ -540,6 +555,15 @@ function closeInviteModal() {
     if (!modal) return;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
+
+    const bulkField = document.getElementById("bulkInviteField");
+    const toggleBtn = document.getElementById("bulkInviteToggleBtn");
+    const bulkTextarea = document.getElementById("bulkInviteTextarea");
+    const bulkResult = document.getElementById("bulkInviteResult");
+    if (bulkField) bulkField.hidden = true;
+    if (toggleBtn) toggleBtn.textContent = "여러 명 한 번에 초대하기";
+    if (bulkTextarea) bulkTextarea.value = "";
+    if (bulkResult) bulkResult.textContent = "";
 }
 
 function inviteContentType() {
@@ -672,7 +696,7 @@ async function deleteNotice(id) {
 // ---- 강의 시간표 관리 ----
 
 let adminTimetableCache = [];
-const TIMETABLE_DAY_LABEL = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI: "금" };
+const TIMETABLE_DAY_LABEL = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI: "금", SAT: "토", SUN: "일" };
 const TIMETABLE_COLOR_LABEL = { korean: "한국어", computer: "컴퓨터", other: "기타" };
 
 async function loadAdminTimetable() {
@@ -920,6 +944,413 @@ async function deleteFaq(id) {
     }
 }
 
+// ---- 출석부 (관리자 전용) ----
+
+const ATTENDANCE_STATUS_LABEL = { PRESENT: "출석", ABSENT: "결석", MAKEUP: "보강" };
+
+function openAttendanceModal(applicationId, courseName) {
+    const modal = document.getElementById("attendanceModal");
+    if (!modal) return;
+
+    document.getElementById("attendanceApplicationId").value = applicationId;
+    document.getElementById("attendanceModalTitle").textContent = `출석부 · ${courseName}`;
+    document.getElementById("attendanceDateInput").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("attendanceStatusSelect").value = "PRESENT";
+    document.getElementById("attendanceNoteInput").value = "";
+    document.getElementById("attendanceError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    loadAttendanceForModal(applicationId);
+}
+
+function closeAttendanceModal() {
+    const modal = document.getElementById("attendanceModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function loadAttendanceForModal(applicationId) {
+    const summaryEl = document.getElementById("attendanceSummary");
+    const listEl = document.getElementById("attendanceList");
+    if (!summaryEl || !listEl) return;
+
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/attendance`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const total = data.presentCount + data.absentCount + data.makeupCount;
+        const rate = total > 0 ? Math.round((data.presentCount / total) * 100) : 0;
+        summaryEl.innerHTML = `
+      <div class="admin-attendance-stat"><span class="admin-attendance-stat-value">${data.presentCount}</span><span>출석</span></div>
+      <div class="admin-attendance-stat"><span class="admin-attendance-stat-value">${data.absentCount}</span><span>결석</span></div>
+      <div class="admin-attendance-stat"><span class="admin-attendance-stat-value">${data.makeupCount}</span><span>보강</span></div>
+      <div class="admin-attendance-stat admin-attendance-stat--rate"><span class="admin-attendance-stat-value">${rate}%</span><span>출석률</span></div>
+    `;
+
+        listEl.innerHTML = "";
+        if (data.records.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 기록이 없어요.</p>`;
+            return;
+        }
+        data.records.forEach((r) => {
+            const row = document.createElement("div");
+            row.className = "admin-attendance-row";
+            row.innerHTML = `
+        <span class="admin-attendance-row-date">${r.classDate}</span>
+        <span class="admin-attendance-row-status admin-attendance-row-status--${r.status.toLowerCase()}">${ATTENDANCE_STATUS_LABEL[r.status] || r.status}</span>
+        <span class="admin-attendance-row-note">${escapeHtmlForAdmin(r.note || "")}</span>
+        <button type="button" class="admin-attendance-row-delete" data-delete-attendance-id="${r.id}" aria-label="삭제">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function submitAttendanceRecord() {
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    const classDate = document.getElementById("attendanceDateInput").value;
+    const status = document.getElementById("attendanceStatusSelect").value;
+    const note = document.getElementById("attendanceNoteInput").value.trim();
+    const errorEl = document.getElementById("attendanceError");
+    const saveBtn = document.getElementById("attendanceSaveBtn");
+
+    if (!classDate) {
+        errorEl.textContent = "날짜를 선택해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "추가하는 중...";
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/attendance`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ classDate, status, note }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        document.getElementById("attendanceNoteInput").value = "";
+        loadAttendanceForModal(applicationId);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "추가하기";
+    }
+}
+
+async function deleteAttendanceRecordAdmin(recordId) {
+    if (!confirm("이 출석 기록을 삭제할까요?")) return;
+
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    try {
+        const res = await fetch(`/api/admin/attendance/${recordId}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAttendanceForModal(applicationId);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+const SENT_FILE_CATEGORY_LABEL = { CERTIFICATE: "자격증", EXAM: "시험 자료" };
+
+function openSendFileModal(applicationId, courseName) {
+    const modal = document.getElementById("sendFileModal");
+    if (!modal) return;
+
+    document.getElementById("sendFileApplicationId").value = applicationId;
+    document.getElementById("sendFileModalTitle").textContent = `파일 보내기 · ${courseName}`;
+    document.getElementById("sendFileInput").value = "";
+    const categoryRadio = document.querySelector('input[name="sendFileCategory"][value="CERTIFICATE"]');
+    if (categoryRadio) categoryRadio.checked = true;
+    document.getElementById("sendFileError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    loadSentFiles(applicationId);
+}
+
+function closeSendFileModal() {
+    const modal = document.getElementById("sendFileModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function loadSentFiles(applicationId) {
+    const listEl = document.getElementById("sentFilesList");
+    const emptyEl = document.getElementById("sentFilesEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/files`);
+        if (!res.ok) return;
+        const files = await res.json();
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = files.length > 0;
+
+        files.forEach((f) => {
+            const row = document.createElement("div");
+            row.className = "admin-sent-file-row";
+            row.innerHTML = `
+        <span class="admin-sent-file-category">${SENT_FILE_CATEGORY_LABEL[f.category] || f.category}</span>
+        <span class="admin-sent-file-name">${escapeHtmlForAdmin(f.fileName)}</span>
+        <span class="admin-sent-file-date">${f.createdAt}</span>
+        <button type="button" class="admin-attendance-row-delete" data-delete-sent-file-id="${f.id}" aria-label="삭제">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function submitSendFile() {
+    const applicationId = document.getElementById("sendFileApplicationId").value;
+    const category = document.querySelector('input[name="sendFileCategory"]:checked')?.value;
+    const fileInput = document.getElementById("sendFileInput");
+    const errorEl = document.getElementById("sendFileError");
+    const submitBtn = document.getElementById("sendFileSubmitBtn");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        errorEl.textContent = "파일을 선택해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "보내는 중...";
+
+    try {
+        const fileData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        const res = await fetch(`/api/admin/applications/${applicationId}/files`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category, fileName: file.name, fileData }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "전송에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        fileInput.value = "";
+        loadSentFiles(applicationId);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "보내기";
+    }
+}
+
+async function deleteSentFile(fileId) {
+    if (!confirm("이 파일을 삭제할까요?")) return;
+
+    const applicationId = document.getElementById("sendFileApplicationId").value;
+    try {
+        const res = await fetch(`/api/admin/files/${fileId}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadSentFiles(applicationId);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---- 오늘 출석 체크 ----
+
+const ATTENDANCE_TODAY_STATUS_LABEL = { PRESENT: "출석", LATE: "지각", ABSENT: "결석", MAKEUP: "보강" };
+
+function getAttendanceTodayDate() {
+    const input = document.getElementById("attendanceTodayDateInput");
+    if (!input) return new Date().toISOString().slice(0, 10);
+    if (!input.value) input.value = new Date().toISOString().slice(0, 10);
+    return input.value;
+}
+
+async function loadAttendanceToday() {
+    const list = document.getElementById("attendanceTodayList");
+    const emptyEl = document.getElementById("attendanceTodayEmpty");
+    if (!list) return;
+    const date = getAttendanceTodayDate();
+    list.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/attendance/today?date=${date}`);
+        if (!res.ok) return;
+        const roster = await res.json();
+
+        list.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = roster.length > 0;
+
+        roster.forEach((entry) => {
+            const row = document.createElement("div");
+            row.className = "admin-attendance-today-row";
+            const statusLabel = entry.status ? ATTENDANCE_TODAY_STATUS_LABEL[entry.status] || entry.status : "미체크";
+            row.innerHTML = `
+        <span class="admin-attendance-today-time">${entry.classTime ? entry.classTime.slice(0, 5) : "-"}</span>
+        <span class="admin-attendance-today-course">${escapeHtmlForAdmin(entry.courseName)}</span>
+        <span class="admin-attendance-today-student">${escapeHtmlForAdmin(entry.studentNickname || "")}</span>
+        <span class="admin-attendance-today-current admin-attendance-today-current--${entry.status ? entry.status.toLowerCase() : "none"}">
+          ${statusLabel}${entry.checkedInByStudent ? " · 학생 체크" : ""}
+        </span>
+        <div class="admin-attendance-today-actions">
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--present" data-mark-attendance="${entry.applicationId}" data-mark-status="PRESENT">출석</button>
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--late" data-mark-attendance="${entry.applicationId}" data-mark-status="LATE">지각</button>
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--absent" data-mark-attendance="${entry.applicationId}" data-mark-status="ABSENT">결석</button>
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--makeup" data-mark-attendance="${entry.applicationId}" data-mark-status="MAKEUP">보강</button>
+        </div>
+      `;
+            list.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function markTodayAttendance(applicationId, status) {
+    const date = getAttendanceTodayDate();
+    try {
+        const res = await fetch(`/api/admin/attendance/today?date=${date}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applicationId: Number(applicationId), status }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "처리에 실패했어요.");
+            return;
+        }
+        loadAttendanceToday();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function markRestAbsentToday() {
+    if (!confirm("아직 체크 안 된 학생을 전부 결석으로 처리할까요?")) return;
+    const date = getAttendanceTodayDate();
+    try {
+        const res = await fetch(`/api/admin/attendance/today/mark-rest-absent?date=${date}`, { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "처리에 실패했어요.");
+            return;
+        }
+        const count = await res.json();
+        alert(`${count}명을 결석으로 처리했어요.`);
+        loadAttendanceToday();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+
+
+function openScheduleModal(applicationId, courseName, classDays, classTime) {
+    const modal = document.getElementById("scheduleModal");
+    if (!modal) return;
+
+    document.getElementById("scheduleApplicationId").value = applicationId;
+    document.getElementById("scheduleModalTitle").textContent = `수업 시간 설정 · ${courseName}`;
+    document.querySelectorAll('input[name="scheduleDay"]').forEach((cb) => {
+        cb.checked = classDays ? classDays.split(",").includes(cb.value) : false;
+    });
+    document.getElementById("scheduleTimeInput").value = classTime || "";
+    document.getElementById("scheduleError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeScheduleModal() {
+    const modal = document.getElementById("scheduleModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitSchedule() {
+    const applicationId = document.getElementById("scheduleApplicationId").value;
+    const days = [...document.querySelectorAll('input[name="scheduleDay"]:checked')].map((cb) => cb.value);
+    const time = document.getElementById("scheduleTimeInput").value;
+    const errorEl = document.getElementById("scheduleError");
+    const saveBtn = document.getElementById("scheduleSaveBtn");
+
+    if (days.length === 0 || !time) {
+        errorEl.textContent = "요일을 하나 이상 고르고, 시간도 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장하는 중...";
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/schedule`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ classDays: days.join(","), classTime: time }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeScheduleModal();
+        loadStudentList();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "저장하기";
+    }
+}
+
 async function confirmPaymentReceived(applicationId, btn) {
     if (!confirm("입금을 확인하셨나요? 학생에게 확인 알림이 가요.")) return;
 
@@ -1136,6 +1567,65 @@ async function inviteStudentToLanguage() {
         console.error(err);
         errorEl.textContent = "서버에 연결할 수 없어요.";
         errorEl.hidden = false;
+    }
+}
+
+function toggleBulkInviteField() {
+    const field = document.getElementById("bulkInviteField");
+    const toggleBtn = document.getElementById("bulkInviteToggleBtn");
+    if (!field || !toggleBtn) return;
+    const willOpen = field.hidden;
+    field.hidden = !willOpen;
+    toggleBtn.textContent = willOpen ? "한 명씩 초대하기" : "여러 명 한 번에 초대하기";
+}
+
+// 한 명씩 순서대로 기존 초대 API를 호출해요 (성공/실패를 각각 기록해서 마지막에 요약을 보여줘요)
+async function submitBulkInvite() {
+    const textarea = document.getElementById("bulkInviteTextarea");
+    const resultEl = document.getElementById("bulkInviteResult");
+    const submitBtn = document.getElementById("bulkInviteSubmitBtn");
+    if (!textarea) return;
+
+    const studentNumbers = textarea.value
+        .split(/[\n,]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+    if (studentNumbers.length === 0) {
+        resultEl.textContent = "학생번호를 입력해주세요.";
+        return;
+    }
+
+    submitBtn.disabled = true;
+    let successCount = 0;
+    const failed = [];
+
+    for (const studentNumber of studentNumbers) {
+        try {
+            const res = await fetch(`/api/admin/kwzm-invites?language=${currentInviteLanguage}&type=${inviteContentType()}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ studentNumber }),
+            });
+            if (res.ok) {
+                successCount++;
+            } else {
+                failed.push(studentNumber);
+            }
+        } catch (err) {
+            console.error(err);
+            failed.push(studentNumber);
+        }
+    }
+
+    submitBtn.disabled = false;
+    resultEl.textContent = failed.length === 0
+        ? `${successCount}명 모두 초대됐어요.`
+        : `${successCount}명 초대됨, 실패: ${failed.join(", ")}`;
+
+    if (successCount > 0) {
+        textarea.value = failed.join("\n");
+        loadInvitedStudents();
     }
 }
 
@@ -1575,6 +2065,7 @@ async function loadStudentList() {
         <div class="admin-student-main">
           <p class="admin-student-name">${escapeHtmlForAdmin(app.nickname)} 님</p>
           ${app.memo ? `<p class="admin-student-memo">${escapeHtmlForAdmin(app.memo)}</p>` : ""}
+          ${app.classDays ? `<p class="admin-student-schedule">희망: ${app.classDays.split(",").map((d) => TIMETABLE_DAY_LABEL[d] || d).join(",")} ${app.classTime ? app.classTime.slice(0, 5) : ""}</p>` : ""}
         </div>
         <p class="admin-student-email">${app.email ? `<span class="admin-student-email-text">${escapeHtmlForAdmin(app.email)}</span><button type="button" class="admin-copy-btn" data-copy-value="${escapeHtmlForAdmin(app.email)}" aria-label="이메일 복사" title="이메일 복사">${ICON_COPY}</button>` : "-"}</p>
         <p class="admin-student-course">${escapeHtmlForAdmin(app.courseName)}<span>${escapeHtmlForAdmin(studyTypeLabel[app.studyType] || app.studyType)}</span></p>
@@ -1588,6 +2079,9 @@ async function loadStudentList() {
         <div class="admin-student-actions-row">
           <button type="button" class="admin-material-action-btn" data-change-course-id="${app.id}">강의 변경</button>
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-payment-info-id="${app.id}">${app.hasPaymentInfo ? "결제 안내 수정" : "결제 안내 등록"}</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}">${app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정"}</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-attendance-id="${app.id}" data-attendance-course="${escapeHtmlForAdmin(app.courseName)}">출석부</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-send-file-id="${app.id}" data-send-file-course="${escapeHtmlForAdmin(app.courseName)}">파일 보내기</button>` : ""}
           ${paymentStatusHtml(app)}
         </div>
       `;
@@ -2137,41 +2631,75 @@ document.addEventListener("fragments:loaded", () => {
         });
     });
 
-    document.querySelectorAll(".admin-maintab").forEach((tab) => {
-        tab.addEventListener("click", () => {
-            document.querySelectorAll(".admin-maintab").forEach((t) => {
-                t.classList.remove("active");
-                t.setAttribute("aria-selected", "false");
-            });
-            document.querySelectorAll(".admin-main-panel").forEach((p) => (p.hidden = true));
+    function activateMainTab(key) {
+        document.querySelectorAll(".admin-maintab").forEach((t) => {
+            t.classList.remove("active");
+            t.setAttribute("aria-selected", "false");
+        });
+        document.querySelectorAll(".admin-main-panel").forEach((p) => (p.hidden = true));
 
+        const tab = document.querySelector(`.admin-maintab[data-main-tab="${key}"]`);
+        if (tab) {
             tab.classList.add("active");
             tab.setAttribute("aria-selected", "true");
+        }
 
-            const key = tab.dataset.mainTab;
-            const panel = document.querySelector(`.admin-main-panel[data-main-panel="${key}"]`);
-            if (panel) panel.hidden = false;
+        const panel = document.querySelector(`.admin-main-panel[data-main-panel="${key}"]`);
+        if (panel) panel.hidden = false;
 
-            updateHeroContent(key);
+        updateHeroContent(key);
 
-            currentMaterialScope = key === "kwzm" ? "KWZM" : key === "video" ? "VIDEO" : key === "trial" ? "TRIAL" : "PERSONAL";
+        currentMaterialScope = key === "kwzm" ? "KWZM" : key === "video" ? "VIDEO" : key === "trial" ? "TRIAL" : "PERSONAL";
 
-            if (key === "personal" || key === "kwzm" || key === "video" || key === "trial") {
-                const prefix = prefixForScope(currentMaterialScope);
-                const langContainer = document.getElementById(`${prefix}LanguagePills`);
-                if (langContainer && !langContainer.querySelector(".admin-pill.active")) {
-                    autoSelectFirstMaterials(prefix, currentMaterialScope);
-                }
+        if (key === "personal" || key === "kwzm" || key === "video" || key === "trial") {
+            const prefix = prefixForScope(currentMaterialScope);
+            const langContainer = document.getElementById(`${prefix}LanguagePills`);
+            if (langContainer && !langContainer.querySelector(".admin-pill.active")) {
+                autoSelectFirstMaterials(prefix, currentMaterialScope);
+            }
+        }
+
+        if (key === "students") {
+            loadStudentList();
+            loadAdminReviews();
+            loadAdminPosts();
+        }
+        if (key === "my") loadAdminMe();
+        if (key === "notices") loadAdminNotices();
+        if (key === "dashboard") loadDashboard();
+    }
+
+    document.querySelectorAll(".admin-maintab").forEach((tab) => {
+        tab.addEventListener("click", () => activateMainTab(tab.dataset.mainTab));
+    });
+
+    // 그룹 탭(나만의 공부화면 / KWZM Center 관리 / IMKhun 관리 / 학생 관리) — 1단계 큰 탭
+    const GROUP_SUBTABS = { personal: "adminSubtabsPersonal", kwzm: "adminSubtabsKwzm" };
+    const GROUP_DEFAULT_TAB = { personal: "dashboard", kwzm: "kwzm", imkhun: "notices", students: "students" };
+
+    document.querySelectorAll(".admin-grouptab").forEach((groupTab) => {
+        groupTab.addEventListener("click", () => {
+            document.querySelectorAll(".admin-grouptab").forEach((g) => {
+                g.classList.remove("active");
+                g.setAttribute("aria-selected", "false");
+            });
+            groupTab.classList.add("active");
+            groupTab.setAttribute("aria-selected", "true");
+
+            const group = groupTab.dataset.groupTab;
+
+            // 서브탭 줄은 그룹에 맞는 것만 보여주고 나머지는 숨김 (없는 그룹은 전부 숨김)
+            Object.values(GROUP_SUBTABS).forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.hidden = true;
+            });
+            const subtabId = GROUP_SUBTABS[group];
+            if (subtabId) {
+                const subtabEl = document.getElementById(subtabId);
+                if (subtabEl) subtabEl.hidden = false;
             }
 
-            if (key === "students") {
-                loadStudentList();
-                loadAdminReviews();
-                loadAdminPosts();
-            }
-            if (key === "my") loadAdminMe();
-            if (key === "notices") loadAdminNotices();
-            if (key === "dashboard") loadDashboard();
+            activateMainTab(GROUP_DEFAULT_TAB[group]);
         });
     });
 
@@ -2207,6 +2735,9 @@ document.addEventListener("fragments:loaded", () => {
             if (tabAttr === "data-notice-tab") {
                 if (key === "timetable") loadAdminTimetable();
                 if (key === "faq") loadAdminFaqs();
+            }
+            if (tabAttr === "data-students-tab" && key === "attendance-today") {
+                loadAttendanceToday();
             }
         });
     });
@@ -2263,6 +2794,28 @@ document.addEventListener("fragments:loaded", () => {
         const deleteTimetableBtn = e.target.closest("[data-delete-timetable-id]");
         if (deleteTimetableBtn) deleteTimetableEntry(deleteTimetableBtn.dataset.deleteTimetableId);
 
+        if (e.target.closest("[data-attendance-modal-close]")) closeAttendanceModal();
+        const attendanceBtn = e.target.closest("[data-attendance-id]");
+        if (attendanceBtn) openAttendanceModal(attendanceBtn.dataset.attendanceId, attendanceBtn.dataset.attendanceCourse);
+        const deleteAttendanceBtn = e.target.closest("[data-delete-attendance-id]");
+        if (deleteAttendanceBtn) deleteAttendanceRecordAdmin(deleteAttendanceBtn.dataset.deleteAttendanceId);
+
+        if (e.target.closest("[data-send-file-modal-close]")) closeSendFileModal();
+        const sendFileBtn = e.target.closest("[data-send-file-id]");
+        if (sendFileBtn) openSendFileModal(sendFileBtn.dataset.sendFileId, sendFileBtn.dataset.sendFileCourse);
+        const deleteSentFileBtn = e.target.closest("[data-delete-sent-file-id]");
+        if (deleteSentFileBtn) deleteSentFile(deleteSentFileBtn.dataset.deleteSentFileId);
+
+        if (e.target.closest("[data-schedule-modal-close]")) closeScheduleModal();
+        const scheduleBtn = e.target.closest("[data-schedule-id]");
+        if (scheduleBtn) {
+            openScheduleModal(scheduleBtn.dataset.scheduleId, scheduleBtn.dataset.scheduleCourse,
+                scheduleBtn.dataset.scheduleDays, scheduleBtn.dataset.scheduleTime);
+        }
+
+        const markAttendanceBtn = e.target.closest("[data-mark-attendance]");
+        if (markAttendanceBtn) markTodayAttendance(markAttendanceBtn.dataset.markAttendance, markAttendanceBtn.dataset.markStatus);
+
         if (e.target.closest("[data-faq-modal-close]")) closeFaqModal();
         const editFaqBtn = e.target.closest("[data-edit-faq-id]");
         if (editFaqBtn) openFaqModal(editFaqBtn.dataset.editFaqId);
@@ -2280,12 +2833,19 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("noticeSaveBtn")?.addEventListener("click", submitNotice);
     document.getElementById("adminTimetableNewBtn")?.addEventListener("click", () => openTimetableModal());
     document.getElementById("timetableSaveBtn")?.addEventListener("click", submitTimetableEntry);
+    document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
+    document.getElementById("sendFileSubmitBtn")?.addEventListener("click", submitSendFile);
+    document.getElementById("scheduleSaveBtn")?.addEventListener("click", submitSchedule);
+    document.getElementById("attendanceTodayDateInput")?.addEventListener("change", loadAttendanceToday);
+    document.getElementById("attendanceMarkRestAbsentBtn")?.addEventListener("click", markRestAbsentToday);
     document.getElementById("adminFaqNewBtn")?.addEventListener("click", () => openFaqModal());
     document.getElementById("faqSaveBtn")?.addEventListener("click", submitFaq);
     document.getElementById("inviteAddBtn")?.addEventListener("click", inviteStudentToLanguage);
     document.getElementById("inviteStudentNumberInput")?.addEventListener("keydown", (e) => {
         if (e.key === "Enter") inviteStudentToLanguage();
     });
+    document.getElementById("bulkInviteToggleBtn")?.addEventListener("click", toggleBulkInviteField);
+    document.getElementById("bulkInviteSubmitBtn")?.addEventListener("click", submitBulkInvite);
     document.addEventListener("click", (e) => {
         const removeBtn = e.target.closest("[data-remove-student]");
         if (!removeBtn) return;

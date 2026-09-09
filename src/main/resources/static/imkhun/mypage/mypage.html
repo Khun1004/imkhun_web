@@ -194,3 +194,25 @@
         </div>
     </div>
 </div>
+<!-- ===================== 출석 현황 (마이페이지 위에 뜨는 모달) ===================== -->
+<div class="payment-confirm-modal" id="attendanceModal" aria-hidden="true">
+    <div class="payment-confirm-backdrop" data-attendance-close></div>
+    <div class="payment-confirm-panel" role="dialog" aria-modal="true">
+        <div class="payment-confirm-head">
+            <div>
+                <p class="payment-confirm-eyebrow">Attendance</p>
+                <h3>출석 현황</h3>
+                <p class="payment-confirm-course" id="attendanceCourseTitle"></p>
+            </div>
+            <button type="button" class="auth-modal-close" data-attendance-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+
+        <div class="payment-confirm-body">
+            <div class="attendance-summary-grid" id="attendanceSummaryGrid"></div>
+            <p class="admin-empty-text" id="attendanceEmpty" hidden>아직 출석 기록이 없어요.</p>
+            <div class="attendance-record-list" id="attendanceRecordList"></div>
+        </div>
+    </div>
+</div>

@@ -414,6 +414,239 @@
     gap: 10px;
 }
 
+/* 알림 종 아이콘 + 드롭다운 패널 */
+
+.site-notif-wrap {
+    position: relative;
+}
+
+.site-notif-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--paper-3);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.site-notif-btn:hover {
+    background: var(--paper-2);
+    color: var(--ink);
+}
+
+.site-notif-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+.site-notif-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #b8446a;
+    border: 1.5px solid var(--paper);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 12px;
+    text-align: center;
+}
+
+.site-notif-panel {
+    position: fixed;
+    width: 320px;
+    max-height: 420px;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper-3);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 20px 44px -18px rgba(23, 20, 15, 0.3);
+    overflow: hidden;
+    z-index: 200;
+}
+
+.site-notif-panel[hidden] {
+    display: none;
+}
+
+.site-notif-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink);
+    flex-shrink: 0;
+}
+
+.site-notif-readall-btn {
+    border: none;
+    background: none;
+    color: var(--accent-2);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.site-notif-readall-btn:hover {
+    text-decoration: underline;
+}
+
+.site-notif-list {
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.site-notif-hint {
+    padding: 20px 12px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+}
+
+.site-notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.site-notif-item:hover {
+    background: var(--paper-2);
+}
+
+.site-notif-item.is-unread {
+    background: rgba(168, 124, 34, 0.08);
+}
+
+.site-notif-item.is-unread:hover {
+    background: rgba(168, 124, 34, 0.14);
+}
+
+.site-notif-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--accent-2);
+}
+
+.site-notif-item.is-unread .site-notif-icon {
+    background: var(--accent);
+    color: #fff;
+}
+
+.site-notif-icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+.site-notif-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.site-notif-message {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ink);
+}
+
+.site-notif-date {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+}
+
+@media (max-width: 480px) {
+    .site-notif-panel {
+        left: 12px;
+        width: auto;
+    }
+}
+
+/* 회원가입/로그인/비밀번호 변경 등 방금 한 행동에 대한 토스트 알림 */
+
+.site-toast-container {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.site-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.site-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.site-toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+}
+
+.site-toast--error .site-toast-icon {
+    background: #b8446a;
+}
+
+.site-toast-icon svg {
+    width: 12px;
+    height: 12px;
+}
+
 .auth-logout-link {
     font-size: 12px;
     font-weight: 500;

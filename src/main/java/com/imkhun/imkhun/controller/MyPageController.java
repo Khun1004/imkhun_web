@@ -6,6 +6,7 @@ import com.imkhun.imkhun.dto.UpdateNicknameRequest;
 import com.imkhun.imkhun.dto.UpdatePhoneRequest;
 import com.imkhun.imkhun.dto.UpdatePhotoRequest;
 import com.imkhun.imkhun.repository.UserRepository;
+import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,16 +20,48 @@ public class MyPageController {
 
     private final UserService userService;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
-    public MyPageController(UserService userService, UserRepository userRepository) {
+    public MyPageController(UserService userService, UserRepository userRepository, NotificationService notificationService) {
         this.userService = userService;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     private boolean notLoggedIn(Authentication authentication) {
         return authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal());
+    }
+
+    // ---- 알림 (imkhun 사이트 자체 로그인 세션 기준) ----
+    // KWZM Center 쪽 알림(/api/student/notifications)이랑 실제로는 같은 데이터를 보여줘요.
+    // 로그인 방식만 다를 뿐, 계정(username)은 같아서 알림도 공유돼요.
+
+    @GetMapping("/notifications")
+    public ResponseEntity<?> getNotifications(Authentication authentication) {
+        if (notLoggedIn(authentication)) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(notificationService.getStudentNotifications(authentication.getName()));
+    }
+
+    @GetMapping("/notifications/unread-count")
+    public ResponseEntity<?> getUnreadNotificationCount(Authentication authentication) {
+        if (notLoggedIn(authentication)) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(notificationService.getUnreadCountForStudent(authentication.getName()));
+    }
+
+    @PostMapping("/notifications/{id}/read")
+    public ResponseEntity<?> markNotificationRead(Authentication authentication, @PathVariable Long id) {
+        if (notLoggedIn(authentication)) return ResponseEntity.status(401).build();
+        notificationService.markRead(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/notifications/read-all")
+    public ResponseEntity<?> markAllNotificationsRead(Authentication authentication) {
+        if (notLoggedIn(authentication)) return ResponseEntity.status(401).build();
+        notificationService.markAllReadForStudent(authentication.getName());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
