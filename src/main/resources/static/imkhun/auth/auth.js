@@ -356,8 +356,8 @@ async function loadMyApplications() {
     if (!list) return;
 
     const studyTypeLabel = { TOGETHER: "실시간으로 함께 배우기", VIDEO: "언제든 영상으로 배우기" };
-    const statusLabel = { PENDING: "승인대기", APPROVED: "승인완료" };
-    const statusClass = { PENDING: "mypage-badge--pending", APPROVED: "mypage-badge--approved" };
+    const statusLabel = { PENDING: "승인대기", APPROVED: "승인완료", WITHDRAWN: "퇴원", SUSPENDED: "휴면" };
+    const statusClass = { PENDING: "mypage-badge--pending", APPROVED: "mypage-badge--approved", WITHDRAWN: "mypage-badge--withdrawn", SUSPENDED: "mypage-badge--suspended" };
 
     try {
         const res = await fetch("/api/applications/mine");

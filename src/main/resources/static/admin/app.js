@@ -41,6 +41,7 @@ function showAdminScreen() {
     autoSelectFirstMaterialsForActiveTab();
     updateHeroContent("dashboard");
     loadDashboard();
+    loadAttendanceToday();
 }
 
 // 상단 배너에 탭마다 다른 제목/설명을 보여줘요.
@@ -208,6 +209,7 @@ const ADMIN_NOTIF_TYPE_ICON = {
     NEW_APPLICATION: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     NEW_POST: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
     NEW_REVIEW: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 17l-5.6 3.1 1.4-6.3-4.8-4.3 6.4-.6L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    CONSECUTIVE_ABSENCE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.3 3.9 2.4 18.1a1.5 1.5 0 0 0 1.3 2.2h16.6a1.5 1.5 0 0 0 1.3-2.2L13.7 3.9a1.5 1.5 0 0 0-2.6 0Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
 };
 const ADMIN_NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
@@ -1202,22 +1204,26 @@ async function deleteSentFile(fileId) {
 const ATTENDANCE_TODAY_STATUS_LABEL = { PRESENT: "출석", LATE: "지각", ABSENT: "결석", MAKEUP: "보강" };
 
 function getAttendanceTodayDate() {
-    const input = document.getElementById("attendanceTodayDateInput");
+    const input = document.getElementById("adminCheckinDockDateInput");
     if (!input) return new Date().toISOString().slice(0, 10);
     if (!input.value) input.value = new Date().toISOString().slice(0, 10);
     return input.value;
 }
 
 async function loadAttendanceToday() {
-    const list = document.getElementById("attendanceTodayList");
-    const emptyEl = document.getElementById("attendanceTodayEmpty");
+    const list = document.getElementById("adminCheckinDockList");
+    const emptyEl = document.getElementById("adminCheckinDockEmpty");
     if (!list) return;
     const date = getAttendanceTodayDate();
     list.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
 
     try {
         const res = await fetch(`/api/admin/attendance/today?date=${date}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+            const message = await res.text().catch(() => "");
+            list.innerHTML = `<p class="admin-note-hint">불러오지 못했어요. ${escapeHtmlForAdmin(message) || "다시 시도해주세요."}</p>`;
+            return;
+        }
         const roster = await res.json();
 
         list.innerHTML = "";
@@ -1230,7 +1236,7 @@ async function loadAttendanceToday() {
             row.innerHTML = `
         <span class="admin-attendance-today-time">${entry.classTime ? entry.classTime.slice(0, 5) : "-"}</span>
         <span class="admin-attendance-today-course">${escapeHtmlForAdmin(entry.courseName)}</span>
-        <span class="admin-attendance-today-student">${escapeHtmlForAdmin(entry.studentNickname || "")}</span>
+        <span class="admin-attendance-today-student"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 19c0-3 3-5.5 6.5-5.5s6.5 2.5 6.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>${escapeHtmlForAdmin(entry.studentNickname || "")}</span>
         <span class="admin-attendance-today-current admin-attendance-today-current--${entry.status ? entry.status.toLowerCase() : "none"}">
           ${statusLabel}${entry.checkedInByStudent ? " · 학생 체크" : ""}
         </span>
@@ -1245,6 +1251,7 @@ async function loadAttendanceToday() {
         });
     } catch (err) {
         console.error(err);
+        list.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
     }
 }
 
@@ -1282,6 +1289,55 @@ async function markRestAbsentToday() {
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function loadAttendanceHistory() {
+    const table = document.getElementById("attendanceHistoryTable");
+    const emptyEl = document.getElementById("attendanceHistoryEmpty");
+    if (!table) return;
+    table.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/admin/attendance/history");
+        if (!res.ok) {
+            table.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const records = await res.json();
+
+        table.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = records.length > 0;
+
+        if (records.length === 0) return;
+
+        const header = document.createElement("div");
+        header.className = "admin-attendance-history-row admin-attendance-history-row--head";
+        header.innerHTML = `
+      <span>날짜</span>
+      <span>강의</span>
+      <span>학생</span>
+      <span>상태</span>
+    `;
+        table.appendChild(header);
+
+        records.forEach((r) => {
+            const row = document.createElement("div");
+            row.className = "admin-attendance-history-row";
+            const statusLabel = ATTENDANCE_TODAY_STATUS_LABEL[r.status] || r.status;
+            row.innerHTML = `
+        <span class="admin-attendance-history-date">${r.classDate}</span>
+        <span class="admin-attendance-history-course">${escapeHtmlForAdmin(r.courseName)}</span>
+        <span class="admin-attendance-history-student">${escapeHtmlForAdmin(r.studentUsername)}</span>
+        <span class="admin-attendance-today-current admin-attendance-today-current--${r.status ? r.status.toLowerCase() : "none"}">
+          ${statusLabel}${r.checkedInByStudent ? " · 학생 체크" : ""}
+        </span>
+      `;
+            table.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        table.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
     }
 }
 
@@ -2046,8 +2102,8 @@ async function loadStudentList() {
     if (!list) return;
 
     const studyTypeLabel = { TOGETHER: "실시간으로 함께 배우기", VIDEO: "언제든 영상으로 배우기" };
-    const statusLabel = { PENDING: "승인대기", APPROVED: "승인완료" };
-    const statusClass = { PENDING: "mypage-badge--pending", APPROVED: "mypage-badge--approved" };
+    const statusLabel = { PENDING: "승인대기", APPROVED: "승인완료", WITHDRAWN: "퇴원", SUSPENDED: "휴면" };
+    const statusClass = { PENDING: "mypage-badge--pending", APPROVED: "mypage-badge--approved", WITHDRAWN: "mypage-badge--withdrawn", SUSPENDED: "mypage-badge--suspended" };
 
     try {
         const res = await fetch("/api/admin/applications");
@@ -2082,6 +2138,9 @@ async function loadStudentList() {
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}">${app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정"}</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-attendance-id="${app.id}" data-attendance-course="${escapeHtmlForAdmin(app.courseName)}">출석부</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-send-file-id="${app.id}" data-send-file-course="${escapeHtmlForAdmin(app.courseName)}">파일 보내기</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-set-status-id="${app.id}" data-set-status-value="SUSPENDED">휴면 처리</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-set-status-id="${app.id}" data-set-status-value="WITHDRAWN">퇴원 처리</button>` : ""}
+          ${(app.status === "SUSPENDED" || app.status === "WITHDRAWN") ? `<button type="button" class="admin-material-action-btn" data-set-status-id="${app.id}" data-set-status-value="APPROVED">복구하기</button>` : ""}
           ${paymentStatusHtml(app)}
         </div>
       `;
@@ -2669,12 +2728,12 @@ document.addEventListener("fragments:loaded", () => {
         if (key === "dashboard") loadDashboard();
     }
 
-    document.querySelectorAll(".admin-maintab").forEach((tab) => {
+    document.querySelectorAll(".admin-maintab[data-main-tab]").forEach((tab) => {
         tab.addEventListener("click", () => activateMainTab(tab.dataset.mainTab));
     });
 
     // 그룹 탭(나만의 공부화면 / KWZM Center 관리 / IMKhun 관리 / 학생 관리) — 1단계 큰 탭
-    const GROUP_SUBTABS = { personal: "adminSubtabsPersonal", kwzm: "adminSubtabsKwzm" };
+    const GROUP_SUBTABS = { personal: "adminSubtabsPersonal", kwzm: "adminSubtabsKwzm", imkhun: "adminSubtabsImkhun", students: "adminSubtabsStudents" };
     const GROUP_DEFAULT_TAB = { personal: "dashboard", kwzm: "kwzm", imkhun: "notices", students: "students" };
 
     document.querySelectorAll(".admin-grouptab").forEach((groupTab) => {
@@ -2694,12 +2753,62 @@ document.addEventListener("fragments:loaded", () => {
                 if (el) el.hidden = true;
             });
             const subtabId = GROUP_SUBTABS[group];
+            let subtabEl = null;
             if (subtabId) {
-                const subtabEl = document.getElementById(subtabId);
+                subtabEl = document.getElementById(subtabId);
                 if (subtabEl) subtabEl.hidden = false;
             }
 
-            activateMainTab(GROUP_DEFAULT_TAB[group]);
+            const firstPill = subtabEl ? subtabEl.querySelector(".admin-maintab") : null;
+            if (firstPill) {
+                // 서브탭이 있는 그룹은 첫 번째 알약을 직접 눌러서, 화면 전환이랑 배경색 표시가 항상 같이 일어나게 함
+                firstPill.click();
+            } else {
+                activateMainTab(GROUP_DEFAULT_TAB[group]);
+            }
+        });
+    });
+
+    // "IMKhun 관리" 서브탭 (공지 글 / 강의 시간표 / FAQ) — notices 패널 안의 세부 화면을 직접 전환해요
+    document.querySelectorAll("[data-imkhun-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            activateMainTab("notices");
+
+            document.querySelectorAll("[data-imkhun-tab]").forEach((b) => {
+                b.classList.remove("active");
+                b.setAttribute("aria-selected", "false");
+            });
+            btn.classList.add("active");
+            btn.setAttribute("aria-selected", "true");
+
+            const key = btn.dataset.imkhunTab;
+            document.querySelectorAll('.admin-inline-panel[data-notice-panel]').forEach((p) => (p.hidden = true));
+            const panel = document.querySelector(`.admin-inline-panel[data-notice-panel="${key}"]`);
+            if (panel) panel.hidden = false;
+
+            if (key === "timetable") loadAdminTimetable();
+            if (key === "faq") loadAdminFaqs();
+        });
+    });
+
+    // "학생 관리" 서브탭 (강의 신청 내역 / 오늘 출석 체크 / 리뷰 / 학생 게시판)
+    document.querySelectorAll("[data-students-subtab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            activateMainTab("students");
+
+            document.querySelectorAll("[data-students-subtab]").forEach((b) => {
+                b.classList.remove("active");
+                b.setAttribute("aria-selected", "false");
+            });
+            btn.classList.add("active");
+            btn.setAttribute("aria-selected", "true");
+
+            const key = btn.dataset.studentsSubtab;
+            document.querySelectorAll('.admin-inline-panel[data-students-panel]').forEach((p) => (p.hidden = true));
+            const panel = document.querySelector(`.admin-inline-panel[data-students-panel="${key}"]`);
+            if (panel) panel.hidden = false;
+
+            if (key === "attendance-history") loadAttendanceHistory();
         });
     });
 
@@ -2836,8 +2945,26 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
     document.getElementById("sendFileSubmitBtn")?.addEventListener("click", submitSendFile);
     document.getElementById("scheduleSaveBtn")?.addEventListener("click", submitSchedule);
-    document.getElementById("attendanceTodayDateInput")?.addEventListener("change", loadAttendanceToday);
-    document.getElementById("attendanceMarkRestAbsentBtn")?.addEventListener("click", markRestAbsentToday);
+    document.getElementById("adminCheckinDockDateInput")?.addEventListener("change", loadAttendanceToday);
+    document.getElementById("adminCheckinDockMarkRestBtn")?.addEventListener("click", markRestAbsentToday);
+
+    document.getElementById("adminCheckinDockTab")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const dock = document.getElementById("adminCheckinDock");
+        const tab = document.getElementById("adminCheckinDockTab");
+        if (!dock || !tab) return;
+        const willOpen = !dock.classList.contains("is-open");
+        dock.classList.toggle("is-open", willOpen);
+        tab.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    });
+    document.getElementById("adminCheckinDockPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", (e) => {
+        const dock = document.getElementById("adminCheckinDock");
+        if (dock && dock.classList.contains("is-open") && !dock.contains(e.target)) {
+            dock.classList.remove("is-open");
+            document.getElementById("adminCheckinDockTab")?.setAttribute("aria-expanded", "false");
+        }
+    });
     document.getElementById("adminFaqNewBtn")?.addEventListener("click", () => openFaqModal());
     document.getElementById("faqSaveBtn")?.addEventListener("click", submitFaq);
     document.getElementById("inviteAddBtn")?.addEventListener("click", inviteStudentToLanguage);
@@ -2920,6 +3047,39 @@ document.addEventListener("fragments:loaded", () => {
             console.error(err);
             alert("서버에 연결할 수 없어요.");
             approveBtn.disabled = false;
+        }
+    });
+
+    document.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-set-status-id]");
+        if (!btn) return;
+
+        const id = btn.dataset.setStatusId;
+        const status = btn.dataset.setStatusValue;
+        const confirmText = status === "WITHDRAWN" ? "이 학생을 퇴원 처리할까요? KWZM 로그인이 막혀요."
+            : status === "SUSPENDED" ? "이 학생을 휴면 처리할까요? KWZM 로그인이 막혀요."
+                : "이 학생을 다시 승인 상태로 복구할까요?";
+        if (!confirm(confirmText)) return;
+
+        btn.disabled = true;
+        try {
+            const res = await fetch(`/api/admin/applications/${id}/status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status }),
+            });
+
+            if (!res.ok) {
+                alert((await res.text()) || "처리에 실패했어요.");
+                btn.disabled = false;
+                return;
+            }
+
+            loadStudentList();
+        } catch (err) {
+            console.error(err);
+            alert("서버에 연결할 수 없어요.");
+            btn.disabled = false;
         }
     });
 

@@ -26,7 +26,7 @@ public class ApplicationService {
     private final KwzmInviteService kwzmInviteService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final Set<String> VALID_STUDY_TYPES = Set.of("TOGETHER", "VIDEO");
-    private static final Set<String> VALID_STATUSES = Set.of("PENDING", "APPROVED");
+    private static final Set<String> VALID_STATUSES = Set.of("PENDING", "APPROVED", "WITHDRAWN", "SUSPENDED");
 
     public ApplicationService(ApplicationRepository applicationRepository, UserRepository userRepository,
                               NotificationService notificationService, KwzmInviteService kwzmInviteService) {
@@ -115,6 +115,14 @@ public class ApplicationService {
         if ("APPROVED".equals(status) && !wasAlreadyApproved) {
             notificationService.notifyStudent(application.getUsername(), "APPLICATION_APPROVED",
                     "신청하신 " + application.getCourseName() + " 강의가 승인됐어요!", null);
+        }
+        if ("WITHDRAWN".equals(status)) {
+            notificationService.notifyStudent(application.getUsername(), "APPLICATION_WITHDRAWN",
+                    application.getCourseName() + " 강의가 퇴원 처리됐어요. 문의사항은 선생님께 연락해주세요.", null);
+        }
+        if ("SUSPENDED".equals(status)) {
+            notificationService.notifyStudent(application.getUsername(), "APPLICATION_SUSPENDED",
+                    application.getCourseName() + " 강의가 휴면 처리됐어요. 다시 활동하시려면 선생님께 문의해주세요.", null);
         }
     }
 
@@ -214,6 +222,20 @@ public class ApplicationService {
                 .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
         application.updateSchedule(request.classDays(), request.classTime());
         applicationRepository.save(application);
+    }
+
+    // 체험 전용 가입 — 승인 절차 없이 바로 KWZM 로그인이 가능하도록 자동 승인 처리된 신청을 만들어줌.
+    // 이미 체험 신청이 있으면 새로 안 만들고 그대로 재사용함 (여러 번 눌러도 하나만 생김).
+    public Application createOrGetTrialApplication(String username) {
+        return applicationRepository.findByUsernameOrderByCreatedAtDesc(username).stream()
+                .filter(a -> "무료체험".equals(a.getCourseName()))
+                .findFirst()
+                .orElseGet(() -> {
+                    Application application = Application.create(username, "TRIAL", "무료체험", "", "체험 전용 가입");
+                    application.changeStatus("APPROVED");
+                    application.assignStudentNumber(generateStudentNumber("무료체험"));
+                    return applicationRepository.save(application);
+                });
     }
 
     // 예: "일본어 1급" -> "2026_Japanese_Level1_01"

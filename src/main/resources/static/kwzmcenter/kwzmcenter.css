@@ -158,6 +158,51 @@
     text-align: center;
 }
 
+.student-login-hint--error {
+    color: #b8446a;
+}
+
+.student-trial-signup-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0 12px;
+    color: var(--kwzm-ink-faint);
+    font-size: 11px;
+}
+
+.student-trial-signup-divider::before,
+.student-trial-signup-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--kwzm-line);
+}
+
+.student-trial-signup-btn {
+    width: 100%;
+    padding: 13px;
+    border: 1.5px solid var(--kwzm-accent);
+    border-radius: 10px;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-primary);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.student-trial-signup-btn:hover {
+    background: var(--kwzm-bg-2);
+    transform: translateY(-1px);
+}
+
+.student-trial-signup-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* ===================== 학생 화면 (imkhun 사이트와 같은 톤) ===================== */
 
 .student-screen {
@@ -967,7 +1012,9 @@
 .student-lightbox-img {
     position: relative;
     max-width: 100%;
-    max-height: 100%;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
     border-radius: 8px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }

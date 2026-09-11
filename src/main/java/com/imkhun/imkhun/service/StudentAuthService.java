@@ -55,6 +55,14 @@ public class StudentAuthService {
         return true;
     }
 
+    // 체험 전용 가입 — 이미 imkhun에 로그인된 사용자를 그대로 KWZM 세션으로 로그인시켜줌 (비밀번호 재확인 없음)
+    public void loginDirectly(HttpServletResponse response, User user) {
+        String token = generateToken();
+        user.updateStudentSessionToken(token);
+        userRepository.save(user);
+        setCookie(response, token, COOKIE_MAX_AGE_SECONDS);
+    }
+
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         getLoggedInUser(request).ifPresent(user -> {
             user.updateStudentSessionToken(null);

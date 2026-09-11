@@ -2,10 +2,12 @@ package com.imkhun.imkhun.service;
 
 import com.imkhun.imkhun.domain.Application;
 import com.imkhun.imkhun.domain.AttendanceRecord;
+import com.imkhun.imkhun.dto.AttendanceHistoryEntryResponse;
 import com.imkhun.imkhun.dto.AttendanceRecordResponse;
 import com.imkhun.imkhun.dto.AttendanceSummaryResponse;
 import com.imkhun.imkhun.dto.CheckinStatusResponse;
 import com.imkhun.imkhun.dto.CreateAttendanceRecordRequest;
+import com.imkhun.imkhun.dto.StudentScheduleEntryResponse;
 import com.imkhun.imkhun.dto.TodayAttendanceEntryResponse;
 import com.imkhun.imkhun.repository.ApplicationRepository;
 import com.imkhun.imkhun.repository.AttendanceRecordRepository;
@@ -71,6 +73,7 @@ public class AttendanceService {
         if ("ABSENT".equals(request.status())) {
             notificationService.notifyStudent(application.getUsername(), "ATTENDANCE_ABSENT",
                     application.getCourseName() + " " + classDate.format(DATE_FORMAT) + " 수업이 결석으로 기록됐어요.", null);
+            checkConsecutiveAbsences(application);
         }
 
         return getSummary(applicationId);
@@ -161,6 +164,30 @@ public class AttendanceService {
         if ("ABSENT".equals(status)) {
             notificationService.notifyStudent(application.getUsername(), "ATTENDANCE_ABSENT",
                     application.getCourseName() + " " + date.format(DATE_FORMAT) + " 수업이 결석으로 기록됐어요.", null);
+            checkConsecutiveAbsences(application);
+        }
+    }
+
+    // 이 강의(신청)에서 최근 기록부터 몇 번 연속으로 결석인지 세어서, 기준(2회) 이상이면 관리자에게 알림
+    private static final int CONSECUTIVE_ABSENCE_ALERT_THRESHOLD = 2;
+
+    private void checkConsecutiveAbsences(Application application) {
+        List<AttendanceRecord> records = attendanceRecordRepository
+                .findByApplicationIdOrderByClassDateDesc(application.getId());
+
+        int consecutive = 0;
+        for (AttendanceRecord record : records) {
+            if ("ABSENT".equals(record.getStatus())) {
+                consecutive++;
+            } else {
+                break;
+            }
+        }
+
+        if (consecutive >= CONSECUTIVE_ABSENCE_ALERT_THRESHOLD) {
+            notificationService.notifyAdmin("CONSECUTIVE_ABSENCE",
+                    application.getUsername() + "님이 " + application.getCourseName() + " 강의에서 "
+                            + consecutive + "회 연속 결석했어요. 확인이 필요해요.", null);
         }
     }
 
@@ -176,6 +203,30 @@ public class AttendanceService {
             }
         }
         return count;
+    }
+
+    // 관리자 - "출석 관리 내역" 화면. 전체 학생의 전체 출석 기록을 최신순으로 보여줌
+    @Transactional(readOnly = true)
+    public List<AttendanceHistoryEntryResponse> getAllHistoryForAdmin() {
+        List<AttendanceRecord> records = attendanceRecordRepository.findAllByOrderByClassDateDesc();
+
+        List<Long> applicationIds = records.stream().map(AttendanceRecord::getApplicationId).distinct().toList();
+        Map<Long, Application> applicationById = applicationRepository.findAllById(applicationIds).stream()
+                .collect(Collectors.toMap(Application::getId, a -> a));
+
+        return records.stream()
+                .map(r -> {
+                    Application app = applicationById.get(r.getApplicationId());
+                    return new AttendanceHistoryEntryResponse(
+                            r.getId(),
+                            app != null ? app.getUsername() : "-",
+                            app != null ? app.getCourseName() : "-",
+                            r.getClassDate().format(DATE_FORMAT),
+                            r.getStatus(),
+                            r.isCheckedInByStudent()
+                    );
+                })
+                .toList();
     }
 
     // ---------- 학생 스스로 출석 체크 ----------
@@ -227,6 +278,17 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public List<TodayAttendanceEntryResponse> getCheckInOptionsForStudent(String username) {
         return getCheckinStatusForStudent(username).checkableNow();
+    }
+
+    // 학생의 전체 시간표 (요일 상관없이 등록된 모든 강의) — 출석 체크 패널에 같이 보여줌
+    @Transactional(readOnly = true)
+    public List<StudentScheduleEntryResponse> getWeeklyScheduleForStudent(String username) {
+        return applicationRepository.findByUsernameOrderByCreatedAtDesc(username).stream()
+                .filter(a -> "APPROVED".equals(a.getStatus()))
+                .filter(a -> a.getClassDays() != null && !a.getClassDays().isBlank()
+                        && a.getClassTime() != null && !a.getClassTime().isBlank())
+                .map(a -> new StudentScheduleEntryResponse(a.getCourseName(), a.getClassDays(), a.getClassTime()))
+                .toList();
     }
 
     // 오늘 수업이 아예 없는지 / 있지만 아직·이미 체크 시간이 아닌지 구분해서 알려줌

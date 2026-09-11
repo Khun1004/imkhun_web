@@ -369,6 +369,16 @@
     color: var(--accent-2);
 }
 
+.mypage-badge--withdrawn {
+    background: rgba(23, 20, 15, 0.08);
+    color: var(--ink-faint);
+}
+
+.mypage-badge--suspended {
+    background: rgba(184, 68, 106, 0.12);
+    color: #b8446a;
+}
+
 .mypage-history-item--review {
     align-items: center;
 }

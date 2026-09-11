@@ -69,7 +69,15 @@
 </div>
 
 <!-- 지금 출석 체크할 수 있는 수업이 있으면 여기 뜸 (없으면 자동으로 비어있음) -->
-<div class="student-checkin-banner" id="studentCheckinBanner" hidden></div>
+<!-- 지금 출석 체크할 수 있는 수업이 있으면 오른쪽 끝에 탭이 나타나고, 누르면 펼쳐져요 -->
+<div class="student-checkin-dock" id="studentCheckinDock" hidden>
+    <button type="button" class="student-checkin-dock-tab" id="studentCheckinDockTab" aria-expanded="false" aria-controls="studentCheckinDockPanel">
+        <span class="student-checkin-dock-tab-dot" aria-hidden="true"></span>
+        <span>출석 체크</span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="student-checkin-dock-panel" id="studentCheckinDockPanel"></div>
+</div>
 
 <!-- 오늘의 표현 + 빠른 문의 -->
 <div class="student-home-row">

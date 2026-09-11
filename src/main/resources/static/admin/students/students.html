@@ -1,12 +1,11 @@
-<nav class="admin-inline-tabs" role="tablist" aria-label="학생 관리 메뉴">
-    <button type="button" class="admin-inline-tab active" data-students-tab="applications" role="tab" aria-selected="true">강의 신청 내역</button>
-    <button type="button" class="admin-inline-tab" data-students-tab="attendance-today" role="tab" aria-selected="false">오늘 출석 체크</button>
-    <button type="button" class="admin-inline-tab" data-students-tab="reviews" role="tab" aria-selected="false">리뷰</button>
-    <button type="button" class="admin-inline-tab" data-students-tab="posts" role="tab" aria-selected="false">학생 게시판</button>
-</nav>
-
 <div class="admin-inline-panel active" data-students-panel="applications">
-    <p class="admin-note-hint">학생들이 신청한 강의 목록이에요. 확인했으면 승인 처리해주세요.</p>
+    <div class="admin-materials-head-row">
+        <p class="admin-note-hint" style="margin:0;">학생들이 신청한 강의 목록이에요. 확인했으면 승인 처리해주세요.</p>
+        <a class="admin-export-btn" href="/api/admin/applications/export" download>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            엑셀로 내보내기
+        </a>
+    </div>
     <p class="admin-empty-text" id="adminStudentsEmpty" hidden>아직 신청 내역이 없어요.</p>
     <div class="admin-student-columns" aria-hidden="true">
         <span>학생</span>
@@ -20,17 +19,16 @@
     <div id="adminStudentList" class="admin-student-table"></div>
 </div>
 
-<div class="admin-inline-panel" data-students-panel="attendance-today" hidden>
-    <div class="admin-attendance-today-head">
-        <div class="auth-form-field admin-attendance-today-date-field">
-            <label for="attendanceTodayDateInput">날짜</label>
-            <input type="date" id="attendanceTodayDateInput">
-        </div>
-        <button type="button" class="admin-note-save-btn" id="attendanceMarkRestAbsentBtn">나머지 전부 결석 처리</button>
+<div class="admin-inline-panel" data-students-panel="attendance-history" hidden>
+    <div class="admin-materials-head-row">
+        <p class="admin-note-hint" style="margin:0;">전체 학생의 출석 기록을 최신순으로 보여줘요. 오늘 수업 학생을 빠르게 체크하려면 오른쪽 끝의 "출석 체크" 탭을 눌러주세요.</p>
+        <a class="admin-export-btn" href="/api/admin/attendance/export" download>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            엑셀로 내보내기
+        </a>
     </div>
-    <p class="admin-note-hint">이 날짜에 수업이 있는 학생만 자동으로 걸러서 보여줘요. 학생이 스스로 출석 체크했으면 "학생 체크"라고 표시돼요.</p>
-    <p class="admin-empty-text" id="attendanceTodayEmpty" hidden>이 날짜에 수업 있는 학생이 없어요.</p>
-    <div class="admin-attendance-today-list" id="attendanceTodayList"></div>
+    <p class="admin-empty-text" id="attendanceHistoryEmpty" hidden>아직 출석 기록이 없어요.</p>
+    <div class="admin-attendance-history-table" id="attendanceHistoryTable"></div>
 </div>
 
 <div class="admin-inline-panel" data-students-panel="reviews" hidden>

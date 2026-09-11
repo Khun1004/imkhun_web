@@ -77,8 +77,15 @@ public class StudentPortalController {
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         User user = userOpt.get();
 
+        // 승인됐어도, 초대(자료 또는 영상)가 하나도 없으면 "내 수강 정보"에서도 빠짐 —
+        // 관리자가 초대를 지웠으면 학생 화면에서도 그 강의가 안 보이는 게 자연스러워서요.
         List<StudentCourseResponse> courses = studentAuthService.getApprovedApplications(user.getUsername())
                 .stream()
+                .filter(a -> {
+                    String lang = applicationService.extractLanguageCode(a.getCourseName());
+                    return isInvitedForLanguage(user.getUsername(), lang, "MATERIAL")
+                            || isInvitedForLanguage(user.getUsername(), lang, "VIDEO");
+                })
                 .map(a -> new StudentCourseResponse(
                         a.getStudentNumber(), a.getCourseName(), applicationService.extractLanguageCode(a.getCourseName())
                 ))
@@ -348,6 +355,14 @@ public class StudentPortalController {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         return ResponseEntity.ok(attendanceService.getCheckinStatusForStudent(userOpt.get().getUsername()));
+    }
+
+    // 내 전체 시간표 (요일 상관없이 등록된 모든 강의) — 출석 체크 패널에 같이 보여줌
+    @GetMapping("/attendance/my-schedule")
+    public ResponseEntity<?> getMySchedule(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(attendanceService.getWeeklyScheduleForStudent(userOpt.get().getUsername()));
     }
 
     // 학생 스스로 출석 체크

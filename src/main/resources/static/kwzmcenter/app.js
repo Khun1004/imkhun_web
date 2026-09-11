@@ -138,61 +138,147 @@ let checkinPollTimer = null;
 let studentNicknameForCheckin = "";
 
 async function loadCheckinOptions() {
-    const banner = document.getElementById("studentCheckinBanner");
-    if (!banner) return;
+    const dock = document.getElementById("studentCheckinDock");
+    const panel = document.getElementById("studentCheckinDockPanel");
+    if (!dock || !panel) return;
+
+    const scheduleHtml = await buildWeeklyScheduleHtml();
 
     try {
         const res = await fetch("/api/student/attendance/check-in-options");
         if (!res.ok) return;
         const data = await res.json();
         const options = data.checkableNow || [];
+        const nickname = studentNicknameForCheckin || "";
 
         if (!data.hasClassToday) {
-            banner.hidden = false;
-            banner.innerHTML = `
-        <div class="student-checkin-card student-checkin-card--none">
-          <span class="student-checkin-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            dock.hidden = scheduleHtml === "";
+            panel.innerHTML = `
+        <div class="student-checkin-dock-head student-checkin-dock-head--rest">
+          <span class="student-checkin-dock-eyebrow">REST DAY</span>
+          <span class="student-checkin-dock-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
           </span>
-          <span class="student-checkin-text">
-            <strong>${escapeHtmlForStudent(studentNicknameForCheckin || "")}님의 수업은 오늘에 없습니다.</strong>
-            <span>편히 쉬시고, 다음 수업 때 만나요!</span>
-          </span>
+          <p class="student-checkin-dock-title">오늘은 쉬는 날</p>
         </div>
+        <p class="student-checkin-dock-rest-text">${escapeHtmlForStudent(nickname)}님의 수업은 오늘에 없습니다.<br>편히 쉬시고, 다음 수업 때 만나요!</p>
+        ${scheduleHtml}
       `;
             return;
         }
 
         if (options.length === 0) {
-            banner.hidden = true;
-            banner.innerHTML = "";
+            dock.hidden = scheduleHtml === "";
+            panel.innerHTML = scheduleHtml;
             return;
         }
 
-        banner.hidden = false;
-        banner.innerHTML = "";
+        dock.hidden = false;
+        panel.innerHTML = "";
         options.forEach((opt) => {
             const card = document.createElement("div");
-            card.className = "student-checkin-card";
+            card.className = "student-checkin-dock-card";
             card.innerHTML = `
-        <span class="student-checkin-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
-        <span class="student-checkin-text">
-          <span class="student-checkin-eyebrow"><span class="student-checkin-eyebrow-dot" aria-hidden="true"></span>NOW</span>
-          <strong>지금 수업 시간이에요!</strong>
-          <span>${escapeHtmlForStudent(opt.courseName)} · ${opt.classTime ? opt.classTime.slice(0, 5) : ""}</span>
-        </span>
-        <button type="button" class="student-checkin-btn" data-checkin-id="${opt.applicationId}">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          출석하기
-        </button>
+        <div class="student-checkin-dock-head">
+          <span class="student-checkin-dock-eyebrow"><span class="student-checkin-dock-eyebrow-dot" aria-hidden="true"></span>NOW</span>
+          <span class="student-checkin-dock-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <p class="student-checkin-dock-title">지금 출석 체크</p>
+        </div>
+        <div class="student-checkin-dock-body">
+          <div class="student-checkin-dock-details">
+            <div class="student-checkin-dock-detail-row">
+              <span class="student-checkin-dock-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span class="student-checkin-dock-detail-text">
+                <span class="student-checkin-dock-detail-label">강의</span>
+                <span class="student-checkin-dock-detail-value">${escapeHtmlForStudent(opt.courseName)}</span>
+              </span>
+            </div>
+            <div class="student-checkin-dock-detail-row">
+              <span class="student-checkin-dock-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 19c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span class="student-checkin-dock-detail-text">
+                <span class="student-checkin-dock-detail-label">학생</span>
+                <span class="student-checkin-dock-detail-value">${escapeHtmlForStudent(nickname)} 님</span>
+              </span>
+            </div>
+            <div class="student-checkin-dock-detail-row">
+              <span class="student-checkin-dock-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span class="student-checkin-dock-detail-text">
+                <span class="student-checkin-dock-detail-label">시간</span>
+                <span class="student-checkin-dock-detail-value">${opt.classTime ? opt.classTime.slice(0, 5) : "-"}</span>
+              </span>
+            </div>
+          </div>
+          <button type="button" class="student-checkin-dock-btn" data-checkin-id="${opt.applicationId}">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            출석 체크하기
+          </button>
+        </div>
       `;
-            banner.appendChild(card);
+            panel.appendChild(card);
         });
+        panel.insertAdjacentHTML("beforeend", scheduleHtml);
     } catch (err) {
         console.error(err);
     }
+}
+
+const SCHEDULE_DAY_LABEL = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI: "금", SAT: "토", SUN: "일" };
+const SCHEDULE_DAY_ORDER = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+async function buildWeeklyScheduleHtml() {
+    try {
+        const res = await fetch("/api/student/attendance/my-schedule");
+        if (!res.ok) return "";
+        const entries = await res.json();
+        if (entries.length === 0) return "";
+
+        const byDay = {};
+        entries.forEach((entry) => {
+            (entry.classDays || "").split(",").forEach((day) => {
+                if (!byDay[day]) byDay[day] = [];
+                byDay[day].push(entry);
+            });
+        });
+
+        const rows = SCHEDULE_DAY_ORDER.map((day) => {
+            const items = byDay[day] || [];
+            const itemsHtml = items.length > 0
+                ? items.map((i) => `<span class="student-checkin-dock-schedule-chip">${escapeHtmlForStudent(i.courseName)} · ${i.classTime ? i.classTime.slice(0, 5) : ""}</span>`).join("")
+                : `<span class="student-checkin-dock-schedule-empty">-</span>`;
+            return `
+        <div class="student-checkin-dock-schedule-row${items.length > 0 ? " has-class" : ""}">
+          <span class="student-checkin-dock-schedule-day">${SCHEDULE_DAY_LABEL[day]}</span>
+          <span class="student-checkin-dock-schedule-items">${itemsHtml}</span>
+        </div>`;
+        }).join("");
+
+        return `
+      <div class="student-checkin-dock-schedule">
+        <p class="student-checkin-dock-schedule-title">나의 시간표</p>
+        <div class="student-checkin-dock-schedule-list">${rows}</div>
+      </div>
+    `;
+    } catch (err) {
+        console.error(err);
+        return "";
+    }
+}
+
+function toggleCheckinDock() {
+    const dock = document.getElementById("studentCheckinDock");
+    const tab = document.getElementById("studentCheckinDockTab");
+    if (!dock || !tab) return;
+    const willOpen = !dock.classList.contains("is-open");
+    dock.classList.toggle("is-open", willOpen);
+    tab.setAttribute("aria-expanded", willOpen ? "true" : "false");
 }
 
 async function submitCheckin(applicationId, btn) {
@@ -203,17 +289,18 @@ async function submitCheckin(applicationId, btn) {
         if (!res.ok) {
             alert((await res.text()) || "출석 체크에 실패했어요.");
             btn.disabled = false;
-            btn.textContent = "출석하기";
+            btn.textContent = "출석 체크하기";
             return;
         }
         const data = await res.json();
         alert(data.status === "LATE" ? "지각으로 체크됐어요." : "출석 체크됐어요!");
+        document.getElementById("studentCheckinDock")?.classList.remove("is-open");
         loadCheckinOptions();
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
         btn.disabled = false;
-        btn.textContent = "출석하기";
+        btn.textContent = "출석 체크하기";
     }
 }
 
@@ -1737,6 +1824,19 @@ document.addEventListener("fragments:loaded", () => {
         const checkinBtn = e.target.closest("[data-checkin-id]");
         if (checkinBtn) submitCheckin(checkinBtn.dataset.checkinId, checkinBtn);
     });
+
+    document.getElementById("studentCheckinDockTab")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleCheckinDock();
+    });
+    document.getElementById("studentCheckinDockPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", (e) => {
+        const dock = document.getElementById("studentCheckinDock");
+        if (dock && dock.classList.contains("is-open") && !dock.contains(e.target)) {
+            dock.classList.remove("is-open");
+            document.getElementById("studentCheckinDockTab")?.setAttribute("aria-expanded", "false");
+        }
+    });
     document.getElementById("boardFormSubmitBtn")?.addEventListener("click", submitBoardPost);
     document.getElementById("boardFormTopic")?.addEventListener("change", updateBoardCategoryFieldVisibility);
 
@@ -1828,6 +1928,32 @@ document.addEventListener("fragments:loaded", () => {
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = "들어가기";
+        }
+    });
+
+    document.getElementById("studentTrialSignupBtn")?.addEventListener("click", async () => {
+        const btn = document.getElementById("studentTrialSignupBtn");
+        const hintEl = document.getElementById("studentTrialSignupHint");
+        btn.disabled = true;
+        btn.textContent = "준비하는 중...";
+
+        try {
+            const res = await fetch("/api/applications/trial-signup", { method: "POST" });
+            if (!res.ok) {
+                hintEl.textContent = "먼저 imkhun 홈페이지에서 로그인(또는 회원가입)해주세요.";
+                hintEl.classList.add("student-login-hint--error");
+                return;
+            }
+            showStudentScreen();
+            loadStudentPortalData();
+            switchStudentMainTab("trial");
+        } catch (err) {
+            console.error(err);
+            hintEl.textContent = "서버에 연결할 수 없어요.";
+            hintEl.classList.add("student-login-hint--error");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "승인 절차 없이 무료체험 바로 시작하기";
         }
     });
 

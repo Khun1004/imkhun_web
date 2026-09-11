@@ -3,8 +3,11 @@ package com.imkhun.imkhun.controller;
 import com.imkhun.imkhun.dto.ApplicationResponse;
 import com.imkhun.imkhun.dto.ConfirmPaymentRequest;
 import com.imkhun.imkhun.dto.CreateApplicationRequest;
+import com.imkhun.imkhun.repository.UserRepository;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AttendanceService;
+import com.imkhun.imkhun.service.StudentAuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +20,15 @@ public class ApplicationController {
 
     private final ApplicationService applicationService;
     private final AttendanceService attendanceService;
+    private final StudentAuthService studentAuthService;
+    private final UserRepository userRepository;
 
-    public ApplicationController(ApplicationService applicationService, AttendanceService attendanceService) {
+    public ApplicationController(ApplicationService applicationService, AttendanceService attendanceService,
+                                 StudentAuthService studentAuthService, UserRepository userRepository) {
         this.applicationService = applicationService;
         this.attendanceService = attendanceService;
+        this.studentAuthService = studentAuthService;
+        this.userRepository = userRepository;
     }
 
     private boolean notLoggedIn(Authentication authentication) {
@@ -79,5 +87,17 @@ public class ApplicationController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // 체험 전용 가입 — 승인 절차 없이 바로 KWZM Center에 로그인시켜줌 (imkhun 로그인은 되어있어야 함)
+    @PostMapping("/trial-signup")
+    public ResponseEntity<?> trialSignup(Authentication authentication, HttpServletResponse response) {
+        if (notLoggedIn(authentication)) {
+            return ResponseEntity.status(401).body("먼저 imkhun에 로그인해주세요.");
+        }
+        String username = authentication.getName();
+        applicationService.createOrGetTrialApplication(username);
+        userRepository.findByUsername(username).ifPresent(user -> studentAuthService.loginDirectly(response, user));
+        return ResponseEntity.ok().build();
     }
 }

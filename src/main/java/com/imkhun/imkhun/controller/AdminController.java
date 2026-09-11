@@ -720,10 +720,16 @@ public class AdminController {
     @GetMapping("/attendance/today")
     public ResponseEntity<?> getTodayRoster(HttpServletRequest request, @RequestParam String date) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        java.time.LocalDate parsedDate;
         try {
-            return ResponseEntity.ok(attendanceService.getRosterForDate(java.time.LocalDate.parse(date)));
+            parsedDate = java.time.LocalDate.parse(date.trim());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("날짜 형식이 올바르지 않아요.");
+            return ResponseEntity.badRequest().body("날짜 형식이 올바르지 않아요. (받은 값: \"" + date + "\")");
+        }
+        try {
+            return ResponseEntity.ok(attendanceService.getRosterForDate(parsedDate));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("목록을 불러오는 중 오류가 났어요: " + e);
         }
     }
 
@@ -749,6 +755,13 @@ public class AdminController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // "출석 관리 내역" — 전체 학생의 전체 출석 기록
+    @GetMapping("/attendance/history")
+    public ResponseEntity<?> getAttendanceHistory(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(attendanceService.getAllHistoryForAdmin());
     }
 
     // ---------- 자격증/시험 자료 파일 보내기 ----------
@@ -783,5 +796,66 @@ public class AdminController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // ---------- 엑셀(CSV)로 내보내기 ----------
+
+    // 엑셀에서 한글이 깨지지 않도록 UTF-8 BOM을 앞에 붙여줌
+    private static final byte[] UTF8_BOM = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+
+    private String csvCell(String value) {
+        String safe = value == null ? "" : value.replace("\"", "\"\"").replace("\r", " ").replace("\n", " ");
+        return "\"" + safe + "\"";
+    }
+
+    private ResponseEntity<byte[]> csvResponse(String filename, String csvBody) {
+        byte[] bodyBytes = csvBody.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] result = new byte[UTF8_BOM.length + bodyBytes.length];
+        System.arraycopy(UTF8_BOM, 0, result, 0, UTF8_BOM.length);
+        System.arraycopy(bodyBytes, 0, result, UTF8_BOM.length, bodyBytes.length);
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                .body(result);
+    }
+
+    @GetMapping("/applications/export")
+    public ResponseEntity<?> exportApplications(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.join(",", "이름", "이메일", "연락처", "과목", "학습방식", "학생번호", "신청일", "상태",
+                "결제수단", "금액", "학생결제확인", "관리자결제확인")).append("\r\n");
+
+        for (AdminApplicationResponse app : applicationService.getAllApplicationsForAdmin()) {
+            sb.append(String.join(",",
+                    csvCell(app.nickname()), csvCell(app.email()), csvCell(app.contact()),
+                    csvCell(app.courseName()), csvCell(app.studyType()), csvCell(app.studentNumber()),
+                    csvCell(app.createdAt()), csvCell(app.status()),
+                    csvCell(app.paymentMethod()), csvCell(app.amount()),
+                    csvCell(app.paymentConfirmedByStudent() ? "확인함" : "-"),
+                    csvCell(app.paymentConfirmedByAdmin() ? "확인함" : "-")
+            )).append("\r\n");
+        }
+
+        return csvResponse("student_list.csv", sb.toString());
+    }
+
+    @GetMapping("/attendance/export")
+    public ResponseEntity<?> exportAttendance(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.join(",", "날짜", "강의", "학생", "상태", "학생체크여부")).append("\r\n");
+
+        for (AttendanceHistoryEntryResponse r : attendanceService.getAllHistoryForAdmin()) {
+            sb.append(String.join(",",
+                    csvCell(r.classDate()), csvCell(r.courseName()), csvCell(r.studentUsername()),
+                    csvCell(r.status()), csvCell(r.checkedInByStudent() ? "학생 체크" : "관리자 입력")
+            )).append("\r\n");
+        }
+
+        return csvResponse("attendance_history.csv", sb.toString());
     }
 }
