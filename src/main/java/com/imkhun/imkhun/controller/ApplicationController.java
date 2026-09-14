@@ -6,8 +6,10 @@ import com.imkhun.imkhun.dto.CreateApplicationRequest;
 import com.imkhun.imkhun.repository.UserRepository;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AttendanceService;
+import com.imkhun.imkhun.service.ReceiptService;
 import com.imkhun.imkhun.service.StudentAuthService;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -22,13 +24,16 @@ public class ApplicationController {
     private final AttendanceService attendanceService;
     private final StudentAuthService studentAuthService;
     private final UserRepository userRepository;
+    private final ReceiptService receiptService;
 
     public ApplicationController(ApplicationService applicationService, AttendanceService attendanceService,
-                                 StudentAuthService studentAuthService, UserRepository userRepository) {
+                                 StudentAuthService studentAuthService, UserRepository userRepository,
+                                 ReceiptService receiptService) {
         this.applicationService = applicationService;
         this.attendanceService = attendanceService;
         this.studentAuthService = studentAuthService;
         this.userRepository = userRepository;
+        this.receiptService = receiptService;
     }
 
     private boolean notLoggedIn(Authentication authentication) {
@@ -99,5 +104,18 @@ public class ApplicationController {
         applicationService.createOrGetTrialApplication(username);
         userRepository.findByUsername(username).ifPresent(user -> studentAuthService.loginDirectly(response, user));
         return ResponseEntity.ok().build();
+    }
+
+    // 결제 영수증 — 결제 확인이 끝난 본인 신청만 볼 수 있음. 인쇄해서 PDF로 저장할 수 있는 HTML 페이지를 그대로 돌려줌
+    @GetMapping(value = "/{id}/receipt", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> getReceipt(Authentication authentication, @PathVariable Long id) {
+        if (notLoggedIn(authentication)) {
+            return ResponseEntity.status(401).body("로그인이 필요해요.");
+        }
+        try {
+            return ResponseEntity.ok(receiptService.buildReceiptHtmlForStudent(id, authentication.getName()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

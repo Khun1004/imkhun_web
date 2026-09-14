@@ -176,7 +176,13 @@
                 <div class="admin-dashboard-card admin-dashboard-card--teal">
                     <span class="admin-dashboard-card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                     <p class="admin-dashboard-card-value" id="dashboardNewThisMonthCount">-</p>
-                    <p class="admin-dashboard-card-label">이번 달 신규 신청자</p>
+                    <p class="admin-dashboard-card-label">이번 달 신규 신청 건수</p>
+                </div>
+
+                <div class="admin-dashboard-card admin-dashboard-card--gold">
+                    <span class="admin-dashboard-card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M17 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 5 18.5V20M9.5 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19 20v-1.5a3 3 0 0 0-2-2.83" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <p class="admin-dashboard-card-value" id="dashboardTotalStudentsCount">-</p>
+                    <p class="admin-dashboard-card-label">내 학생 총원</p>
                 </div>
 
                 <div class="admin-dashboard-card admin-dashboard-card--ink">
@@ -184,6 +190,29 @@
                     <p class="admin-dashboard-card-value" id="dashboardUnreadNotifCount">-</p>
                     <p class="admin-dashboard-card-label">안 읽은 알림</p>
                 </div>
+
+                <div class="admin-dashboard-card admin-dashboard-card--teal">
+                    <span class="admin-dashboard-card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg></span>
+                    <p class="admin-dashboard-card-value" id="dashboardAttendanceRate">-</p>
+                    <p class="admin-dashboard-card-label">이번 달 평균 출석률</p>
+                </div>
+            </div>
+
+            <div class="admin-dashboard-recent admin-dashboard-recent--absent">
+                <p class="admin-materials-heading">이번 달 결석 많은 학생 TOP 5</p>
+                <p class="admin-empty-text" id="dashboardTopAbsentEmpty" hidden>이번 달 결석 기록이 없어요.</p>
+                <div class="admin-dashboard-recent-list" id="dashboardTopAbsentList"></div>
+            </div>
+
+            <div class="admin-dashboard-recent admin-dashboard-reminder-card">
+                <div class="admin-materials-head-row" style="margin:0;">
+                    <p class="admin-materials-heading" style="margin:0;">결제 리마인더</p>
+                    <button type="button" class="admin-export-btn" id="sendPaymentReminderBtn">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a1 1 0 0 1 1 1v.6a6 6 0 0 1 5 5.9v3l1.6 2.6a1 1 0 0 1-.85 1.5H5.25a1 1 0 0 1-.85-1.5L6 13.5v-3a6 6 0 0 1 5-5.9V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                        지금 보내기
+                    </button>
+                </div>
+                <p class="admin-note-hint">결제 안내는 등록됐는데 학생이 아직 확인 안 한 신청에 자동으로 알림을 보내요 (매일 오전 9시 자동 실행 + 3일 간격으로 반복). 지금 바로 보내보고 싶으면 버튼을 눌러주세요.</p>
             </div>
 
             <div class="admin-dashboard-recent">
@@ -336,8 +365,15 @@
                     </button>
                 </div>
                 <p class="admin-note-hint">홈페이지 공지사항 탭에 나오는 시간표예요. 같은 시간대에 여러 요일 수업을 추가할 수 있어요.</p>
+
+                <div class="admin-view-toggle" role="tablist" aria-label="시간표 보기 방식">
+                    <button type="button" class="admin-view-toggle-btn active" data-timetable-view="list" role="tab" aria-selected="true">목록</button>
+                    <button type="button" class="admin-view-toggle-btn" data-timetable-view="calendar" role="tab" aria-selected="false">캘린더</button>
+                </div>
+
                 <p class="admin-empty-text" id="adminTimetableEmpty" hidden>아직 등록된 시간표가 없어요.</p>
                 <div class="admin-timetable-list" id="adminTimetableList"></div>
+                <div class="admin-timetable-calendar" id="adminTimetableCalendar" hidden></div>
             </div>
 
             <div class="admin-inline-panel" data-notice-panel="faq" hidden>

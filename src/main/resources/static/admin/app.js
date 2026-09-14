@@ -730,10 +730,44 @@ async function loadAdminTimetable() {
       `;
             list.appendChild(item);
         });
+
+        renderAdminTimetableCalendar(entries);
     } catch (err) {
         console.error(err);
     }
 }
+
+const TIMETABLE_CALENDAR_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+
+function renderAdminTimetableCalendar(entries) {
+    const calendar = document.getElementById("adminTimetableCalendar");
+    if (!calendar) return;
+
+    calendar.innerHTML = "";
+    TIMETABLE_CALENDAR_DAYS.forEach((day) => {
+        const dayEntries = entries
+            .filter((e) => e.day === day)
+            .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+
+        const col = document.createElement("div");
+        col.className = "admin-timetable-cal-col";
+        col.innerHTML = `
+      <p class="admin-timetable-cal-day">${TIMETABLE_DAY_LABEL[day] || day}</p>
+      <div class="admin-timetable-cal-blocks">
+        ${dayEntries.length === 0
+            ? `<p class="admin-timetable-cal-empty">-</p>`
+            : dayEntries.map((e) => `
+              <button type="button" class="admin-timetable-cal-block admin-timetable-cal-block--${e.colorType}" data-edit-timetable-id="${e.id}">
+                <span class="admin-timetable-cal-block-time">${escapeHtmlForAdmin(e.startTime)}</span>
+                <span class="admin-timetable-cal-block-course">${escapeHtmlForAdmin(e.courseName)}</span>
+              </button>
+            `).join("")}
+      </div>
+    `;
+        calendar.appendChild(col);
+    });
+}
+
 
 function openTimetableModal(entryId) {
     const modal = document.getElementById("timetableModal");
@@ -2085,7 +2119,10 @@ let studentApplicationsCache = [];
 function paymentStatusHtml(app) {
     if (!app.hasPaymentInfo) return "";
     if (app.paymentConfirmedByAdmin) {
-        return `<span class="admin-payment-status admin-payment-status--done">${ICON_CHECK} 결제 완료</span>`;
+        return `<span class="admin-payment-status admin-payment-status--done">${ICON_CHECK} 결제 완료</span>
+      <a class="admin-receipt-view-btn" href="/api/admin/applications/${app.id}/receipt" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> 영수증 발급
+      </a>`;
     }
     if (app.paymentConfirmedByStudent) {
         const receiptBtn = app.receiptImage
@@ -2305,6 +2342,30 @@ async function markAllAdminNotifsRead() {
     }
 }
 
+async function sendPaymentRemindersNow() {
+    const btn = document.getElementById("sendPaymentReminderBtn");
+    if (!btn) return;
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "보내는 중...";
+
+    try {
+        const res = await fetch("/api/admin/payment-reminders/send-now", { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "실패했어요.");
+            return;
+        }
+        const count = await res.json();
+        alert(count > 0 ? `${count}명에게 리마인더를 보냈어요.` : "지금 보낼 대상이 없어요. (이미 확인했거나, 아직 보낼 때가 안 됐어요)");
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
 async function loadDashboard() {
     try {
         const res = await fetch("/api/admin/dashboard");
@@ -2314,11 +2375,35 @@ async function loadDashboard() {
         const pendingEl = document.getElementById("dashboardPendingCount");
         const paymentEl = document.getElementById("dashboardPaymentPendingCount");
         const newThisMonthEl = document.getElementById("dashboardNewThisMonthCount");
+        const totalStudentsEl = document.getElementById("dashboardTotalStudentsCount");
         const unreadEl = document.getElementById("dashboardUnreadNotifCount");
+        const attendanceRateEl = document.getElementById("dashboardAttendanceRate");
         if (pendingEl) pendingEl.textContent = data.pendingApplicationsCount;
         if (paymentEl) paymentEl.textContent = data.paymentPendingConfirmCount;
         if (newThisMonthEl) newThisMonthEl.textContent = data.newApplicationsThisMonth;
+        if (totalStudentsEl) totalStudentsEl.textContent = data.totalStudentsCount;
         if (unreadEl) unreadEl.textContent = data.unreadNotificationsCount;
+        if (attendanceRateEl) attendanceRateEl.textContent = `${data.attendanceRateThisMonth}%`;
+
+        const topAbsentList = document.getElementById("dashboardTopAbsentList");
+        const topAbsentEmpty = document.getElementById("dashboardTopAbsentEmpty");
+        if (topAbsentList) {
+            topAbsentList.innerHTML = "";
+            const topAbsent = data.topAbsentStudents || [];
+            if (topAbsentEmpty) topAbsentEmpty.hidden = topAbsent.length > 0;
+
+            topAbsent.forEach((s, i) => {
+                const item = document.createElement("div");
+                item.className = "admin-dashboard-recent-item admin-dashboard-recent-item--absent";
+                item.innerHTML = `
+          <span class="admin-dashboard-absent-rank">${i + 1}</span>
+          <span class="admin-dashboard-recent-name">${escapeHtmlForAdmin(s.studentUsername)}</span>
+          <span class="admin-dashboard-recent-title">${escapeHtmlForAdmin(s.courseName)}</span>
+          <span class="admin-dashboard-absent-count">결석 ${s.absentCount}회</span>
+        `;
+                topAbsentList.appendChild(item);
+            });
+        }
 
         const list = document.getElementById("dashboardRecentList");
         const emptyText = document.getElementById("dashboardRecentEmpty");
@@ -2945,6 +3030,24 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
     document.getElementById("sendFileSubmitBtn")?.addEventListener("click", submitSendFile);
     document.getElementById("scheduleSaveBtn")?.addEventListener("click", submitSchedule);
+    document.getElementById("sendPaymentReminderBtn")?.addEventListener("click", sendPaymentRemindersNow);
+
+    document.querySelectorAll("[data-timetable-view]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-timetable-view]").forEach((b) => {
+                b.classList.remove("active");
+                b.setAttribute("aria-selected", "false");
+            });
+            btn.classList.add("active");
+            btn.setAttribute("aria-selected", "true");
+
+            const view = btn.dataset.timetableView;
+            const listEl = document.getElementById("adminTimetableList");
+            const calendarEl = document.getElementById("adminTimetableCalendar");
+            if (listEl) listEl.hidden = view !== "list";
+            if (calendarEl) calendarEl.hidden = view !== "calendar";
+        });
+    });
     document.getElementById("adminCheckinDockDateInput")?.addEventListener("change", loadAttendanceToday);
     document.getElementById("adminCheckinDockMarkRestBtn")?.addEventListener("click", markRestAbsentToday);
 

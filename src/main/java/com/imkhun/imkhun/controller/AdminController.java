@@ -12,6 +12,8 @@ import com.imkhun.imkhun.service.FaqService;
 import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.NoticeService;
 import com.imkhun.imkhun.service.NotificationService;
+import com.imkhun.imkhun.service.PaymentReminderService;
+import com.imkhun.imkhun.service.ReceiptService;
 import com.imkhun.imkhun.service.ReviewService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyNoteService;
@@ -43,6 +45,8 @@ public class AdminController {
     private final DashboardService dashboardService;
     private final AttendanceService attendanceService;
     private final AdminFileService adminFileService;
+    private final PaymentReminderService paymentReminderService;
+    private final ReceiptService receiptService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -50,7 +54,8 @@ public class AdminController {
                            KwzmInviteService kwzmInviteService, StudyPostService studyPostService,
                            NotificationService notificationService, NoticeService noticeService,
                            TimetableService timetableService, FaqService faqService, DashboardService dashboardService,
-                           AttendanceService attendanceService, AdminFileService adminFileService) {
+                           AttendanceService attendanceService, AdminFileService adminFileService,
+                           PaymentReminderService paymentReminderService, ReceiptService receiptService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -66,6 +71,8 @@ public class AdminController {
         this.dashboardService = dashboardService;
         this.attendanceService = attendanceService;
         this.adminFileService = adminFileService;
+        this.paymentReminderService = paymentReminderService;
+        this.receiptService = receiptService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -857,5 +864,24 @@ public class AdminController {
         }
 
         return csvResponse("attendance_history.csv", sb.toString());
+    }
+
+    // 결제 리마인더 — 원래 매일 오전 9시에 자동으로 도는데, 관리자가 지금 바로 보내보고 싶을 때 씀
+    @PostMapping("/payment-reminders/send-now")
+    public ResponseEntity<?> sendPaymentRemindersNow(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        int sentCount = paymentReminderService.sendRemindersNow();
+        return ResponseEntity.ok(sentCount);
+    }
+
+    // 결제 영수증 — 관리자는 결제 확인된 신청이면 누구 것이든 볼 수 있음
+    @GetMapping(value = "/applications/{id}/receipt", produces = org.springframework.http.MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> getReceipt(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(receiptService.buildReceiptHtml(id));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

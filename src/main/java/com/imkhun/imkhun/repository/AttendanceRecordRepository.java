@@ -15,6 +15,9 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
     // 관리자 "출석 관리 내역" — 전체 학생의 전체 기록
     List<AttendanceRecord> findAllByOrderByClassDateDesc();
 
+    // 대시보드 통계용 — 이번 달 기록만
+    List<AttendanceRecord> findByClassDateBetween(java.time.LocalDate start, java.time.LocalDate end);
+
     long countByApplicationIdAndStatus(Long applicationId, String status);
 
     Optional<AttendanceRecord> findByApplicationIdAndClassDate(Long applicationId, LocalDate classDate);

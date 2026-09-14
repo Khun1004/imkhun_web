@@ -69,6 +69,14 @@ public class Application {
     @Column(name = "payment_confirmed_by_admin_at")
     private LocalDateTime paymentConfirmedByAdminAt;
 
+    // 결제 안내를 등록한 시각 (리마인더를 언제부터 셀지 기준)
+    @Column(name = "payment_info_registered_at")
+    private LocalDateTime paymentInfoRegisteredAt;
+
+    // 마지막으로 결제 리마인더를 보낸 시각 (계속 도배하지 않도록 간격 확인용)
+    @Column(name = "payment_reminder_sent_at")
+    private LocalDateTime paymentReminderSentAt;
+
     // 학생이 "입금했어요" 누를 때 같이 첨부한 영수증 이미지 (base64 데이터 URI) — 없으면 null
     @Column(name = "receipt_image", columnDefinition = "CLOB")
     private String receiptImage;
@@ -118,6 +126,13 @@ public class Application {
         this.amountReason = amountReason;
         this.materialGuide = materialGuide;
         this.classGuide = classGuide;
+        if (this.paymentInfoRegisteredAt == null) {
+            this.paymentInfoRegisteredAt = LocalDateTime.now();
+        }
+    }
+
+    public void markPaymentReminderSent(LocalDateTime at) {
+        this.paymentReminderSentAt = at;
     }
 
     // 5개 항목 중 하나라도 채워져 있으면 "결제 안내가 등록됐다"고 봐요
@@ -202,6 +217,14 @@ public class Application {
 
     public LocalDateTime getPaymentConfirmedByAdminAt() {
         return paymentConfirmedByAdminAt;
+    }
+
+    public LocalDateTime getPaymentInfoRegisteredAt() {
+        return paymentInfoRegisteredAt;
+    }
+
+    public LocalDateTime getPaymentReminderSentAt() {
+        return paymentReminderSentAt;
     }
 
     public String getReceiptImage() {

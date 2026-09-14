@@ -829,6 +829,7 @@
     font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
+    text-decoration: none;
     transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 

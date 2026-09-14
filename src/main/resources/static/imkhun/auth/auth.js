@@ -75,6 +75,7 @@ const SITE_NOTIF_TYPE_ICON = {
     APPLICATION_APPROVED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     COURSE_CHANGED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     PAYMENT_INFO_REGISTERED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    PAYMENT_REMINDER: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     PAYMENT_CONFIRMED_BY_ADMIN: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     ATTENDANCE_ABSENT: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     REVIEW_REPLY: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 17l-5.6 3.1 1.4-6.3-4.8-4.3 6.4-.6L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
@@ -394,6 +395,7 @@ async function loadMyApplications() {
             <div class="mypage-history-actions">
               ${app.hasPaymentInfo ? `<button type="button" class="mypage-payment-confirm-btn" data-payment-confirm-id="${app.id}">결제 확인</button>` : ""}
               ${app.status === "APPROVED" ? `<button type="button" class="mypage-attendance-btn" data-attendance-id="${app.id}" data-attendance-course="${escapeHtmlForMypage(app.courseName)}">출석 현황</button>` : ""}
+              ${app.paymentConfirmedByAdmin ? `<a class="mypage-attendance-btn" href="/api/applications/${app.id}/receipt" target="_blank" rel="noopener">영수증 보기</a>` : ""}
             </div>
           ` : ""}
         </div>
