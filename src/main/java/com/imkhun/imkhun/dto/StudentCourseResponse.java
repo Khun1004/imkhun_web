@@ -1,4 +1,4 @@
 package com.imkhun.imkhun.dto;
 
-public record StudentCourseResponse(String studentNumber, String courseName, String language) {
+public record StudentCourseResponse(Long applicationId, String studentNumber, String courseName, String language) {
 }

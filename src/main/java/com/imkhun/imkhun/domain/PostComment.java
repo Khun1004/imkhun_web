@@ -23,7 +23,7 @@ public class PostComment {
     private String nickname;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "CLOB")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content;
 
     // "STUDENT" / "ADMIN"

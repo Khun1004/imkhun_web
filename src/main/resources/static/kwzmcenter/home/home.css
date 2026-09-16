@@ -582,6 +582,26 @@
     transform: none;
 }
 
+.student-checkin-dock-closed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(184, 68, 106, 0.1);
+    color: #b8446a;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.student-checkin-dock-closed svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
 .student-checkin-dock-head--rest {
     background: linear-gradient(135deg, #fdf6ec 0%, #f3ece0 45%, #e9f0ee 100%);
 }
@@ -622,34 +642,92 @@
 /* 출석 체크 패널 안의 "나의 시간표" */
 
 .student-checkin-dock-schedule {
-    padding: 0 22px 26px;
+    padding: 0 0 22px;
+    border-top: 1px solid var(--kwzm-line);
+    margin-top: 4px;
+}
+
+.student-checkin-dock-schedule-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 22px;
+    background: linear-gradient(135deg, var(--kwzm-primary, #16386b), var(--kwzm-accent, #2f9aa0));
+    color: #fff;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.student-checkin-dock-schedule-banner::before {
+    content: "";
+    position: absolute;
+    top: -30px;
+    right: -20px;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, transparent 70%);
+}
+
+.student-checkin-dock-schedule-icon {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.student-checkin-dock-schedule-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.student-checkin-dock-schedule-eyebrow {
+    position: relative;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 2px;
 }
 
 .student-checkin-dock-schedule-title {
+    position: relative;
     font-family: "Noto Serif KR", serif;
-    font-size: 14.5px;
-    font-weight: 700;
-    color: var(--kwzm-ink);
-    margin-bottom: 12px;
-    padding-top: 20px;
-    border-top: 1px dashed var(--kwzm-line);
+    font-size: 15.5px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
 }
 
 .student-checkin-dock-schedule-list {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    padding: 0 22px;
 }
 
 .student-checkin-dock-schedule-row {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 10px;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid transparent;
 }
 
 .student-checkin-dock-schedule-row.has-class {
+    background: var(--kwzm-bg-2);
+}
+
+.student-checkin-dock-schedule-row.is-today {
+    border-color: var(--kwzm-accent, #2f9aa0);
     background: var(--kwzm-bg-2);
 }
 
@@ -658,29 +736,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     color: var(--kwzm-ink-faint);
+    background: var(--kwzm-bg-2);
 }
 
 .student-checkin-dock-schedule-row.has-class .student-checkin-dock-schedule-day {
     background: var(--kwzm-gradient);
     color: #fff;
+    box-shadow: 0 6px 14px -8px rgba(15, 37, 71, 0.5);
 }
 
 .student-checkin-dock-schedule-items {
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    flex-direction: column;
+    gap: 3px;
 }
 
 .student-checkin-dock-schedule-chip {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--kwzm-ink);
     overflow: hidden;
@@ -691,6 +771,122 @@
 .student-checkin-dock-schedule-empty {
     font-size: 11.5px;
     color: var(--kwzm-ink-faint);
+}
+
+.student-checkin-dock-schedule-today-tag {
+    flex-shrink: 0;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--kwzm-accent, #2f9aa0);
+    color: #fff;
+}
+
+/* 오늘 날짜 미니 달력 */
+
+.student-checkin-dock-calendar {
+    margin: 18px 22px 0;
+    padding: 16px 14px;
+    border-radius: 14px;
+    background: var(--kwzm-bg-2);
+    border: 1px solid var(--kwzm-line);
+}
+
+.student-checkin-dock-calendar-head {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.student-checkin-dock-calendar-eyebrow {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--kwzm-accent, #2f9aa0);
+    margin: 0 0 3px;
+}
+
+.student-checkin-dock-calendar-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+    margin: 0;
+}
+
+.student-checkin-dock-calendar-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.student-checkin-dock-calendar-nav-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0;
+}
+
+.student-checkin-dock-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 50%;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-soft);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.student-checkin-dock-calendar-nav svg {
+    width: 14px;
+    height: 14px;
+}
+
+.student-checkin-dock-calendar-nav:hover {
+    background: var(--kwzm-gradient);
+    color: #fff;
+}
+
+.student-checkin-dock-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.student-checkin-dock-calendar-dow {
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink-faint);
+    padding-bottom: 4px;
+}
+
+.student-checkin-dock-calendar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--kwzm-ink-soft);
+}
+
+.student-checkin-dock-calendar-day.is-blank {
+    visibility: hidden;
+}
+
+.student-checkin-dock-calendar-day.is-today {
+    background: var(--kwzm-gradient);
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 6px 14px -8px rgba(15, 37, 71, 0.5);
 }
 
 @media (max-width: 560px) {

@@ -33,7 +33,7 @@ public class StudyMaterial {
 
     // 제목 밑에 들어가는 부가 설명 (선택)
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
 
     // 이 자료를 볼 수 있는 학생번호들 — 비어있으면 그 언어를 듣는 전체 학생에게 보임,

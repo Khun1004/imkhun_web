@@ -210,6 +210,7 @@ const ADMIN_NOTIF_TYPE_ICON = {
     NEW_POST: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
     NEW_REVIEW: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 17l-5.6 3.1 1.4-6.3-4.8-4.3 6.4-.6L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
     CONSECUTIVE_ABSENCE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.3 3.9 2.4 18.1a1.5 1.5 0 0 0 1.3 2.2h16.6a1.5 1.5 0 0 0 1.3-2.2L13.7 3.9a1.5 1.5 0 0 0-2.6 0Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    CLASS_CHANGE_REQUEST: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 15l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 const ADMIN_NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
@@ -995,9 +996,38 @@ function openAttendanceModal(applicationId, courseName) {
     document.getElementById("attendanceNoteInput").value = "";
     document.getElementById("attendanceError").hidden = true;
 
+    const lessonDateInput = document.getElementById("lessonNoteDateInput");
+    if (lessonDateInput) lessonDateInput.value = new Date().toISOString().slice(0, 10);
+    const lessonContentInput = document.getElementById("lessonNoteContentInput");
+    if (lessonContentInput) lessonContentInput.value = "";
+    const lessonError = document.getElementById("lessonNoteError");
+    if (lessonError) lessonError.hidden = true;
+
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
     loadAttendanceForModal(applicationId);
+    loadLessonNotes(applicationId);
+
+    const levelInput = document.getElementById("levelRecordLevelInput");
+    if (levelInput) levelInput.value = "";
+    const levelDateInput = document.getElementById("levelRecordDateInput");
+    if (levelDateInput) levelDateInput.value = new Date().toISOString().slice(0, 10);
+    const levelNoteInput = document.getElementById("levelRecordNoteInput");
+    if (levelNoteInput) levelNoteInput.value = "";
+    const levelError = document.getElementById("levelRecordError");
+    if (levelError) levelError.hidden = true;
+    loadLevelRecords(applicationId);
+
+    const assignmentTitleInput = document.getElementById("assignmentTitleInput");
+    if (assignmentTitleInput) assignmentTitleInput.value = "";
+    const assignmentDescInput = document.getElementById("assignmentDescInput");
+    if (assignmentDescInput) assignmentDescInput.value = "";
+    const assignmentDueDateInput = document.getElementById("assignmentDueDateInput");
+    if (assignmentDueDateInput) assignmentDueDateInput.value = "";
+    const assignmentError = document.getElementById("assignmentError");
+    if (assignmentError) assignmentError.hidden = true;
+    loadAssignmentsForModal(applicationId);
+    loadClassChangeRequestsForModal(applicationId);
 }
 
 function closeAttendanceModal() {
@@ -1005,6 +1035,83 @@ function closeAttendanceModal() {
     if (!modal) return;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
+}
+
+const CLASSCHANGE_STATUS_LABEL = { PENDING: "대기중", APPROVED: "승인됨", REJECTED: "거절됨" };
+const CLASSCHANGE_TYPE_LABEL = { CANCEL: "취소", RESCHEDULE: "변경" };
+
+async function loadClassChangeRequestsForModal(applicationId) {
+    const listEl = document.getElementById("classChangeList");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/class-change-requests`);
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const requests = await res.json();
+
+        listEl.innerHTML = "";
+        if (requests.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 보낸 요청이 없어요.</p>`;
+            return;
+        }
+
+        requests.forEach((r) => {
+            const row = document.createElement("div");
+            row.className = "admin-lesson-note-row";
+            row.innerHTML = `
+        <div class="admin-lesson-note-row-head">
+          <span class="admin-assignment-row-status admin-assignment-row-status--${r.status === "APPROVED" ? "done" : "pending"}">${CLASSCHANGE_STATUS_LABEL[r.status] || r.status}</span>
+        </div>
+        <p class="admin-lesson-note-row-content"><strong>${CLASSCHANGE_TYPE_LABEL[r.requestType] || r.requestType}</strong> · ${r.classDate}${r.requestedDate ? ` → ${r.requestedDate}` : ""}</p>
+        ${r.reason ? `<p class="admin-lesson-note-row-content">${escapeHtmlForAdmin(r.reason)}</p>` : ""}
+        ${r.adminReply ? `<p class="admin-lesson-note-row-content">내 답변: ${escapeHtmlForAdmin(r.adminReply)}</p>` : ""}
+        ${r.status === "PENDING" ? `
+          <div class="admin-note-footer" style="margin-top: 8px;">
+            <span></span>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="admin-material-action-btn" data-respond-classchange-id="${r.id}" data-respond-approved="false">거절</button>
+              <button type="button" class="admin-note-save-btn" data-respond-classchange-id="${r.id}" data-respond-approved="true">승인</button>
+            </div>
+          </div>
+        ` : ""}
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function respondToClassChangeRequest(id, approved) {
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    let adminReply = "";
+    if (approved) {
+        adminReply = prompt("학생한테 남길 메시지가 있으면 적어주세요 (선택, 비워두고 확인 눌러도 돼요).") || "";
+    } else {
+        if (!confirm("이 요청을 거절할까요?")) return;
+        adminReply = prompt("거절 사유를 적어주세요 (선택).") || "";
+    }
+
+    try {
+        const res = await fetch(`/api/admin/class-change-requests/${id}/respond`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ approved, adminReply }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "처리에 실패했어요.");
+            return;
+        }
+        loadClassChangeRequestsForModal(applicationId);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
 }
 
 async function loadAttendanceForModal(applicationId) {
@@ -1048,6 +1155,311 @@ async function loadAttendanceForModal(applicationId) {
         });
     } catch (err) {
         console.error(err);
+    }
+}
+
+async function loadLevelRecords(applicationId) {
+    const listEl = document.getElementById("levelRecordList");
+    const currentEl = document.getElementById("adminLevelCurrent");
+    const currentValueEl = document.getElementById("adminLevelCurrentValue");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/level-records`);
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const records = await res.json();
+
+        if (currentEl) {
+            if (records.length > 0) {
+                currentEl.hidden = false;
+                if (currentValueEl) currentValueEl.textContent = records[0].level;
+            } else {
+                currentEl.hidden = true;
+            }
+        }
+
+        listEl.innerHTML = "";
+        if (records.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 기록한 레벨이 없어요.</p>`;
+            return;
+        }
+
+        records.forEach((r) => {
+            const row = document.createElement("div");
+            row.className = "admin-lesson-note-row";
+            row.innerHTML = `
+        <div class="admin-lesson-note-row-head">
+          <span class="admin-lesson-note-row-date">${r.recordedDate || "날짜 없음"} · <strong>${escapeHtmlForAdmin(r.level)}</strong></span>
+          <button type="button" class="admin-attendance-row-delete" data-delete-level-record-id="${r.id}" aria-label="삭제">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        ${r.note ? `<p class="admin-lesson-note-row-content">${escapeHtmlForAdmin(r.note)}</p>` : ""}
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function submitLevelRecord() {
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    const level = document.getElementById("levelRecordLevelInput").value.trim();
+    const recordedDate = document.getElementById("levelRecordDateInput").value;
+    const note = document.getElementById("levelRecordNoteInput").value.trim();
+    const errorEl = document.getElementById("levelRecordError");
+    const saveBtn = document.getElementById("levelRecordSaveBtn");
+
+    if (!level) {
+        errorEl.textContent = "레벨을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "추가하는 중...";
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/level-records`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ level, note, recordedDate: recordedDate || null }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "추가에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        document.getElementById("levelRecordLevelInput").value = "";
+        document.getElementById("levelRecordNoteInput").value = "";
+        loadLevelRecords(applicationId);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "기록 추가하기";
+    }
+}
+
+async function deleteLevelRecord(id) {
+    if (!confirm("이 레벨 기록을 삭제할까요?")) return;
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    try {
+        const res = await fetch(`/api/admin/level-records/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadLevelRecords(applicationId);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function loadLessonNotes(applicationId) {
+    const listEl = document.getElementById("lessonNoteList");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/lesson-notes`);
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const notes = await res.json();
+
+        listEl.innerHTML = "";
+        if (notes.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 남긴 노트가 없어요.</p>`;
+            return;
+        }
+
+        notes.forEach((n) => {
+            const row = document.createElement("div");
+            row.className = "admin-lesson-note-row";
+            row.innerHTML = `
+        <div class="admin-lesson-note-row-head">
+          <span class="admin-lesson-note-row-date">${n.classDate || "날짜 없음"}</span>
+          <button type="button" class="admin-attendance-row-delete" data-delete-lesson-note-id="${n.id}" aria-label="삭제">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <p class="admin-lesson-note-row-content">${escapeHtmlForAdmin(n.content)}</p>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function submitLessonNote() {
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    const classDate = document.getElementById("lessonNoteDateInput").value;
+    const content = document.getElementById("lessonNoteContentInput").value.trim();
+    const errorEl = document.getElementById("lessonNoteError");
+    const saveBtn = document.getElementById("lessonNoteSaveBtn");
+
+    if (!content) {
+        errorEl.textContent = "수업 내용을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "추가하는 중...";
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/lesson-notes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ classDate: classDate || null, content }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "추가에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        document.getElementById("lessonNoteContentInput").value = "";
+        loadLessonNotes(applicationId);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "노트 추가하기";
+    }
+}
+
+async function deleteLessonNote(id) {
+    if (!confirm("이 노트를 삭제할까요?")) return;
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    try {
+        const res = await fetch(`/api/admin/lesson-notes/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadLessonNotes(applicationId);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function loadAssignmentsForModal(applicationId) {
+    const listEl = document.getElementById("assignmentList");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/assignments`);
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const assignments = await res.json();
+
+        listEl.innerHTML = "";
+        if (assignments.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 낸 숙제가 없어요.</p>`;
+            return;
+        }
+
+        assignments.forEach((a) => {
+            const row = document.createElement("div");
+            row.className = "admin-lesson-note-row";
+            row.innerHTML = `
+        <div class="admin-lesson-note-row-head">
+          <span class="admin-assignment-row-status admin-assignment-row-status--${a.completed ? "done" : "pending"}">${a.completed ? "완료" : "진행중"}</span>
+          <button type="button" class="admin-attendance-row-delete" data-delete-assignment-id="${a.id}" aria-label="삭제">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <p class="admin-lesson-note-row-content"><strong>${escapeHtmlForAdmin(a.title)}</strong>${a.dueDate ? ` · 기한 ${a.dueDate}` : ""}</p>
+        ${a.description ? `<p class="admin-lesson-note-row-content">${escapeHtmlForAdmin(a.description)}</p>` : ""}
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function submitAssignment() {
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    const title = document.getElementById("assignmentTitleInput").value.trim();
+    const description = document.getElementById("assignmentDescInput").value.trim();
+    const dueDate = document.getElementById("assignmentDueDateInput").value;
+    const errorEl = document.getElementById("assignmentError");
+    const saveBtn = document.getElementById("assignmentSaveBtn");
+
+    if (!title) {
+        errorEl.textContent = "숙제 제목을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "내는 중...";
+
+    try {
+        const res = await fetch(`/api/admin/applications/${applicationId}/assignments`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, description: description || null, dueDate: dueDate || null }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        document.getElementById("assignmentTitleInput").value = "";
+        document.getElementById("assignmentDescInput").value = "";
+        document.getElementById("assignmentDueDateInput").value = "";
+        loadAssignmentsForModal(applicationId);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "숙제 내주기";
+    }
+}
+
+async function deleteAssignmentAdmin(id) {
+    if (!confirm("이 숙제를 삭제할까요?")) return;
+    const applicationId = document.getElementById("attendanceApplicationId").value;
+    try {
+        const res = await fetch(`/api/admin/assignments/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAssignmentsForModal(applicationId);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
     }
 }
 
@@ -1244,7 +1656,46 @@ function getAttendanceTodayDate() {
     return input.value;
 }
 
+let adminCalendarViewYear = null;
+let adminCalendarViewMonth = null; // 0-11
+
+function renderAdminCheckinCalendar() {
+    const titleEl = document.getElementById("adminCheckinCalendarTitle");
+    const gridEl = document.getElementById("adminCheckinCalendarGrid");
+    if (!titleEl || !gridEl) return;
+
+    const selectedDate = getAttendanceTodayDate(); // "yyyy-mm-dd"
+    if (adminCalendarViewYear === null) {
+        const [y, m] = selectedDate.split("-").map(Number);
+        adminCalendarViewYear = y;
+        adminCalendarViewMonth = m - 1;
+    }
+
+    const year = adminCalendarViewYear;
+    const month = adminCalendarViewMonth;
+    titleEl.textContent = `${year}년 ${month + 1}월`;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const dowKo = ["일", "월", "화", "수", "목", "금", "토"];
+
+    const dowHtml = dowKo.map((d) => `<span class="admin-checkin-dock-calendar-dow">${d}</span>`).join("");
+    const blanksHtml = Array.from({ length: firstDayOfWeek }, () => `<span class="admin-checkin-dock-calendar-day is-blank"></span>`).join("");
+    const daysHtml = Array.from({ length: daysInMonth }, (_, i) => {
+        const d = i + 1;
+        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const classes = ["admin-checkin-dock-calendar-day"];
+        if (dateStr === selectedDate) classes.push("is-selected");
+        if (dateStr === todayStr) classes.push("is-today");
+        return `<button type="button" class="${classes.join(" ")}" data-calendar-date="${dateStr}">${d}</button>`;
+    }).join("");
+
+    gridEl.innerHTML = dowHtml + blanksHtml + daysHtml;
+}
+
 async function loadAttendanceToday() {
+    renderAdminCheckinCalendar();
     const list = document.getElementById("adminCheckinDockList");
     const emptyEl = document.getElementById("adminCheckinDockEmpty");
     if (!list) return;
@@ -1326,6 +1777,9 @@ async function markRestAbsentToday() {
     }
 }
 
+let attendanceHistoryRecords = [];
+let attendanceHistoryFilter = "ALL";
+
 async function loadAttendanceHistory() {
     const table = document.getElementById("attendanceHistoryTable");
     const emptyEl = document.getElementById("attendanceHistoryEmpty");
@@ -1338,40 +1792,83 @@ async function loadAttendanceHistory() {
             table.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
             return;
         }
-        const records = await res.json();
+        attendanceHistoryRecords = await res.json();
+        renderAttendanceHistoryTable();
+    } catch (err) {
+        console.error(err);
+        table.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
 
-        table.innerHTML = "";
-        if (emptyEl) emptyEl.hidden = records.length > 0;
+function renderAttendanceHistoryTable() {
+    const table = document.getElementById("attendanceHistoryTable");
+    const emptyEl = document.getElementById("attendanceHistoryEmpty");
+    if (!table) return;
 
-        if (records.length === 0) return;
+    const records = attendanceHistoryFilter === "ALL"
+        ? attendanceHistoryRecords
+        : attendanceHistoryRecords.filter((r) => r.status === attendanceHistoryFilter
+            || (attendanceHistoryFilter === "ABSENT" && r.status === "ABSENT_PENDING"));
 
-        const header = document.createElement("div");
-        header.className = "admin-attendance-history-row admin-attendance-history-row--head";
-        header.innerHTML = `
+    table.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = records.length > 0;
+    if (records.length === 0) return;
+
+    const header = document.createElement("div");
+    header.className = "admin-attendance-history-row admin-attendance-history-row--head";
+    header.innerHTML = `
       <span>날짜</span>
       <span>강의</span>
       <span>학생</span>
       <span>상태</span>
     `;
-        table.appendChild(header);
+    table.appendChild(header);
 
-        records.forEach((r) => {
-            const row = document.createElement("div");
-            row.className = "admin-attendance-history-row";
-            const statusLabel = ATTENDANCE_TODAY_STATUS_LABEL[r.status] || r.status;
-            row.innerHTML = `
+    records.forEach((r) => {
+        const row = document.createElement("div");
+        row.className = "admin-attendance-history-row";
+        row.innerHTML = `
         <span class="admin-attendance-history-date">${r.classDate}</span>
         <span class="admin-attendance-history-course">${escapeHtmlForAdmin(r.courseName)}</span>
-        <span class="admin-attendance-history-student">${escapeHtmlForAdmin(r.studentUsername)}</span>
-        <span class="admin-attendance-today-current admin-attendance-today-current--${r.status ? r.status.toLowerCase() : "none"}">
-          ${statusLabel}${r.checkedInByStudent ? " · 학생 체크" : ""}
-        </span>
+        <span class="admin-attendance-history-student">${escapeHtmlForAdmin(r.studentUsername)}${r.checkedInByStudent ? " · 학생 체크" : ""}</span>
+        <select class="admin-attendance-history-status-select admin-attendance-today-current--${r.status ? r.status.toLowerCase() : "none"}"
+                data-history-record-id="${r.id}" data-history-application-id="${r.applicationId}" data-history-date="${r.classDate}">
+          ${r.status === "ABSENT_PENDING" ? `<option value="ABSENT_PENDING" selected disabled>결석 예정</option>` : ""}
+          <option value="PRESENT" ${r.status === "PRESENT" ? "selected" : ""}>출석</option>
+          <option value="LATE" ${r.status === "LATE" ? "selected" : ""}>지각</option>
+          <option value="ABSENT" ${r.status === "ABSENT" ? "selected" : ""}>결석</option>
+          <option value="MAKEUP" ${r.status === "MAKEUP" ? "selected" : ""}>보강</option>
+        </select>
       `;
-            table.appendChild(row);
+        table.appendChild(row);
+    });
+}
+
+async function changeAttendanceHistoryStatus(selectEl) {
+    const applicationId = selectEl.dataset.historyApplicationId;
+    const date = selectEl.dataset.historyDate;
+    const newStatus = selectEl.value;
+    selectEl.disabled = true;
+
+    try {
+        const res = await fetch(`/api/admin/attendance/today?date=${date}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applicationId: Number(applicationId), status: newStatus }),
         });
+        if (!res.ok) {
+            alert((await res.text()) || "변경에 실패했어요.");
+            loadAttendanceHistory();
+            return;
+        }
+        const record = attendanceHistoryRecords.find((r) => String(r.applicationId) === applicationId && r.classDate === date);
+        if (record) record.status = newStatus;
+        selectEl.className = `admin-attendance-history-status-select admin-attendance-today-current--${newStatus.toLowerCase()}`;
     } catch (err) {
         console.error(err);
-        table.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        selectEl.disabled = false;
     }
 }
 
@@ -2427,6 +2924,99 @@ async function loadDashboard() {
     } catch (err) {
         console.error(err);
     }
+
+    loadTodayTodos();
+    loadRevenueReport();
+}
+
+async function loadRevenueReport() {
+    const chartEl = document.getElementById("adminRevenueChart");
+    if (!chartEl) return;
+
+    try {
+        const res = await fetch("/api/admin/dashboard/revenue");
+        if (!res.ok) return;
+        const months = await res.json();
+
+        const maxRevenue = Math.max(...months.map((m) => m.totalRevenue), 1);
+
+        chartEl.innerHTML = months.map((m) => {
+            const [year, month] = m.month.split("-");
+            const heightPct = Math.round((m.totalRevenue / maxRevenue) * 100);
+            return `
+        <div class="admin-revenue-bar-col">
+          <span class="admin-revenue-bar-value">${m.totalRevenue.toLocaleString()}원</span>
+          <div class="admin-revenue-bar-track">
+            <div class="admin-revenue-bar-fill" style="height: ${Math.max(heightPct, 3)}%;"></div>
+          </div>
+          <span class="admin-revenue-bar-label">${Number(month)}월</span>
+          <span class="admin-revenue-bar-count">${m.paymentCount}건</span>
+        </div>
+      `;
+        }).join("");
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+const CLASSCHANGE_TODO_TYPE_LABEL = { CANCEL: "취소", RESCHEDULE: "변경" };
+
+async function loadTodayTodos() {
+    const classesList = document.getElementById("adminTodoClassesList");
+    const paymentsList = document.getElementById("adminTodoPaymentsList");
+    const changesList = document.getElementById("adminTodoClassChangesList");
+    if (!classesList) return;
+
+    try {
+        const res = await fetch("/api/admin/dashboard/today-todos");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // 오늘 수업
+        const classes = data.todayClasses || [];
+        classesList.innerHTML = classes.length === 0
+            ? `<p class="admin-todo-empty">오늘 예정된 수업이 없어요.</p>`
+            : classes.map((c) => `
+        <div class="admin-todo-item">
+          <span class="admin-todo-item-time">${c.classTime ? c.classTime.slice(0, 5) : "-"}</span>
+          <div class="admin-todo-item-info">
+            <p class="admin-todo-item-title">${escapeHtmlForAdmin(c.courseName)}</p>
+            <p class="admin-todo-item-sub">${escapeHtmlForAdmin(c.studentNickname || "")}</p>
+          </div>
+          <span class="admin-todo-item-tag${c.status ? " is-done" : ""}">${c.status ? (ATTENDANCE_TODAY_STATUS_LABEL[c.status] || c.status) : "미체크"}</span>
+        </div>
+      `).join("");
+
+        // 입금 확인 대기
+        const payments = data.pendingPayments || [];
+        paymentsList.innerHTML = payments.length === 0
+            ? `<p class="admin-todo-empty">입금 확인 대기 중인 학생이 없어요.</p>`
+            : payments.map((p) => `
+        <div class="admin-todo-item">
+          <div class="admin-todo-item-info">
+            <p class="admin-todo-item-title">${escapeHtmlForAdmin(p.courseName)}</p>
+            <p class="admin-todo-item-sub">${escapeHtmlForAdmin(p.username)}</p>
+          </div>
+          <button type="button" class="admin-todo-item-btn" data-dashboard-goto="students">확인하기</button>
+        </div>
+      `).join("");
+
+        // 수업 변경 요청
+        const changes = data.pendingClassChanges || [];
+        changesList.innerHTML = changes.length === 0
+            ? `<p class="admin-todo-empty">대기 중인 요청이 없어요.</p>`
+            : changes.map((r) => `
+        <div class="admin-todo-item">
+          <div class="admin-todo-item-info">
+            <p class="admin-todo-item-title">${escapeHtmlForAdmin(r.courseName)} · ${CLASSCHANGE_TODO_TYPE_LABEL[r.requestType] || r.requestType}</p>
+            <p class="admin-todo-item-sub">${escapeHtmlForAdmin(r.studentUsername)} · ${r.classDate}${r.requestedDate ? ` → ${r.requestedDate}` : ""}</p>
+          </div>
+          <button type="button" class="admin-todo-item-btn" data-dashboard-goto="students">확인하기</button>
+        </div>
+      `).join("");
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 async function loadAdminPosts() {
@@ -2993,6 +3583,16 @@ document.addEventListener("fragments:loaded", () => {
         if (attendanceBtn) openAttendanceModal(attendanceBtn.dataset.attendanceId, attendanceBtn.dataset.attendanceCourse);
         const deleteAttendanceBtn = e.target.closest("[data-delete-attendance-id]");
         if (deleteAttendanceBtn) deleteAttendanceRecordAdmin(deleteAttendanceBtn.dataset.deleteAttendanceId);
+        const deleteLessonNoteBtn = e.target.closest("[data-delete-lesson-note-id]");
+        if (deleteLessonNoteBtn) deleteLessonNote(deleteLessonNoteBtn.dataset.deleteLessonNoteId);
+        const deleteLevelRecordBtn = e.target.closest("[data-delete-level-record-id]");
+        if (deleteLevelRecordBtn) deleteLevelRecord(deleteLevelRecordBtn.dataset.deleteLevelRecordId);
+        const deleteAssignmentBtn = e.target.closest("[data-delete-assignment-id]");
+        if (deleteAssignmentBtn) deleteAssignmentAdmin(deleteAssignmentBtn.dataset.deleteAssignmentId);
+        const respondClasschangeBtn = e.target.closest("[data-respond-classchange-id]");
+        if (respondClasschangeBtn) {
+            respondToClassChangeRequest(respondClasschangeBtn.dataset.respondClasschangeId, respondClasschangeBtn.dataset.respondApproved === "true");
+        }
 
         if (e.target.closest("[data-send-file-modal-close]")) closeSendFileModal();
         const sendFileBtn = e.target.closest("[data-send-file-id]");
@@ -3028,6 +3628,9 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("adminTimetableNewBtn")?.addEventListener("click", () => openTimetableModal());
     document.getElementById("timetableSaveBtn")?.addEventListener("click", submitTimetableEntry);
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
+    document.getElementById("lessonNoteSaveBtn")?.addEventListener("click", submitLessonNote);
+    document.getElementById("levelRecordSaveBtn")?.addEventListener("click", submitLevelRecord);
+    document.getElementById("assignmentSaveBtn")?.addEventListener("click", submitAssignment);
     document.getElementById("sendFileSubmitBtn")?.addEventListener("click", submitSendFile);
     document.getElementById("scheduleSaveBtn")?.addEventListener("click", submitSchedule);
     document.getElementById("sendPaymentReminderBtn")?.addEventListener("click", sendPaymentRemindersNow);
@@ -3048,8 +3651,46 @@ document.addEventListener("fragments:loaded", () => {
             if (calendarEl) calendarEl.hidden = view !== "calendar";
         });
     });
-    document.getElementById("adminCheckinDockDateInput")?.addEventListener("change", loadAttendanceToday);
+    document.getElementById("adminCheckinDockDateInput")?.addEventListener("change", () => {
+        adminCalendarViewYear = null;
+        adminCalendarViewMonth = null;
+        loadAttendanceToday();
+    });
+    document.getElementById("adminCheckinCalendarPrevBtn")?.addEventListener("click", () => {
+        adminCalendarViewMonth -= 1;
+        if (adminCalendarViewMonth < 0) {
+            adminCalendarViewMonth = 11;
+            adminCalendarViewYear -= 1;
+        }
+        renderAdminCheckinCalendar();
+    });
+    document.getElementById("adminCheckinCalendarNextBtn")?.addEventListener("click", () => {
+        adminCalendarViewMonth += 1;
+        if (adminCalendarViewMonth > 11) {
+            adminCalendarViewMonth = 0;
+            adminCalendarViewYear += 1;
+        }
+        renderAdminCheckinCalendar();
+    });
+    document.getElementById("adminCheckinCalendarGrid")?.addEventListener("click", (e) => {
+        const dayBtn = e.target.closest("[data-calendar-date]");
+        if (!dayBtn) return;
+        const dateInput = document.getElementById("adminCheckinDockDateInput");
+        if (dateInput) dateInput.value = dayBtn.dataset.calendarDate;
+        loadAttendanceToday();
+    });
     document.getElementById("adminCheckinDockMarkRestBtn")?.addEventListener("click", markRestAbsentToday);
+    document.getElementById("attendanceHistoryFilterTabs")?.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-attendance-filter]");
+        if (!tab) return;
+        attendanceHistoryFilter = tab.dataset.attendanceFilter;
+        document.querySelectorAll("[data-attendance-filter]").forEach((t) => t.classList.toggle("active", t === tab));
+        renderAttendanceHistoryTable();
+    });
+    document.getElementById("attendanceHistoryTable")?.addEventListener("change", (e) => {
+        const select = e.target.closest("[data-history-record-id]");
+        if (select) changeAttendanceHistoryStatus(select);
+    });
 
     document.getElementById("adminCheckinDockTab")?.addEventListener("click", (e) => {
         e.stopPropagation();

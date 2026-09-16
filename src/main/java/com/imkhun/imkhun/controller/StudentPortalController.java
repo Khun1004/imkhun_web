@@ -5,7 +5,9 @@ import com.imkhun.imkhun.domain.User;
 import com.imkhun.imkhun.dto.*;
 import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
+import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AttendanceService;
+import com.imkhun.imkhun.service.ClassChangeRequestService;
 import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.StudentAuthService;
@@ -33,16 +35,21 @@ public class StudentPortalController {
     private final NotificationService notificationService;
     private final AdminFileService adminFileService;
     private final AttendanceService attendanceService;
+    private final AssignmentService assignmentService;
+    private final ClassChangeRequestService classChangeRequestService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
                                    StudyPostService studyPostService, NotificationService notificationService,
-                                   AdminFileService adminFileService, AttendanceService attendanceService) {
+                                   AdminFileService adminFileService, AttendanceService attendanceService,
+                                   AssignmentService assignmentService, ClassChangeRequestService classChangeRequestService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
         this.adminFileService = adminFileService;
         this.attendanceService = attendanceService;
+        this.assignmentService = assignmentService;
+        this.classChangeRequestService = classChangeRequestService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -87,7 +94,7 @@ public class StudentPortalController {
                             || isInvitedForLanguage(user.getUsername(), lang, "VIDEO");
                 })
                 .map(a -> new StudentCourseResponse(
-                        a.getStudentNumber(), a.getCourseName(), applicationService.extractLanguageCode(a.getCourseName())
+                        a.getId(), a.getStudentNumber(), a.getCourseName(), applicationService.extractLanguageCode(a.getCourseName())
                 ))
                 .toList();
 
@@ -376,5 +383,75 @@ public class StudentPortalController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // ---------- 숙제 / 과제 ----------
+
+    // 내 모든 강의에 걸친 숙제를 한번에 모아서 보여줌
+    @GetMapping("/assignments")
+    public ResponseEntity<?> getMyAssignments(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(assignmentService.getForStudent(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/assignments/{id}/complete")
+    public ResponseEntity<?> completeAssignment(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            assignmentService.toggleComplete(id, userOpt.get().getUsername(), true);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/assignments/{id}/incomplete")
+    public ResponseEntity<?> uncompleteAssignment(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            assignmentService.toggleComplete(id, userOpt.get().getUsername(), false);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 수업 취소/변경 요청 ----------
+
+    // 이 강의(신청)에 대해 취소/변경 요청을 남김 — 본인 신청인지는 서비스에서 확인함
+    @PostMapping("/applications/{id}/class-change-requests")
+    public ResponseEntity<?> createClassChangeRequest(HttpServletRequest request, @PathVariable Long id,
+                                                      @RequestBody CreateClassChangeRequest changeRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(classChangeRequestService.createRequest(id, userOpt.get().getUsername(), changeRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 마이페이지 "수업 변경 요청" — 본인의 모든 요청을 한번에 모아서 보여줌
+    @GetMapping("/class-change-requests")
+    public ResponseEntity<?> getMyClassChangeRequests(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(classChangeRequestService.getForStudent(userOpt.get().getUsername()));
+    }
+
+    // "수업 변경 요청"에서 강의를 고를 때 씀 — 자료 초대 여부랑 상관없이 승인된 신청은 다 나옴
+    // ("내 수강 정보" 카드는 초대까지 있어야 뜨지만, 수업 변경 요청은 승인만 되어있으면 할 수 있어야 해서 따로 만듦)
+    @GetMapping("/enrolled-courses")
+    public ResponseEntity<?> getEnrolledCourses(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        var courses = studentAuthService.getApprovedApplications(userOpt.get().getUsername()).stream()
+                .filter(a -> !"TRIAL".equals(a.getStudyType())) // 무료체험은 취소/변경 요청 대상이 아니라서 뺌
+                .map(a -> new EnrolledCourseResponse(a.getId(), a.getCourseName()))
+                .toList();
+        return ResponseEntity.ok(courses);
     }
 }

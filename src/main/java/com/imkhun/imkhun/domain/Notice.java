@@ -17,7 +17,7 @@ public class Notice {
     private String title;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "CLOB")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content;
 
     @Column(nullable = false, updatable = false)

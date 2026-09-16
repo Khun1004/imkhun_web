@@ -23,7 +23,7 @@ public class StudyNote {
     private String language;
 
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String content;
 
     @Column(nullable = false)

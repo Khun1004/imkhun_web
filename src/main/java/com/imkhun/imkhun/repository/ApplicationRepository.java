@@ -25,6 +25,10 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     long countByPaymentConfirmedByStudentAtIsNotNullAndPaymentConfirmedByAdminAtIsNull();
 
+    List<Application> findByPaymentConfirmedByStudentAtIsNotNullAndPaymentConfirmedByAdminAtIsNull();
+
+    List<Application> findByPaymentConfirmedByAdminAtBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
+
     // 출석 체크용 — 요일 필터링은 서비스 쪽에서 classDays 문자열을 보고 걸러줌
     List<Application> findByStatusAndClassDaysIsNotNull(String status);
 

@@ -3,6 +3,9 @@ package com.imkhun.imkhun.service;
 import com.imkhun.imkhun.domain.Application;
 import com.imkhun.imkhun.domain.AttendanceRecord;
 import com.imkhun.imkhun.dto.DashboardResponse;
+import com.imkhun.imkhun.dto.MonthlyRevenueResponse;
+import com.imkhun.imkhun.dto.PendingPaymentTodoResponse;
+import com.imkhun.imkhun.dto.TodayTodoResponse;
 import com.imkhun.imkhun.dto.TopAbsentStudentResponse;
 import com.imkhun.imkhun.repository.ApplicationRepository;
 import com.imkhun.imkhun.repository.AttendanceRecordRepository;
@@ -23,13 +26,35 @@ public class DashboardService {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final StudyPostService studyPostService;
     private final NotificationService notificationService;
+    private final AttendanceService attendanceService;
+    private final ClassChangeRequestService classChangeRequestService;
 
     public DashboardService(ApplicationRepository applicationRepository, AttendanceRecordRepository attendanceRecordRepository,
-                            StudyPostService studyPostService, NotificationService notificationService) {
+                            StudyPostService studyPostService, NotificationService notificationService,
+                            AttendanceService attendanceService, ClassChangeRequestService classChangeRequestService) {
         this.applicationRepository = applicationRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.studyPostService = studyPostService;
         this.notificationService = notificationService;
+        this.attendanceService = attendanceService;
+        this.classChangeRequestService = classChangeRequestService;
+    }
+
+    // "오늘 할 일" — 오늘 수업 있는 학생, 결제 확인 대기, 수업 변경 요청 대기를 한번에 모아서 보여줌
+    @Transactional(readOnly = true)
+    public TodayTodoResponse getTodayTodos() {
+        var todayClasses = attendanceService.getRosterForDate(LocalDate.now());
+
+        var pendingPayments = applicationRepository.findByPaymentConfirmedByStudentAtIsNotNullAndPaymentConfirmedByAdminAtIsNull()
+                .stream()
+                .map(a -> new PendingPaymentTodoResponse(a.getId(), a.getUsername(), a.getCourseName()))
+                .toList();
+
+        var pendingClassChanges = classChangeRequestService.getPendingForAdmin();
+
+        long unreadNotifications = notificationService.getUnreadCountForAdmin();
+
+        return new TodayTodoResponse(todayClasses, pendingPayments, pendingClassChanges, unreadNotifications);
     }
 
     @Transactional(readOnly = true)
@@ -61,6 +86,38 @@ public class DashboardService {
     }
 
     // 출석/지각을 "나왔다"로 치고, 결석만 "안 나왔다"로 봐서 비율을 계산함 (보강은 집계에서 빼요 — 정규 수업이 아니라서요)
+    // 최근 6개월 매출 리포트 — amount는 자유 텍스트라서 숫자만 뽑아서 더함
+    @Transactional(readOnly = true)
+    public List<MonthlyRevenueResponse> getRevenueReport() {
+        YearMonth currentMonth = YearMonth.now();
+        List<MonthlyRevenueResponse> result = new java.util.ArrayList<>();
+
+        for (int i = 5; i >= 0; i--) {
+            YearMonth ym = currentMonth.minusMonths(i);
+            LocalDateTime start = ym.atDay(1).atStartOfDay();
+            LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59);
+
+            List<Application> confirmed = applicationRepository.findByPaymentConfirmedByAdminAtBetween(start, end);
+            long total = confirmed.stream().mapToLong(a -> parseAmount(a.getAmount())).sum();
+
+            result.add(new MonthlyRevenueResponse(ym.toString(), total, confirmed.size()));
+        }
+
+        return result;
+    }
+
+    // "300,000원" 같은 자유 텍스트에서 숫자만 뽑아냄. 숫자가 없으면 0으로 봄
+    private long parseAmount(String amount) {
+        if (amount == null) return 0;
+        String digits = amount.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return 0;
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     private double computeAttendanceRate(List<AttendanceRecord> records) {
         long counted = records.stream().filter(r -> !"MAKEUP".equals(r.getStatus())).count();
         if (counted == 0) return 0;

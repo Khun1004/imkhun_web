@@ -6,10 +6,13 @@ import com.imkhun.imkhun.repository.AdminRepository;
 import com.imkhun.imkhun.service.AdminAuthService;
 import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
+import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AttendanceService;
+import com.imkhun.imkhun.service.ClassChangeRequestService;
 import com.imkhun.imkhun.service.DashboardService;
 import com.imkhun.imkhun.service.FaqService;
 import com.imkhun.imkhun.service.KwzmInviteService;
+import com.imkhun.imkhun.service.LessonNoteService;
 import com.imkhun.imkhun.service.NoticeService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.PaymentReminderService;
@@ -17,6 +20,7 @@ import com.imkhun.imkhun.service.ReceiptService;
 import com.imkhun.imkhun.service.ReviewService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyNoteService;
+import com.imkhun.imkhun.service.StudentLevelService;
 import com.imkhun.imkhun.service.StudyPostService;
 import com.imkhun.imkhun.service.TimetableService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +51,10 @@ public class AdminController {
     private final AdminFileService adminFileService;
     private final PaymentReminderService paymentReminderService;
     private final ReceiptService receiptService;
+    private final LessonNoteService lessonNoteService;
+    private final AssignmentService assignmentService;
+    private final ClassChangeRequestService classChangeRequestService;
+    private final StudentLevelService studentLevelService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -55,7 +63,9 @@ public class AdminController {
                            NotificationService notificationService, NoticeService noticeService,
                            TimetableService timetableService, FaqService faqService, DashboardService dashboardService,
                            AttendanceService attendanceService, AdminFileService adminFileService,
-                           PaymentReminderService paymentReminderService, ReceiptService receiptService) {
+                           PaymentReminderService paymentReminderService, ReceiptService receiptService,
+                           LessonNoteService lessonNoteService, AssignmentService assignmentService,
+                           ClassChangeRequestService classChangeRequestService, StudentLevelService studentLevelService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -73,6 +83,10 @@ public class AdminController {
         this.adminFileService = adminFileService;
         this.paymentReminderService = paymentReminderService;
         this.receiptService = receiptService;
+        this.lessonNoteService = lessonNoteService;
+        this.assignmentService = assignmentService;
+        this.classChangeRequestService = classChangeRequestService;
+        this.studentLevelService = studentLevelService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -676,6 +690,18 @@ public class AdminController {
         return ResponseEntity.ok(dashboardService.getSummary());
     }
 
+    @GetMapping("/dashboard/today-todos")
+    public ResponseEntity<?> getTodayTodos(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(dashboardService.getTodayTodos());
+    }
+
+    @GetMapping("/dashboard/revenue")
+    public ResponseEntity<?> getRevenueReport(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(dashboardService.getRevenueReport());
+    }
+
     // ---------- 출석 관리 ----------
 
     @GetMapping("/applications/{id}/attendance")
@@ -769,6 +795,111 @@ public class AdminController {
     public ResponseEntity<?> getAttendanceHistory(HttpServletRequest request) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         return ResponseEntity.ok(attendanceService.getAllHistoryForAdmin());
+    }
+
+    // ---------- 학생별 수업 노트 / 진도 기록 ----------
+
+    @GetMapping("/applications/{id}/lesson-notes")
+    public ResponseEntity<?> getLessonNotes(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(lessonNoteService.getNotesForApplication(id));
+    }
+
+    @PostMapping("/applications/{id}/lesson-notes")
+    public ResponseEntity<?> addLessonNote(HttpServletRequest request, @PathVariable Long id,
+                                           @RequestBody CreateLessonNoteRequest noteRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(lessonNoteService.addNote(id, noteRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/lesson-notes/{id}")
+    public ResponseEntity<?> deleteLessonNote(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        lessonNoteService.deleteNote(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- 학생 레벨/실력 기록 ----------
+
+    @GetMapping("/applications/{id}/level-records")
+    public ResponseEntity<?> getLevelRecords(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(studentLevelService.getRecordsForApplication(id));
+    }
+
+    @PostMapping("/applications/{id}/level-records")
+    public ResponseEntity<?> addLevelRecord(HttpServletRequest request, @PathVariable Long id,
+                                            @RequestBody CreateLevelRecordRequest levelRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(studentLevelService.addRecord(id, levelRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/level-records/{id}")
+    public ResponseEntity<?> deleteLevelRecord(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        studentLevelService.deleteRecord(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- 숙제 / 과제 ----------
+
+    @GetMapping("/applications/{id}/assignments")
+    public ResponseEntity<?> getAssignments(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(assignmentService.getForApplication(id));
+    }
+
+    @PostMapping("/applications/{id}/assignments")
+    public ResponseEntity<?> createAssignment(HttpServletRequest request, @PathVariable Long id,
+                                              @RequestBody CreateAssignmentRequest assignmentRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(assignmentService.createAssignment(id, assignmentRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/assignments/{id}")
+    public ResponseEntity<?> deleteAssignment(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        assignmentService.deleteAssignment(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- 수업 취소/변경 요청 ----------
+
+    @GetMapping("/applications/{id}/class-change-requests")
+    public ResponseEntity<?> getClassChangeRequestsForApplication(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(classChangeRequestService.getForApplication(id));
+    }
+
+    // 아직 처리 안 한 요청 전체 (알림 종처럼 한눈에 확인용)
+    @GetMapping("/class-change-requests/pending")
+    public ResponseEntity<?> getPendingClassChangeRequests(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(classChangeRequestService.getPendingForAdmin());
+    }
+
+    @PostMapping("/class-change-requests/{id}/respond")
+    public ResponseEntity<?> respondClassChangeRequest(HttpServletRequest request, @PathVariable Long id,
+                                                       @RequestBody RespondClassChangeRequest respondRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            classChangeRequestService.respond(id, respondRequest.approved(), respondRequest.adminReply());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // ---------- 자격증/시험 자료 파일 보내기 ----------

@@ -470,3 +470,214 @@
     width: 15px;
     height: 15px;
 }
+
+/* 숙제 목록 */
+
+.mypage-assignment-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.mypage-assignment-checkbox {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.mypage-assignment-checkbox input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--kwzm-accent);
+}
+
+.mypage-assignment-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mypage-assignment-course {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--kwzm-accent-2);
+    margin: 0 0 3px;
+}
+
+.mypage-assignment-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0 0 4px;
+}
+
+.mypage-assignment-title.is-done {
+    color: var(--kwzm-ink-faint);
+    text-decoration: line-through;
+}
+
+.mypage-assignment-desc {
+    font-size: 12.5px;
+    color: var(--kwzm-ink-soft);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* 수업 취소/변경 요청 */
+
+.mypage-classchange-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    margin: 14px 0 20px;
+    background: var(--kwzm-bg-2);
+    border-radius: 14px;
+}
+
+.mypage-classchange-form-row label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--kwzm-ink-soft);
+    margin-bottom: 6px;
+}
+
+.mypage-classchange-form-row select,
+.mypage-classchange-form-row input,
+.mypage-classchange-form-row textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 8px;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13px;
+    background: var(--kwzm-bg-3);
+    resize: vertical;
+}
+
+.mypage-classchange-type-toggle {
+    display: flex;
+    gap: 8px;
+}
+
+.mypage-classchange-type-btn {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 999px;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-soft);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.mypage-classchange-type-btn.active {
+    background: var(--kwzm-gradient);
+    border-color: transparent;
+    color: #fff;
+}
+
+.mypage-classchange-submit-btn {
+    padding: 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--kwzm-gradient);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.mypage-classchange-submit-btn:hover {
+    transform: translateY(-1px);
+}
+
+.mypage-classchange-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.mypage-classchange-row {
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.mypage-classchange-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.mypage-classchange-row-course {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.mypage-classchange-row-status {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink-faint);
+}
+
+.mypage-classchange-row-status--pending {
+    background: rgba(168, 124, 34, 0.14);
+    color: #a87c22;
+}
+
+.mypage-classchange-row-status--approved {
+    background: var(--kwzm-accent, #2f9aa0);
+    color: #fff;
+}
+
+.mypage-classchange-row-status--rejected {
+    background: rgba(184, 68, 106, 0.12);
+    color: #b8446a;
+}
+
+.mypage-classchange-row-detail {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink-soft);
+    font-family: "JetBrains Mono", monospace;
+    margin: 0 0 4px;
+}
+
+.mypage-classchange-row-reason,
+.mypage-classchange-row-reply {
+    font-size: 12.5px;
+    color: var(--kwzm-ink-soft);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.mypage-classchange-row-reply {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--kwzm-line);
+    color: var(--kwzm-ink);
+    font-weight: 600;
+}

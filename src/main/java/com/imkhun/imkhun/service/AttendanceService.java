@@ -40,9 +40,9 @@ public class AttendanceService {
     );
 
     // 학생이 스스로 "출석하기"를 누를 수 있는 시간 범위 (수업 시작 30분 전 ~ 수업 시작 2시간 후)
-    private static final long CHECK_IN_OPEN_MINUTES_BEFORE = 30;
-    private static final long LATE_CUTOFF_MINUTES_AFTER = 15;
-    private static final long CHECK_IN_CLOSE_MINUTES_AFTER = 120;
+    private static final long CHECK_IN_OPEN_MINUTES_BEFORE = 10; // 수업 10분 전부터 체크 가능
+    private static final long LATE_CUTOFF_MINUTES_AFTER = 10;    // 수업 시작 10분 후까지는 정시, 그 이후는 지각
+    private static final long CHECK_IN_CLOSE_MINUTES_AFTER = 60; // 수업 시작 1시간 후부터는 결석 처리 구간 — 학생은 더 이상 체크 못 함
 
     public AttendanceService(AttendanceRecordRepository attendanceRecordRepository,
                              ApplicationRepository applicationRepository, NotificationService notificationService) {
@@ -206,6 +206,8 @@ public class AttendanceService {
     }
 
     // 관리자 - "출석 관리 내역" 화면. 전체 학생의 전체 출석 기록을 최신순으로 보여줌
+    // 오늘 결석 구간(수업 시작 1시간 후)이 지났는데 아직 실제 기록이 없는 학생은 "결석 예정"으로 가상으로 끼워넣음
+    // (진짜 결석 기록은 밤에 자동 결석 처리 배치가 돌아야 생기는데, 그걸 기다리지 않고 당일에도 바로 보이게 하려고)
     @Transactional(readOnly = true)
     public List<AttendanceHistoryEntryResponse> getAllHistoryForAdmin() {
         List<AttendanceRecord> records = attendanceRecordRepository.findAllByOrderByClassDateDesc();
@@ -214,11 +216,12 @@ public class AttendanceService {
         Map<Long, Application> applicationById = applicationRepository.findAllById(applicationIds).stream()
                 .collect(Collectors.toMap(Application::getId, a -> a));
 
-        return records.stream()
+        List<AttendanceHistoryEntryResponse> result = new java.util.ArrayList<>(records.stream()
                 .map(r -> {
                     Application app = applicationById.get(r.getApplicationId());
                     return new AttendanceHistoryEntryResponse(
                             r.getId(),
+                            r.getApplicationId(),
                             app != null ? app.getUsername() : "-",
                             app != null ? app.getCourseName() : "-",
                             r.getClassDate().format(DATE_FORMAT),
@@ -226,7 +229,31 @@ public class AttendanceService {
                             r.isCheckedInByStudent()
                     );
                 })
-                .toList();
+                .toList());
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+        List<TodayAttendanceEntryResponse> todayRoster = getRosterForDate(today);
+        List<AttendanceHistoryEntryResponse> pending = new java.util.ArrayList<>();
+        for (TodayAttendanceEntryResponse entry : todayRoster) {
+            if (entry.status() != null) continue; // 이미 실제 기록이 있으면 건너뜀
+            if (entry.classTime() == null) continue;
+            try {
+                LocalTime classTime = LocalTime.parse(entry.classTime());
+                long minutesFromStart = java.time.Duration.between(LocalDateTime.of(today, classTime), now).toMinutes();
+                if (minutesFromStart > CHECK_IN_CLOSE_MINUTES_AFTER) {
+                    pending.add(new AttendanceHistoryEntryResponse(
+                            null, entry.applicationId(), entry.studentNickname(), entry.courseName(),
+                            today.format(DATE_FORMAT), "ABSENT_PENDING", false
+                    ));
+                }
+            } catch (Exception ignored) {
+                // 시간 형식이 이상한 데이터는 건너뜀
+            }
+        }
+
+        pending.addAll(result);
+        return pending;
     }
 
     // ---------- 학생 스스로 출석 체크 ----------
@@ -258,10 +285,10 @@ public class AttendanceService {
         long minutesFromStart = java.time.Duration.between(classStart, now).toMinutes();
 
         if (minutesFromStart < -CHECK_IN_OPEN_MINUTES_BEFORE) {
-            throw new IllegalStateException("아직 출석 체크 시간이 아니에요. 수업 시작 30분 전부터 가능해요.");
+            throw new IllegalStateException("아직 출석 체크 시간이 아니에요. 수업 시작 10분 전부터 가능해요.");
         }
         if (minutesFromStart > CHECK_IN_CLOSE_MINUTES_AFTER) {
-            throw new IllegalStateException("출석 체크 시간이 지났어요. 선생님께 문의해주세요.");
+            throw new IllegalStateException("출석 체크 시간이 지나서 결석 처리 구간이에요. 선생님께 문의해주세요.");
         }
 
         LocalDate today = now.toLocalDate();
@@ -321,7 +348,12 @@ public class AttendanceService {
                 .map(a -> new TodayAttendanceEntryResponse(a.getId(), null, a.getCourseName(), a.getClassTime(), null, null, false))
                 .toList();
 
-        return new CheckinStatusResponse(hasClassToday, checkableNow);
+        // 체크 가능 시간이 아니어도 "오늘 이 수업이 있어요" 정보는 항상 보여줄 수 있게 따로 만들어둠
+        List<TodayAttendanceEntryResponse> scheduledTodayResponses = scheduledToday.stream()
+                .map(a -> new TodayAttendanceEntryResponse(a.getId(), null, a.getCourseName(), a.getClassTime(), null, null, false))
+                .toList();
+
+        return new CheckinStatusResponse(hasClassToday, checkableNow, scheduledTodayResponses);
     }
 
     private AttendanceRecordResponse toResponse(AttendanceRecord record) {

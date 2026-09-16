@@ -92,6 +92,9 @@ const NOTIF_TYPE_ICON = {
     ADMIN_COMMENT: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
     APPLICATION_APPROVED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     PAYMENT_REMINDER: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    NEW_ASSIGNMENT: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    CHECKIN_AVAILABLE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    CLASS_CHANGE_RESPONDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 15l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 const NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
@@ -162,15 +165,81 @@ async function loadCheckinOptions() {
           </span>
           <p class="student-checkin-dock-title">오늘은 쉬는 날</p>
         </div>
-        <p class="student-checkin-dock-rest-text">${escapeHtmlForStudent(nickname)}님의 수업은 오늘에 없습니다.<br>편히 쉬시고, 다음 수업 때 만나요!</p>
+        <p class="student-checkin-dock-rest-text">오늘은 쉬는 날, 자습하면서 푹 쉬세요.<br>좋은 하루 되세요!</p>
         ${scheduleHtml}
       `;
+            if (scheduleHtml) renderStudentCalendarGrid();
             return;
         }
 
         if (options.length === 0) {
-            dock.hidden = scheduleHtml === "";
-            panel.innerHTML = scheduleHtml;
+            // 체크 가능한 시간대는 아니지만, 오늘 수업이 있다는 정보는 그대로 보여줌
+            // (아직 안 열렸으면 대기중, 결석 구간이면 버튼을 아예 못 누르게 함)
+            const scheduledToday = data.scheduledToday || [];
+            dock.hidden = false;
+            panel.innerHTML = "";
+            const now = new Date();
+            scheduledToday.forEach((opt) => {
+                let minutesFromStart = null;
+                if (opt.classTime) {
+                    const [h, m] = opt.classTime.slice(0, 5).split(":").map(Number);
+                    const classStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+                    minutesFromStart = Math.round((now - classStart) / 60000);
+                }
+
+                let actionHtml;
+                if (minutesFromStart !== null && minutesFromStart > 60) {
+                    actionHtml = `
+            <div class="student-checkin-dock-closed">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg>
+              결석 처리 구간이에요. 선생님께 문의해주세요.
+            </div>`;
+                } else {
+                    actionHtml = `
+            <button type="button" class="student-checkin-dock-btn is-disabled" disabled>
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              아직 체크 시간이 아니에요
+            </button>`;
+                }
+
+                const card = document.createElement("div");
+                card.className = "student-checkin-dock-card";
+                card.innerHTML = `
+          <div class="student-checkin-dock-head">
+            <span class="student-checkin-dock-eyebrow">TODAY</span>
+            <span class="student-checkin-dock-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <p class="student-checkin-dock-title">오늘 수업</p>
+          </div>
+          <div class="student-checkin-dock-body">
+            <div class="student-checkin-dock-details">
+              <div class="student-checkin-dock-detail-row">
+                <span class="student-checkin-dock-detail-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M9 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                </span>
+                <span class="student-checkin-dock-detail-text">
+                  <span class="student-checkin-dock-detail-label">강의</span>
+                  <span class="student-checkin-dock-detail-value">${escapeHtmlForStudent(opt.courseName)}</span>
+                </span>
+              </div>
+              <div class="student-checkin-dock-detail-row">
+                <span class="student-checkin-dock-detail-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="student-checkin-dock-detail-text">
+                  <span class="student-checkin-dock-detail-label">시간</span>
+                  <span class="student-checkin-dock-detail-value">${opt.classTime ? opt.classTime.slice(0, 5) : "-"}</span>
+                </span>
+              </div>
+            </div>
+            ${actionHtml}
+          </div>
+        `;
+                panel.appendChild(card);
+            });
+            panel.insertAdjacentHTML("beforeend", scheduleHtml);
+            if (scheduleHtml) renderStudentCalendarGrid();
             return;
         }
 
@@ -226,6 +295,7 @@ async function loadCheckinOptions() {
             panel.appendChild(card);
         });
         panel.insertAdjacentHTML("beforeend", scheduleHtml);
+        if (scheduleHtml) renderStudentCalendarGrid();
     } catch (err) {
         console.error(err);
     }
@@ -233,6 +303,62 @@ async function loadCheckinOptions() {
 
 const SCHEDULE_DAY_LABEL = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI: "금", SAT: "토", SUN: "일" };
 const SCHEDULE_DAY_ORDER = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
+let studentCalendarViewYear = null;
+let studentCalendarViewMonth = null; // 0-11
+
+function buildTodayCalendarHtml() {
+    const now = new Date();
+    if (studentCalendarViewYear === null) {
+        studentCalendarViewYear = now.getFullYear();
+        studentCalendarViewMonth = now.getMonth();
+    }
+
+    return `
+      <div class="student-checkin-dock-calendar">
+        <div class="student-checkin-dock-calendar-head">
+          <p class="student-checkin-dock-calendar-eyebrow">TODAY</p>
+          <p class="student-checkin-dock-calendar-title">${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 ${WEEKDAY_KO[now.getDay()]}요일</p>
+        </div>
+        <div class="student-checkin-dock-calendar-nav-row">
+          <button type="button" class="student-checkin-dock-calendar-nav" id="studentCalendarPrevBtn" aria-label="이전 달">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <p class="student-checkin-dock-calendar-nav-title" id="studentCalendarNavTitle"></p>
+          <button type="button" class="student-checkin-dock-calendar-nav" id="studentCalendarNextBtn" aria-label="다음 달">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="student-checkin-dock-calendar-grid" id="studentCalendarGrid"></div>
+      </div>
+    `;
+}
+
+function renderStudentCalendarGrid() {
+    const titleEl = document.getElementById("studentCalendarNavTitle");
+    const gridEl = document.getElementById("studentCalendarGrid");
+    if (!titleEl || !gridEl) return;
+
+    const now = new Date();
+    const year = studentCalendarViewYear;
+    const month = studentCalendarViewMonth;
+    titleEl.textContent = `${year}년 ${month + 1}월`;
+
+    const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const dowHeader = WEEKDAY_KO.map((d) => `<span class="student-checkin-dock-calendar-dow">${d}</span>`).join("");
+    const blanks = Array.from({ length: firstDayOfWeek }, () => `<span class="student-checkin-dock-calendar-day is-blank"></span>`).join("");
+    const days = Array.from({ length: daysInMonth }, (_, i) => {
+        const d = i + 1;
+        const isToday = isCurrentMonth && d === now.getDate();
+        return `<span class="student-checkin-dock-calendar-day${isToday ? " is-today" : ""}">${d}</span>`;
+    }).join("");
+
+    gridEl.innerHTML = dowHeader + blanks + days;
+}
 
 async function buildWeeklyScheduleHtml() {
     try {
@@ -249,22 +375,36 @@ async function buildWeeklyScheduleHtml() {
             });
         });
 
+        const todayIndex = new Date().getDay(); // 0=일 1=월 ... 6=토
+        const todayCode = SCHEDULE_DAY_ORDER[todayIndex === 0 ? 6 : todayIndex - 1];
+
         const rows = SCHEDULE_DAY_ORDER.map((day) => {
             const items = byDay[day] || [];
+            const isToday = day === todayCode;
             const itemsHtml = items.length > 0
                 ? items.map((i) => `<span class="student-checkin-dock-schedule-chip">${escapeHtmlForStudent(i.courseName)} · ${i.classTime ? i.classTime.slice(0, 5) : ""}</span>`).join("")
-                : `<span class="student-checkin-dock-schedule-empty">-</span>`;
+                : `<span class="student-checkin-dock-schedule-empty">${isToday ? "오늘은 쉬는 날" : "-"}</span>`;
             return `
-        <div class="student-checkin-dock-schedule-row${items.length > 0 ? " has-class" : ""}">
+        <div class="student-checkin-dock-schedule-row${items.length > 0 ? " has-class" : ""}${isToday ? " is-today" : ""}">
           <span class="student-checkin-dock-schedule-day">${SCHEDULE_DAY_LABEL[day]}</span>
           <span class="student-checkin-dock-schedule-items">${itemsHtml}</span>
+          ${isToday ? `<span class="student-checkin-dock-schedule-today-tag">오늘</span>` : ""}
         </div>`;
         }).join("");
 
         return `
       <div class="student-checkin-dock-schedule">
-        <p class="student-checkin-dock-schedule-title">나의 시간표</p>
+        <div class="student-checkin-dock-schedule-banner">
+          <span class="student-checkin-dock-schedule-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <div>
+            <p class="student-checkin-dock-schedule-eyebrow">MY SCHEDULE</p>
+            <p class="student-checkin-dock-schedule-title">나의 시간표</p>
+          </div>
+        </div>
         <div class="student-checkin-dock-schedule-list">${rows}</div>
+        ${buildTodayCalendarHtml()}
       </div>
     `;
     } catch (err) {
@@ -1647,6 +1787,188 @@ async function submitBoardPost() {
 // 마이페이지 "내가 쓴 글"
 const SENT_FILE_CATEGORY_LABEL_STUDENT = { CERTIFICATE: "자격증", EXAM: "시험 자료" };
 
+const ASSIGNMENT_STATUS_LABEL = { true: "완료", false: "진행중" };
+
+async function loadMyAssignments() {
+    const listEl = document.getElementById("mypageAssignmentsList");
+    const emptyEl = document.getElementById("mypageAssignmentsEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/assignments");
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const assignments = await res.json();
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = assignments.length > 0;
+
+        assignments.forEach((a) => {
+            const row = document.createElement("div");
+            row.className = "mypage-assignment-row";
+            row.innerHTML = `
+        <label class="mypage-assignment-checkbox">
+          <input type="checkbox" data-assignment-id="${a.id}" ${a.completed ? "checked" : ""}>
+          <span></span>
+        </label>
+        <div class="mypage-assignment-info">
+          <p class="mypage-assignment-course">${escapeHtmlForStudent(a.courseName)}${a.dueDate ? ` · 기한 ${a.dueDate}` : ""}</p>
+          <p class="mypage-assignment-title ${a.completed ? "is-done" : ""}">${escapeHtmlForStudent(a.title)}</p>
+          ${a.description ? `<p class="mypage-assignment-desc">${escapeHtmlForStudent(a.description)}</p>` : ""}
+        </div>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function toggleAssignmentComplete(id, completed) {
+    try {
+        const res = await fetch(`/api/student/assignments/${id}/${completed ? "complete" : "incomplete"}`, { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "처리에 실패했어요.");
+            return;
+        }
+        loadMyAssignments();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---- 수업 취소/변경 요청 ----
+
+let classChangeSelectedType = "CANCEL";
+
+async function populateClassChangeApplicationSelect() {
+    const select = document.getElementById("classChangeApplicationSelect");
+    const submitBtn = document.getElementById("classChangeSubmitBtn");
+    if (!select) return;
+
+    select.innerHTML = `<option value="">불러오는 중...</option>`;
+    select.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+        const res = await fetch("/api/student/enrolled-courses");
+        const courses = res.ok ? await res.json() : [];
+
+        if (courses.length === 0) {
+            select.innerHTML = `<option value="">수강 중인 강의가 없어요</option>`;
+            return;
+        }
+
+        select.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
+        select.innerHTML = courses
+            .map((c) => `<option value="${c.applicationId}">${escapeHtmlForStudent(c.courseName)}</option>`)
+            .join("");
+    } catch (err) {
+        console.error(err);
+        select.innerHTML = `<option value="">불러오지 못했어요</option>`;
+    }
+}
+
+async function loadMyClassChangeRequests() {
+    const listEl = document.getElementById("mypageClassChangeList");
+    const emptyEl = document.getElementById("mypageClassChangeEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/class-change-requests");
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const requests = await res.json();
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = requests.length > 0;
+
+        const statusLabel = { PENDING: "대기중", APPROVED: "승인됨", REJECTED: "거절됨" };
+        const typeLabel = { CANCEL: "취소", RESCHEDULE: "변경" };
+
+        requests.forEach((r) => {
+            const row = document.createElement("div");
+            row.className = "mypage-classchange-row";
+            row.innerHTML = `
+        <div class="mypage-classchange-row-head">
+          <span class="mypage-classchange-row-course">${escapeHtmlForStudent(r.courseName)} · ${typeLabel[r.requestType] || r.requestType}</span>
+          <span class="mypage-classchange-row-status mypage-classchange-row-status--${r.status.toLowerCase()}">${statusLabel[r.status] || r.status}</span>
+        </div>
+        <p class="mypage-classchange-row-detail">${r.classDate}${r.requestedDate ? ` → ${r.requestedDate}` : ""}</p>
+        ${r.reason ? `<p class="mypage-classchange-row-reason">${escapeHtmlForStudent(r.reason)}</p>` : ""}
+        ${r.adminReply ? `<p class="mypage-classchange-row-reply">선생님: ${escapeHtmlForStudent(r.adminReply)}</p>` : ""}
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function submitClassChangeRequest() {
+    const applicationId = document.getElementById("classChangeApplicationSelect").value;
+    const classDate = document.getElementById("classChangeDateInput").value;
+    const requestedDate = document.getElementById("classChangeNewDateInput").value;
+    const reason = document.getElementById("classChangeReasonInput").value.trim();
+    const errorEl = document.getElementById("classChangeError");
+    const submitBtn = document.getElementById("classChangeSubmitBtn");
+
+    if (!applicationId || !classDate) {
+        errorEl.textContent = "강의랑 날짜를 골라주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    if (classChangeSelectedType === "RESCHEDULE" && !requestedDate) {
+        errorEl.textContent = "희망하는 새 날짜를 골라주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "보내는 중...";
+
+    try {
+        const res = await fetch(`/api/student/applications/${applicationId}/class-change-requests`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                requestType: classChangeSelectedType,
+                classDate,
+                requestedDate: classChangeSelectedType === "RESCHEDULE" ? requestedDate : null,
+                reason,
+            }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "요청에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        document.getElementById("classChangeDateInput").value = "";
+        document.getElementById("classChangeNewDateInput").value = "";
+        document.getElementById("classChangeReasonInput").value = "";
+        loadMyClassChangeRequests();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "요청 보내기";
+    }
+}
+
 async function loadMypageFiles() {
     const list = document.getElementById("mypageFilesList");
     const emptyText = document.getElementById("mypageFilesEmpty");
@@ -1830,7 +2152,25 @@ document.addEventListener("fragments:loaded", () => {
         e.stopPropagation();
         toggleCheckinDock();
     });
-    document.getElementById("studentCheckinDockPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    document.getElementById("studentCheckinDockPanel")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (e.target.closest("#studentCalendarPrevBtn")) {
+            studentCalendarViewMonth -= 1;
+            if (studentCalendarViewMonth < 0) {
+                studentCalendarViewMonth = 11;
+                studentCalendarViewYear -= 1;
+            }
+            renderStudentCalendarGrid();
+        }
+        if (e.target.closest("#studentCalendarNextBtn")) {
+            studentCalendarViewMonth += 1;
+            if (studentCalendarViewMonth > 11) {
+                studentCalendarViewMonth = 0;
+                studentCalendarViewYear += 1;
+            }
+            renderStudentCalendarGrid();
+        }
+    });
     document.addEventListener("click", (e) => {
         const dock = document.getElementById("studentCheckinDock");
         if (dock && dock.classList.contains("is-open") && !dock.contains(e.target)) {
@@ -2026,6 +2366,11 @@ document.addEventListener("fragments:loaded", () => {
 
         if (key === "myposts") renderMyPosts();
         if (key === "shortcuts") loadMypageFiles();
+        if (key === "assignments") loadMyAssignments();
+        if (key === "classchange") {
+            populateClassChangeApplicationSelect();
+            loadMyClassChangeRequests();
+        }
     });
 
     document.addEventListener("keydown", (e) => {
@@ -2044,6 +2389,21 @@ document.addEventListener("fragments:loaded", () => {
 
     document.getElementById("studentLightboxPrev")?.addEventListener("click", showStudentLightboxPrev);
     document.getElementById("studentLightboxNext")?.addEventListener("click", showStudentLightboxNext);
+
+    document.querySelectorAll("[data-change-type]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            classChangeSelectedType = btn.dataset.changeType;
+            document.querySelectorAll("[data-change-type]").forEach((b) => b.classList.toggle("active", b === btn));
+            const newDateRow = document.getElementById("classChangeNewDateRow");
+            if (newDateRow) newDateRow.hidden = classChangeSelectedType !== "RESCHEDULE";
+        });
+    });
+    document.getElementById("classChangeSubmitBtn")?.addEventListener("click", submitClassChangeRequest);
+
+    document.addEventListener("change", (e) => {
+        const checkbox = e.target.closest("[data-assignment-id]");
+        if (checkbox) toggleAssignmentComplete(checkbox.dataset.assignmentId, checkbox.checked);
+    });
 
     checkStudentSessionOnLoad();
 });

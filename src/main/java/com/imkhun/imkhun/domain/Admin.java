@@ -32,7 +32,7 @@ public class Admin {
     private String phone;
 
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String paymentInfo;
 
     // 로그인 유지용 토큰 — DB에 저장되니까 서버(devtools)가 재시작돼도 안 풀림

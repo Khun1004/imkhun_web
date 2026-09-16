@@ -24,7 +24,7 @@ public class StudyPost {
     private String title;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "CLOB")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content;
 
     // 작성한 학생의 로그인 아이디 — 나중에 본인 글만 수정/삭제하게 할 때 대비

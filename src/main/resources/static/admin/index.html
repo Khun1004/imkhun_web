@@ -80,13 +80,6 @@
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v.6a6 6 0 0 1 5 5.9v3l1.6 2.6a1 1 0 0 1-.85 1.5H5.25a1 1 0 0 1-.85-1.5L6 13.5v-3a6 6 0 0 1 5-5.9V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                         <span class="admin-notif-badge" id="adminNotifBadge" hidden>0</span>
                     </button>
-                    <div class="admin-notif-panel" id="adminNotifPanel" hidden>
-                        <div class="admin-notif-panel-head">
-                            <span>알림</span>
-                            <button type="button" class="admin-notif-readall-btn" id="adminNotifReadAllBtn">모두 읽음</button>
-                        </div>
-                        <div class="admin-notif-list" id="adminNotifList"></div>
-                    </div>
                 </div>
                 <button type="button" class="admin-register-btn" id="adminRegisterBtn">
                     <span aria-hidden="true">+</span> 등록하기
@@ -131,6 +124,15 @@
         </nav>
     </header>
 
+    <!-- 헤더 안에 두면 헤더의 반투명 유리효과(backdrop-filter) 때문에 fixed 위치 계산이 헤더 기준으로 틀어져서, 밖으로 뺐어요 -->
+    <div class="admin-notif-panel" id="adminNotifPanel" hidden>
+        <div class="admin-notif-panel-head">
+            <span>알림</span>
+            <button type="button" class="admin-notif-readall-btn" id="adminNotifReadAllBtn">모두 읽음</button>
+        </div>
+        <div class="admin-notif-list" id="adminNotifList"></div>
+    </div>
+
     <div class="admin-hero" id="adminHero">
         <div class="admin-hero-slides" id="adminHeroSlides">
             <div class="admin-hero-slide is-active" style="background-image:url('images/hero_1.jpg')"></div>
@@ -156,6 +158,40 @@
 
         <!-- 대시보드 -->
         <section class="admin-main-panel active" data-main-panel="dashboard">
+            <p class="admin-materials-heading admin-dashboard-heading">오늘 할 일</p>
+
+            <div class="admin-todo-section" id="adminTodoSection">
+                <div class="admin-todo-column">
+                    <div class="admin-todo-column-head">
+                        <span class="admin-todo-column-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <p class="admin-todo-column-title">오늘 수업</p>
+                    </div>
+                    <div class="admin-todo-list" id="adminTodoClassesList"><p class="admin-note-hint">불러오는 중...</p></div>
+                </div>
+
+                <div class="admin-todo-column">
+                    <div class="admin-todo-column-head">
+                        <span class="admin-todo-column-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        </span>
+                        <p class="admin-todo-column-title">입금 확인 대기</p>
+                    </div>
+                    <div class="admin-todo-list" id="adminTodoPaymentsList"><p class="admin-note-hint">불러오는 중...</p></div>
+                </div>
+
+                <div class="admin-todo-column">
+                    <div class="admin-todo-column-head">
+                        <span class="admin-todo-column-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        </span>
+                        <p class="admin-todo-column-title">수업 변경 요청</p>
+                    </div>
+                    <div class="admin-todo-list" id="adminTodoClassChangesList"><p class="admin-note-hint">불러오는 중...</p></div>
+                </div>
+            </div>
+
             <p class="admin-materials-heading admin-dashboard-heading">오늘의 요약</p>
 
             <div class="admin-dashboard-cards">
@@ -196,6 +232,11 @@
                     <p class="admin-dashboard-card-value" id="dashboardAttendanceRate">-</p>
                     <p class="admin-dashboard-card-label">이번 달 평균 출석률</p>
                 </div>
+            </div>
+
+            <div class="admin-dashboard-recent admin-revenue-card">
+                <p class="admin-materials-heading">최근 6개월 매출</p>
+                <div class="admin-revenue-chart" id="adminRevenueChart"></div>
             </div>
 
             <div class="admin-dashboard-recent admin-dashboard-recent--absent">
@@ -873,6 +914,63 @@
                 <label>전체 기록</label>
                 <div class="admin-attendance-list" id="attendanceList"></div>
             </div>
+
+            <div class="auth-form-field">
+                <label>레벨 / 실력 기록</label>
+                <p class="admin-note-hint" style="margin-top:0;">시간이 지나면서 실력이 어떻게 늘었는지 기록해두는 곳이에요.</p>
+                <div class="admin-level-current" id="adminLevelCurrent" hidden>
+                    <span class="admin-level-current-eyebrow">현재 레벨</span>
+                    <span class="admin-level-current-value" id="adminLevelCurrentValue"></span>
+                </div>
+                <div class="admin-attendance-add-row">
+                    <input type="text" id="levelRecordLevelInput" placeholder="예: 중급 2, TOPIK 3급">
+                    <input type="date" id="levelRecordDateInput">
+                </div>
+                <textarea id="levelRecordNoteInput" placeholder="예: 읽기는 늘었는데 말하기는 더 연습 필요" rows="2" style="margin-top: 8px; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+                <p class="auth-form-error" id="levelRecordError" hidden></p>
+                <div class="admin-note-footer">
+                    <span></span>
+                    <button type="button" class="admin-note-save-btn" id="levelRecordSaveBtn">기록 추가하기</button>
+                </div>
+                <div class="admin-lesson-note-list" id="levelRecordList" style="margin-top: 12px;"></div>
+            </div>
+
+            <div class="auth-form-field">
+                <label>수업 노트 (진도 기록)</label>
+                <p class="admin-note-hint" style="margin-top:0;">이 학생이랑 어디까지 했는지 남겨두는 곳이에요. 학생한테는 안 보여요.</p>
+                <div class="admin-attendance-add-row">
+                    <input type="date" id="lessonNoteDateInput">
+                </div>
+                <textarea id="lessonNoteContentInput" placeholder="예: 3과 문법 설명 + 4과 단어 예습 숙제" rows="3" style="margin-top: 8px; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+                <p class="auth-form-error" id="lessonNoteError" hidden></p>
+                <div class="admin-note-footer">
+                    <span></span>
+                    <button type="button" class="admin-note-save-btn" id="lessonNoteSaveBtn">노트 추가하기</button>
+                </div>
+                <div class="admin-lesson-note-list" id="lessonNoteList" style="margin-top: 12px;"></div>
+            </div>
+
+            <div class="auth-form-field">
+                <label>숙제 / 과제</label>
+                <p class="admin-note-hint" style="margin-top:0;">학생 마이페이지에 그대로 뜨고, 완료하면 알림이 와요.</p>
+                <input type="text" id="assignmentTitleInput" placeholder="숙제 제목 (예: 3과 단어 암기)">
+                <textarea id="assignmentDescInput" placeholder="자세한 설명 (선택)" rows="2" style="margin-top: 8px; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-family: inherit; font-size: 13px; resize: vertical;"></textarea>
+                <div class="admin-attendance-add-row" style="margin-top: 8px;">
+                    <input type="date" id="assignmentDueDateInput">
+                </div>
+                <p class="auth-form-error" id="assignmentError" hidden></p>
+                <div class="admin-note-footer">
+                    <span></span>
+                    <button type="button" class="admin-note-save-btn" id="assignmentSaveBtn">숙제 내주기</button>
+                </div>
+                <div class="admin-assignment-list" id="assignmentList" style="margin-top: 12px;"></div>
+            </div>
+
+            <div class="auth-form-field">
+                <label>수업 취소/변경 요청</label>
+                <p class="admin-note-hint" style="margin-top:0;">학생이 직접 보낸 취소/변경 요청이에요. 확인하고 승인 또는 거절해주세요.</p>
+                <div class="admin-classchange-list" id="classChangeList" style="margin-top: 8px;"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -997,16 +1095,48 @@
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <div class="admin-checkin-dock-panel" id="adminCheckinDockPanel">
-        <div class="admin-checkin-dock-head">
-            <div class="auth-form-field admin-checkin-dock-date-field">
-                <label for="adminCheckinDockDateInput">날짜</label>
-                <input type="date" id="adminCheckinDockDateInput">
+        <div class="admin-checkin-dock-banner">
+            <span class="admin-checkin-dock-banner-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+                <p class="admin-checkin-dock-banner-eyebrow">TODAY</p>
+                <p class="admin-checkin-dock-banner-title">오늘 출석 체크</p>
             </div>
-            <button type="button" class="admin-note-save-btn" id="adminCheckinDockMarkRestBtn">나머지 전부 결석 처리</button>
         </div>
-        <p class="admin-note-hint">이 날짜에 수업이 있는 학생만 자동으로 걸러서 보여줘요. 학생이 스스로 체크했으면 "학생 체크"라고 표시돼요.</p>
-        <p class="admin-empty-text" id="adminCheckinDockEmpty" hidden>이 날짜에 수업 있는 학생이 없어요.</p>
-        <div class="admin-checkin-dock-list" id="adminCheckinDockList"></div>
+
+        <div class="admin-checkin-dock-body">
+            <div class="admin-checkin-dock-head">
+                <div class="auth-form-field admin-checkin-dock-date-field">
+                    <label for="adminCheckinDockDateInput">날짜</label>
+                    <input type="date" id="adminCheckinDockDateInput">
+                </div>
+                <button type="button" class="admin-checkin-dock-rest-btn" id="adminCheckinDockMarkRestBtn">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    나머지 전부 결석 처리
+                </button>
+            </div>
+
+            <div class="admin-checkin-dock-calendar" id="adminCheckinDockCalendar">
+                <div class="admin-checkin-dock-calendar-head">
+                    <button type="button" class="admin-checkin-dock-calendar-nav" id="adminCheckinCalendarPrevBtn" aria-label="이전 달">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <p class="admin-checkin-dock-calendar-title" id="adminCheckinCalendarTitle"></p>
+                    <button type="button" class="admin-checkin-dock-calendar-nav" id="adminCheckinCalendarNextBtn" aria-label="다음 달">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+                <div class="admin-checkin-dock-calendar-grid" id="adminCheckinCalendarGrid"></div>
+            </div>
+
+            <p class="admin-note-hint">이 날짜에 수업이 있는 학생만 자동으로 걸러서 보여줘요. 학생이 스스로 체크했으면 "학생 체크"라고 표시돼요.</p>
+            <div class="admin-checkin-dock-empty" id="adminCheckinDockEmpty" hidden>
+                <svg viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
+                <p>이 날짜에 수업 있는 학생이 없어요.</p>
+            </div>
+            <div class="admin-checkin-dock-list" id="adminCheckinDockList"></div>
+        </div>
     </div>
 </div>
 

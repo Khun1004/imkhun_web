@@ -17,7 +17,7 @@ public class Faq {
     private String question;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "CLOB")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String answer;
 
     @Column(nullable = false, updatable = false)

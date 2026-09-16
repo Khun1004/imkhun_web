@@ -33,7 +33,7 @@ public class Review {
     private int rating;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "CLOB")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content;
 
     @Column(nullable = false, updatable = false)
@@ -41,7 +41,7 @@ public class Review {
 
     // 관리자(쿤)가 남긴 답글 — 없으면 null
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String adminReply;
 
     @Column

@@ -37,7 +37,7 @@ public class User {
 
     // 프로필 사진 — data:image/...;base64,... 형태로 그대로 저장 (학습 단계라 단순하게)
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String profileImage;
 
     // 지금은 항상 "google" (구글로 본인 확인 후 가입)

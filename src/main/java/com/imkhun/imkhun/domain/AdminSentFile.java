@@ -25,7 +25,7 @@ public class AdminSentFile {
 
     // base64 데이터 URI
     @Lob
-    @Column(name = "file_data", nullable = false, columnDefinition = "CLOB")
+    @Column(name = "file_data", nullable = false, columnDefinition = "LONGTEXT")
     private String fileData;
 
     @Column(nullable = false, updatable = false)

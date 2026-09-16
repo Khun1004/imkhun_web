@@ -22,7 +22,7 @@ public class MaterialFile {
 
     // data:image/...;base64,... 형태로 그대로 저장
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String fileData;
 
     // 링크 등록일 때만 값이 있음
@@ -31,7 +31,7 @@ public class MaterialFile {
 
     // 글 등록일 때만 값이 있음
     @Lob
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "LONGTEXT")
     private String textContent;
 
     // 갤러리에서 보여줄 순서

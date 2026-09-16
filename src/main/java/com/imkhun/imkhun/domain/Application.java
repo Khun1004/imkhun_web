@@ -46,19 +46,19 @@ public class Application {
     private String studentNumber;
 
     // ---- 결제 안내 (관리자가 승인된 학생에게 등록해줌) — 하나라도 등록되면 학생 마이페이지에 "결제 확인" 버튼이 떠요 ----
-    @Column(name = "payment_method", columnDefinition = "CLOB")
+    @Column(name = "payment_method", columnDefinition = "LONGTEXT")
     private String paymentMethod;
 
     @Column
     private String amount;
 
-    @Column(name = "amount_reason", columnDefinition = "CLOB")
+    @Column(name = "amount_reason", columnDefinition = "LONGTEXT")
     private String amountReason;
 
-    @Column(name = "material_guide", columnDefinition = "CLOB")
+    @Column(name = "material_guide", columnDefinition = "LONGTEXT")
     private String materialGuide;
 
-    @Column(name = "class_guide", columnDefinition = "CLOB")
+    @Column(name = "class_guide", columnDefinition = "LONGTEXT")
     private String classGuide;
 
     // 학생이 "입금했어요" 눌렀을 때 (null이면 아직 안 눌렀다는 뜻)
@@ -78,7 +78,7 @@ public class Application {
     private LocalDateTime paymentReminderSentAt;
 
     // 학생이 "입금했어요" 누를 때 같이 첨부한 영수증 이미지 (base64 데이터 URI) — 없으면 null
-    @Column(name = "receipt_image", columnDefinition = "CLOB")
+    @Column(name = "receipt_image", columnDefinition = "LONGTEXT")
     private String receiptImage;
 
     // 출석 체크에 쓰는 수업 요일·시간. classDays는 "TUE,WED"처럼 쉼표로 구분된 요일 코드,
