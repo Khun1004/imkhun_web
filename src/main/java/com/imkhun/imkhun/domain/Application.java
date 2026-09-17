@@ -89,6 +89,15 @@ public class Application {
     @Column(name = "class_time")
     private String classTime;
 
+    // ---- 재등록 리마인더 ----
+    // 관리자가 "이 학생은 언제까지 수강이에요"라고 정해두는 날짜 (안 정해두면 리마인더 대상 아님)
+    @Column(name = "enrollment_end_date")
+    private java.time.LocalDate enrollmentEndDate;
+
+    // 재등록 리마인더를 마지막으로 보낸 시각 (같은 학생한테 매일 도배하지 않도록 간격 확인용)
+    @Column(name = "renewal_reminder_sent_at")
+    private LocalDateTime renewalReminderSentAt;
+
     protected Application() {
         // JPA 기본 생성자
     }
@@ -153,6 +162,16 @@ public class Application {
     public void updateSchedule(String classDays, String classTime) {
         this.classDays = classDays;
         this.classTime = classTime;
+    }
+
+    public void updateEnrollmentEndDate(java.time.LocalDate enrollmentEndDate) {
+        this.enrollmentEndDate = enrollmentEndDate;
+        // 종료일이 새로 바뀌면, 예전 기준으로 이미 보냈던 리마인더 기록은 초기화 (다시 대상이 될 수 있게)
+        this.renewalReminderSentAt = null;
+    }
+
+    public void markRenewalReminderSent() {
+        this.renewalReminderSentAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -237,5 +256,13 @@ public class Application {
 
     public String getClassTime() {
         return classTime;
+    }
+
+    public java.time.LocalDate getEnrollmentEndDate() {
+        return enrollmentEndDate;
+    }
+
+    public LocalDateTime getRenewalReminderSentAt() {
+        return renewalReminderSentAt;
     }
 }

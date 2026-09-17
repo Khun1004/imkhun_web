@@ -59,6 +59,10 @@
             <p class="auth-form-error" id="adminLoginError" hidden></p>
 
             <button type="button" class="auth-form-submit" id="adminLoginSubmitBtn">들어가기</button>
+
+            <button type="button" class="admin-login-toggle-mode" id="adminLoginToggleModeBtn">
+                아직 계정이 없으신가요? <span>계정 만들기</span>
+            </button>
         </div>
     </div>
 </div>
@@ -749,6 +753,12 @@
                 <textarea class="admin-note-textarea" id="noticeContentInput" placeholder="공지 내용을 입력해주세요."></textarea>
             </div>
 
+            <div class="auth-form-field">
+                <label for="noticeScheduledAtInput">예약 발송 (선택)</label>
+                <input type="datetime-local" id="noticeScheduledAtInput">
+                <p class="admin-note-hint" style="margin-top: 6px;">비워두면 바로 공개돼요. 시간을 정하면, 그때까지는 학생 화면에 안 보이고 알림도 안 가다가 그 시간이 되면 자동으로 공개+알림이 가요.</p>
+            </div>
+
             <p class="auth-form-error" id="noticeError" hidden></p>
 
             <div class="admin-note-footer">
@@ -1054,6 +1064,12 @@
             <div class="auth-form-field">
                 <label for="scheduleTimeInput">수업 시작 시간</label>
                 <input type="time" id="scheduleTimeInput">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="enrollmentEndDateInput">수강 종료일 (선택)</label>
+                <input type="date" id="enrollmentEndDateInput">
+                <p class="admin-note-hint" style="margin-top: 6px;">정해두면, 종료 7일 전에 학생한테 자동으로 재등록 안내 알림이 가요. 비워두면 리마인더 대상이 아니에요.</p>
             </div>
 
             <p class="auth-form-error" id="scheduleError" hidden></p>

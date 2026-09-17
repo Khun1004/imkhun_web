@@ -7,6 +7,7 @@ import com.imkhun.imkhun.dto.ApplicationResponse;
 import com.imkhun.imkhun.dto.ChangeCourseRequest;
 import com.imkhun.imkhun.dto.CreateApplicationRequest;
 import com.imkhun.imkhun.dto.UpdateApplicationPaymentRequest;
+import com.imkhun.imkhun.dto.UpdateEnrollmentEndDateRequest;
 import com.imkhun.imkhun.dto.UpdateScheduleRequest;
 import com.imkhun.imkhun.repository.ApplicationRepository;
 import com.imkhun.imkhun.repository.UserRepository;
@@ -90,7 +91,8 @@ public class ApplicationService {
                             app.getAmountReason(), app.getMaterialGuide(), app.getClassGuide(),
                             app.getPaymentConfirmedByStudentAt() != null, app.getPaymentConfirmedByAdminAt() != null,
                             app.getPaymentConfirmedByStudentAt() != null ? app.getPaymentConfirmedByStudentAt().format(DATE_FORMAT) : null,
-                            app.getReceiptImage(), app.getClassDays(), app.getClassTime()
+                            app.getReceiptImage(), app.getClassDays(), app.getClassTime(),
+                            app.getEnrollmentEndDate() != null ? app.getEnrollmentEndDate().toString() : null
                     );
                 })
                 .toList();
@@ -221,6 +223,22 @@ public class ApplicationService {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
         application.updateSchedule(request.classDays(), request.classTime());
+        applicationRepository.save(application);
+    }
+
+    // 관리자 - "이 학생은 언제까지 수강이에요"를 지정 (재등록 리마인더 기준일)
+    public void updateEnrollmentEndDate(Long applicationId, UpdateEnrollmentEndDateRequest request) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+        java.time.LocalDate endDate = null;
+        if (request.enrollmentEndDate() != null && !request.enrollmentEndDate().isBlank()) {
+            try {
+                endDate = java.time.LocalDate.parse(request.enrollmentEndDate());
+            } catch (Exception e) {
+                throw new IllegalStateException("날짜 형식이 올바르지 않아요.");
+            }
+        }
+        application.updateEnrollmentEndDate(endDate);
         applicationRepository.save(application);
     }
 

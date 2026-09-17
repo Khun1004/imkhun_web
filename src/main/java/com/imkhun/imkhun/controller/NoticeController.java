@@ -17,9 +17,9 @@ public class NoticeController {
         this.noticeService = noticeService;
     }
 
-    // 공지 목록은 로그인 안 해도 누구나 볼 수 있음
+    // 공지 목록은 로그인 안 해도 누구나 볼 수 있음 (예약 시간이 안 된 글은 안 보임)
     @GetMapping
     public ResponseEntity<List<NoticeResponse>> getNotices() {
-        return ResponseEntity.ok(noticeService.getAllNotices());
+        return ResponseEntity.ok(noticeService.getPublishedNotices());
     }
 }

@@ -594,11 +594,15 @@ async function loadAdminNotices() {
         notices.forEach((n) => {
             const item = document.createElement("div");
             item.className = "admin-notice-item";
+            const statusBadge = n.isPublished
+                ? ""
+                : `<span class="admin-notice-item-scheduled-tag">예약됨 · ${(n.scheduledAt || "").replace("T", " ")}</span>`;
             item.innerHTML = `
         <div class="admin-notice-item-head">
           <p class="admin-notice-item-title">${escapeHtmlForAdmin(n.title)}</p>
           <span class="admin-notice-item-date">${n.createdAt}</span>
         </div>
+        ${statusBadge}
         <p class="admin-notice-item-content">${escapeHtmlForAdmin(n.content)}</p>
         <div class="admin-notice-item-actions">
           <button type="button" class="admin-material-action-btn" data-edit-notice-id="${n.id}">수정</button>
@@ -623,6 +627,7 @@ function openNoticeModal(noticeId) {
     document.getElementById("noticeEditingId").value = notice ? notice.id : "";
     document.getElementById("noticeTitleInput").value = notice ? notice.title : "";
     document.getElementById("noticeContentInput").value = notice ? notice.content : "";
+    document.getElementById("noticeScheduledAtInput").value = notice && notice.scheduledAt ? notice.scheduledAt : "";
     document.getElementById("noticeError").hidden = true;
 
     modal.classList.add("open");
@@ -640,6 +645,7 @@ async function submitNotice() {
     const editingId = document.getElementById("noticeEditingId").value;
     const title = document.getElementById("noticeTitleInput").value.trim();
     const content = document.getElementById("noticeContentInput").value.trim();
+    const scheduledAt = document.getElementById("noticeScheduledAtInput").value;
     const errorEl = document.getElementById("noticeError");
     const saveBtn = document.getElementById("noticeSaveBtn");
     const isEditing = !!editingId;
@@ -659,7 +665,7 @@ async function submitNotice() {
         const res = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, content }),
+            body: JSON.stringify({ title, content, scheduledAt: scheduledAt || null }),
         });
 
         if (!res.ok) {
@@ -1874,7 +1880,7 @@ async function changeAttendanceHistoryStatus(selectEl) {
 
 
 
-function openScheduleModal(applicationId, courseName, classDays, classTime) {
+function openScheduleModal(applicationId, courseName, classDays, classTime, enrollmentEndDate) {
     const modal = document.getElementById("scheduleModal");
     if (!modal) return;
 
@@ -1884,6 +1890,7 @@ function openScheduleModal(applicationId, courseName, classDays, classTime) {
         cb.checked = classDays ? classDays.split(",").includes(cb.value) : false;
     });
     document.getElementById("scheduleTimeInput").value = classTime || "";
+    document.getElementById("enrollmentEndDateInput").value = enrollmentEndDate || "";
     document.getElementById("scheduleError").hidden = true;
 
     modal.classList.add("open");
@@ -1901,6 +1908,7 @@ async function submitSchedule() {
     const applicationId = document.getElementById("scheduleApplicationId").value;
     const days = [...document.querySelectorAll('input[name="scheduleDay"]:checked')].map((cb) => cb.value);
     const time = document.getElementById("scheduleTimeInput").value;
+    const enrollmentEndDate = document.getElementById("enrollmentEndDateInput").value;
     const errorEl = document.getElementById("scheduleError");
     const saveBtn = document.getElementById("scheduleSaveBtn");
 
@@ -1922,6 +1930,18 @@ async function submitSchedule() {
 
         if (!res.ok) {
             errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        const endDateRes = await fetch(`/api/admin/applications/${applicationId}/enrollment-end-date`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enrollmentEndDate: enrollmentEndDate || null }),
+        });
+
+        if (!endDateRes.ok) {
+            errorEl.textContent = (await endDateRes.text()) || "수강 종료일 저장에 실패했어요.";
             errorEl.hidden = false;
             return;
         }
@@ -2669,7 +2689,7 @@ async function loadStudentList() {
         <div class="admin-student-actions-row">
           <button type="button" class="admin-material-action-btn" data-change-course-id="${app.id}">강의 변경</button>
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-payment-info-id="${app.id}">${app.hasPaymentInfo ? "결제 안내 수정" : "결제 안내 등록"}</button>` : ""}
-          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}">${app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정"}</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}" data-schedule-enrollment-end="${app.enrollmentEndDate || ""}">${app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정"}</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-attendance-id="${app.id}" data-attendance-course="${escapeHtmlForAdmin(app.courseName)}">출석부</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-send-file-id="${app.id}" data-send-file-course="${escapeHtmlForAdmin(app.courseName)}">파일 보내기</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-set-status-id="${app.id}" data-set-status-value="SUSPENDED">휴면 처리</button>` : ""}
@@ -2927,6 +2947,64 @@ async function loadDashboard() {
 
     loadTodayTodos();
     loadRevenueReport();
+}
+
+async function loadBackups() {
+    const listEl = document.getElementById("adminBackupList");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/admin/backups");
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const backups = await res.json();
+
+        listEl.innerHTML = "";
+        if (backups.length === 0) {
+            listEl.innerHTML = `<p class="admin-note-hint">아직 백업된 파일이 없어요.</p>`;
+            return;
+        }
+
+        backups.forEach((b) => {
+            const row = document.createElement("div");
+            row.className = "admin-lesson-note-row";
+            row.innerHTML = `
+        <div class="admin-lesson-note-row-head">
+          <span class="admin-lesson-note-row-date">${b.createdAt}</span>
+        </div>
+        <p class="admin-lesson-note-row-content">${escapeHtmlForAdmin(b.fileName)} · ${b.sizeLabel}</p>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function runBackupNow() {
+    const btn = document.getElementById("adminBackupRunBtn");
+    if (!btn) return;
+    btn.disabled = true;
+    btn.textContent = "백업하는 중...";
+
+    try {
+        const res = await fetch("/api/admin/backups/run-now", { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "백업에 실패했어요.");
+            return;
+        }
+        loadBackups();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "지금 백업하기";
+    }
 }
 
 async function loadRevenueReport() {
@@ -3286,6 +3364,30 @@ document.addEventListener("fragments:loaded", () => {
         btn.classList.toggle("is-active", !isVisible);
     });
 
+    let adminAuthMode = "login";
+
+    document.getElementById("adminLoginToggleModeBtn")?.addEventListener("click", () => {
+        adminAuthMode = adminAuthMode === "login" ? "signup" : "login";
+        const title = document.querySelector(".admin-login-body h3");
+        const desc = document.querySelector(".admin-login-body .auth-modal-desc");
+        const submitBtn = document.getElementById("adminLoginSubmitBtn");
+        const toggleBtn = document.getElementById("adminLoginToggleModeBtn");
+        const errorEl = document.getElementById("adminLoginError");
+        if (errorEl) errorEl.hidden = true;
+
+        if (adminAuthMode === "signup") {
+            if (title) title.textContent = "관리자 계정 만들기";
+            if (desc) desc.innerHTML = "이메일, 전화번호, 아이디, 비밀번호(8자 이상)를 입력해주세요.<br>관리자 계정은 딱 하나만 만들 수 있어요.";
+            if (submitBtn) submitBtn.textContent = "계정 만들기";
+            if (toggleBtn) toggleBtn.innerHTML = `이미 계정이 있으신가요? <span>로그인하기</span>`;
+        } else {
+            if (title) title.textContent = "나만의 공부 화면";
+            if (desc) desc.innerHTML = "관리자만 들어올 수 있어요.<br>이메일, 전화번호, 아이디, 비밀번호를 모두 입력해주세요.";
+            if (submitBtn) submitBtn.textContent = "들어가기";
+            if (toggleBtn) toggleBtn.innerHTML = `아직 계정이 없으신가요? <span>계정 만들기</span>`;
+        }
+    });
+
     document.getElementById("adminLoginSubmitBtn")?.addEventListener("click", async () => {
         const email = document.getElementById("adminLoginEmail").value.trim();
         const phone = document.getElementById("adminLoginPhone").value.trim();
@@ -3301,6 +3403,49 @@ document.addEventListener("fragments:loaded", () => {
         }
         errorEl.hidden = true;
         submitBtn.disabled = true;
+
+        if (adminAuthMode === "signup") {
+            submitBtn.textContent = "만드는 중...";
+            try {
+                const signupRes = await fetch("/api/admin/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, phone, username, password }),
+                });
+                if (!signupRes.ok) {
+                    errorEl.textContent = (await signupRes.text()) || "계정 만들기에 실패했어요.";
+                    errorEl.hidden = false;
+                    return;
+                }
+
+                const loginRes = await fetch("/api/admin/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, phone, username, password }),
+                });
+                if (!loginRes.ok) {
+                    errorEl.textContent = "계정은 만들어졌어요. 다시 로그인해주세요.";
+                    errorEl.hidden = false;
+                    document.getElementById("adminLoginToggleModeBtn")?.click();
+                    return;
+                }
+
+                document.getElementById("adminLoginEmail").value = "";
+                document.getElementById("adminLoginPhone").value = "";
+                document.getElementById("adminLoginUsername").value = "";
+                document.getElementById("adminLoginPassword").value = "";
+                showAdminScreen();
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = "서버에 연결할 수 없어요.";
+                errorEl.hidden = false;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "계정 만들기";
+            }
+            return;
+        }
+
         submitBtn.textContent = "확인 중...";
 
         try {
@@ -3523,6 +3668,9 @@ document.addEventListener("fragments:loaded", () => {
             if (tabAttr === "data-students-tab" && key === "attendance-today") {
                 loadAttendanceToday();
             }
+            if (tabAttr === "data-my-tab" && key === "backup") {
+                loadBackups();
+            }
         });
     });
 
@@ -3604,7 +3752,7 @@ document.addEventListener("fragments:loaded", () => {
         const scheduleBtn = e.target.closest("[data-schedule-id]");
         if (scheduleBtn) {
             openScheduleModal(scheduleBtn.dataset.scheduleId, scheduleBtn.dataset.scheduleCourse,
-                scheduleBtn.dataset.scheduleDays, scheduleBtn.dataset.scheduleTime);
+                scheduleBtn.dataset.scheduleDays, scheduleBtn.dataset.scheduleTime, scheduleBtn.dataset.scheduleEnrollmentEnd);
         }
 
         const markAttendanceBtn = e.target.closest("[data-mark-attendance]");
@@ -3629,6 +3777,7 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("timetableSaveBtn")?.addEventListener("click", submitTimetableEntry);
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
     document.getElementById("lessonNoteSaveBtn")?.addEventListener("click", submitLessonNote);
+    document.getElementById("adminBackupRunBtn")?.addEventListener("click", runBackupNow);
     document.getElementById("levelRecordSaveBtn")?.addEventListener("click", submitLevelRecord);
     document.getElementById("assignmentSaveBtn")?.addEventListener("click", submitAssignment);
     document.getElementById("sendFileSubmitBtn")?.addEventListener("click", submitSendFile);

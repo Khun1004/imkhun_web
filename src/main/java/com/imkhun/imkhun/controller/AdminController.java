@@ -749,6 +749,19 @@ public class AdminController {
         }
     }
 
+    // 수강 종료일 등록 (재등록 리마인더 기준일)
+    @PostMapping("/applications/{id}/enrollment-end-date")
+    public ResponseEntity<?> updateEnrollmentEndDate(HttpServletRequest request, @PathVariable Long id,
+                                                     @RequestBody UpdateEnrollmentEndDateRequest endDateRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            applicationService.updateEnrollmentEndDate(id, endDateRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     // 오늘(또는 고른 날짜) 출석 체크 화면 — 그날 수업 있는 학생들만 자동으로 걸러서 보여줌
     @GetMapping("/attendance/today")
     public ResponseEntity<?> getTodayRoster(HttpServletRequest request, @RequestParam String date) {
