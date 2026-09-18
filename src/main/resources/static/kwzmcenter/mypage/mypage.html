@@ -22,14 +22,24 @@
         <div class="mypage-frosted-card">
             <nav class="mypage-tabs" role="tablist" aria-label="마이페이지 메뉴">
                 <button type="button" class="mypage-tab active" data-mypage-tab="courses" role="tab" aria-selected="true">내 수강 정보</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="growth" role="tab" aria-selected="false">나의 성장</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="assignments" role="tab" aria-selected="false">숙제</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="classchange" role="tab" aria-selected="false">수업 변경 요청</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="survey" role="tab" aria-selected="false">만족도 설문</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="myposts" role="tab" aria-selected="false">내가 쓴 글</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="shortcuts" role="tab" aria-selected="false">바로가기</button>
             </nav>
 
             <div class="mypage-tab-panel active" data-mypage-panel="courses">
                 <div class="student-home-courses" id="mypageCourses"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="growth" hidden>
+                <div class="growth-report-stats" id="growthReportStats"></div>
+
+                <p class="admin-materials-heading" style="margin-top: 24px;">레벨 변화 타임라인</p>
+                <p class="admin-empty-text" id="growthReportLevelEmpty" hidden>아직 기록된 레벨이 없어요.</p>
+                <div class="growth-report-timeline" id="growthReportTimeline"></div>
             </div>
 
             <div class="mypage-tab-panel" data-mypage-panel="assignments" hidden>
@@ -70,6 +80,54 @@
 
                 <p class="admin-empty-text" id="mypageClassChangeEmpty" hidden>아직 보낸 요청이 없어요.</p>
                 <div class="mypage-classchange-list" id="mypageClassChangeList"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="survey" hidden>
+                <p class="admin-note-hint">수업이 어땠는지 솔직한 의견을 남겨주세요. 선생님이 더 좋은 수업을 만드는 데 큰 도움이 돼요.</p>
+
+                <div class="mypage-classchange-form">
+                    <div class="mypage-classchange-form-row">
+                        <label for="surveyApplicationSelect">어떤 강의인가요?</label>
+                        <select id="surveyApplicationSelect"></select>
+                    </div>
+
+                    <div id="surveyAlreadySubmitted" class="mypage-survey-submitted" hidden>
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        이미 이 강의의 설문을 제출하셨어요. 소중한 의견 감사해요!
+                    </div>
+
+                    <div id="surveyForm">
+                        <div class="mypage-survey-rating-row">
+                            <label>강의 내용 만족도</label>
+                            <div class="mypage-survey-stars" data-survey-rating="content"></div>
+                        </div>
+                        <div class="mypage-survey-rating-row">
+                            <label>선생님 만족도</label>
+                            <div class="mypage-survey-stars" data-survey-rating="teacher"></div>
+                        </div>
+                        <div class="mypage-survey-rating-row">
+                            <label>교재/자료 만족도</label>
+                            <div class="mypage-survey-stars" data-survey-rating="material"></div>
+                        </div>
+                        <div class="mypage-survey-rating-row">
+                            <label>전반적 만족도</label>
+                            <div class="mypage-survey-stars" data-survey-rating="overall"></div>
+                        </div>
+
+                        <div class="mypage-classchange-form-row">
+                            <label for="surveyCommentInput">의견 (선택)</label>
+                            <textarea id="surveyCommentInput" rows="3" placeholder="더 해주고 싶은 말씀이 있으면 자유롭게 적어주세요"></textarea>
+                        </div>
+
+                        <label class="mypage-survey-anonymous-label">
+                            <input type="checkbox" id="surveyAnonymousInput">
+                            <span>익명으로 제출하기 (선생님이 누가 썼는지 못 봐요)</span>
+                        </label>
+
+                        <p class="auth-form-error" id="surveyError" hidden></p>
+                        <button type="button" class="mypage-classchange-submit-btn" id="surveySubmitBtn">설문 제출하기</button>
+                    </div>
+                </div>
             </div>
 
             <div class="mypage-tab-panel" data-mypage-panel="myposts" hidden>

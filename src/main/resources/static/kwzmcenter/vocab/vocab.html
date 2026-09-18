@@ -1,0 +1,57 @@
+<div class="student-photo-banner">
+    <div class="student-photo-banner-slides" id="vocabBannerSlides">
+        <div class="student-photo-banner-slide is-active" style="background-image:url('images/1.png')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/2.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/3.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/4.jpg')"></div>
+    </div>
+    <div class="student-photo-banner-overlay" aria-hidden="true"></div>
+    <div class="student-photo-banner-inner">
+        <div class="student-photo-banner-textbox">
+            <p class="eyebrow student-photo-banner-eyebrow">Vocabulary</p>
+            <h2 class="student-photo-banner-title">단어장</h2>
+            <p class="student-photo-banner-desc">카드를 넘기면서 오늘의 단어를 외워보세요.</p>
+        </div>
+    </div>
+    <div class="student-photo-banner-dots" id="vocabBannerDots">
+        <button type="button" class="student-photo-banner-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
+    </div>
+</div>
+
+<div class="student-vocab-layout">
+    <div class="student-vocab-lang-pills" id="vocabLanguagePills"></div>
+
+    <div class="student-vocab-stats" id="vocabStats"></div>
+
+    <p class="admin-empty-text" id="vocabEmpty" hidden>이 언어에 등록된 단어가 아직 없어요.</p>
+
+    <div class="student-vocab-card-area" id="vocabCardArea" hidden>
+        <p class="student-vocab-progress-label" id="vocabProgressLabel"></p>
+
+        <div class="student-vocab-card" id="vocabCard">
+            <div class="student-vocab-card-inner" id="vocabCardInner">
+                <div class="student-vocab-card-face student-vocab-card-front">
+                    <p class="student-vocab-card-word" id="vocabCardWord"></p>
+                    <p class="student-vocab-card-hint">눌러서 뜻 보기</p>
+                </div>
+                <div class="student-vocab-card-face student-vocab-card-back">
+                    <p class="student-vocab-card-meaning" id="vocabCardMeaning"></p>
+                    <p class="student-vocab-card-example" id="vocabCardExample"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="student-vocab-actions">
+            <button type="button" class="student-vocab-nav-btn" id="vocabPrevBtn" aria-label="이전 카드">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="student-vocab-learn-btn student-vocab-learn-btn--no" id="vocabNotYetBtn">아직이에요</button>
+            <button type="button" class="student-vocab-learn-btn student-vocab-learn-btn--yes" id="vocabLearnedBtn">외웠어요!</button>
+            <button type="button" class="student-vocab-nav-btn" id="vocabNextBtn" aria-label="다음 카드">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+    </div>
+</div>

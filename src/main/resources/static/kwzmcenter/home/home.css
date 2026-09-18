@@ -328,7 +328,7 @@
 }
 
 .student-checkin-dock.is-open .student-checkin-dock-tab {
-    right: 300px;
+    right: 420px;
 }
 
 .student-checkin-dock-tab:hover {
@@ -365,16 +365,16 @@
     top: 0;
     right: 0;
     align-self: stretch;
-    width: 300px;
-    max-width: calc(100vw - 60px);
+    width: 420px;
+    max-width: calc(100vw - 40px);
     height: 100%;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
     background: var(--kwzm-bg-3);
-    border-radius: 0;
-    box-shadow: -14px 0 40px -16px rgba(15, 37, 71, 0.4);
+    border-radius: 20px 0 0 20px;
+    box-shadow: -20px 0 48px -18px rgba(15, 37, 71, 0.45);
     transform: translateX(100%);
     opacity: 0;
     visibility: hidden;
@@ -705,11 +705,102 @@
     margin: 0;
 }
 
+/* 출석 스트릭 / 배지 */
+
+.student-streak-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 16px 22px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fff3e0, #ffe8d6);
+    border: 1px solid rgba(240, 140, 40, 0.25);
+}
+
+.student-streak-flame {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    color: #ec7a1e;
+}
+
+.student-streak-flame svg {
+    width: 24px;
+    height: 24px;
+}
+
+.student-streak-count {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #b8541a;
+    margin: 0 0 2px;
+}
+
+.student-streak-rate {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #c26a2a;
+    margin: 0;
+}
+
+.student-streak-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 22px 16px;
+}
+
+.student-streak-badge {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--kwzm-gradient);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+
 .student-checkin-dock-schedule-list {
     display: flex;
     flex-direction: column;
     gap: 6px;
     padding: 0 22px;
+}
+
+.student-checkin-dock-calendar-export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 14px 22px 0;
+    padding: 11px;
+    border-radius: 999px;
+    border: 1px solid var(--kwzm-line);
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-soft);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.student-checkin-dock-calendar-export-btn svg {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+}
+
+.student-checkin-dock-calendar-export-btn:hover {
+    background: var(--kwzm-gradient);
+    color: #fff;
+    border-color: transparent;
 }
 
 .student-checkin-dock-schedule-row {
@@ -896,11 +987,12 @@
     }
 
     .student-checkin-dock.is-open .student-checkin-dock-tab {
-        right: 260px;
+        right: 320px;
     }
 
     .student-checkin-dock-panel {
-        width: 260px;
+        width: 320px;
+        border-radius: 16px 0 0 16px;
     }
 }
 

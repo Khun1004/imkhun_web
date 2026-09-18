@@ -7,12 +7,17 @@ import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AttendanceService;
+import com.imkhun.imkhun.service.AttendanceStreakService;
+import com.imkhun.imkhun.service.CalendarExportService;
 import com.imkhun.imkhun.service.ClassChangeRequestService;
+import com.imkhun.imkhun.service.GrowthReportService;
 import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.StudentAuthService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyPostService;
+import com.imkhun.imkhun.service.SurveyService;
+import com.imkhun.imkhun.service.VocabularyService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -37,12 +42,20 @@ public class StudentPortalController {
     private final AttendanceService attendanceService;
     private final AssignmentService assignmentService;
     private final ClassChangeRequestService classChangeRequestService;
+    private final SurveyService surveyService;
+    private final CalendarExportService calendarExportService;
+    private final AttendanceStreakService attendanceStreakService;
+    private final VocabularyService vocabularyService;
+    private final GrowthReportService growthReportService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
                                    StudyPostService studyPostService, NotificationService notificationService,
                                    AdminFileService adminFileService, AttendanceService attendanceService,
-                                   AssignmentService assignmentService, ClassChangeRequestService classChangeRequestService) {
+                                   AssignmentService assignmentService, ClassChangeRequestService classChangeRequestService,
+                                   SurveyService surveyService, CalendarExportService calendarExportService,
+                                   AttendanceStreakService attendanceStreakService, VocabularyService vocabularyService,
+                                   GrowthReportService growthReportService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -50,6 +63,11 @@ public class StudentPortalController {
         this.attendanceService = attendanceService;
         this.assignmentService = assignmentService;
         this.classChangeRequestService = classChangeRequestService;
+        this.surveyService = surveyService;
+        this.calendarExportService = calendarExportService;
+        this.attendanceStreakService = attendanceStreakService;
+        this.vocabularyService = vocabularyService;
+        this.growthReportService = growthReportService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -450,8 +468,90 @@ public class StudentPortalController {
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         var courses = studentAuthService.getApprovedApplications(userOpt.get().getUsername()).stream()
                 .filter(a -> !"TRIAL".equals(a.getStudyType())) // 무료체험은 취소/변경 요청 대상이 아니라서 뺌
-                .map(a -> new EnrolledCourseResponse(a.getId(), a.getCourseName()))
+                .map(a -> new EnrolledCourseResponse(a.getId(), a.getCourseName(), applicationService.extractLanguageCode(a.getCourseName())))
                 .toList();
         return ResponseEntity.ok(courses);
+    }
+
+    // ---------- 만족도 설문 ----------
+
+    @PostMapping("/applications/{id}/survey")
+    public ResponseEntity<?> submitSurvey(HttpServletRequest request, @PathVariable Long id,
+                                          @RequestBody CreateSurveyRequest surveyRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            surveyService.submitSurvey(id, userOpt.get().getUsername(), surveyRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/applications/{id}/survey/status")
+    public ResponseEntity<?> getSurveyStatus(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(java.util.Map.of("submitted", surveyService.hasSubmitted(id)));
+    }
+
+    // ---------- 구글 캘린더 내보내기 ----------
+
+    // 수업 요일/시간이 설정된 강의들을 .ics 파일로 만들어서 다운로드시킴 — 구글/애플/아웃룩 캘린더에 가져오기(import) 가능
+    @GetMapping(value = "/calendar.ics", produces = "text/calendar;charset=UTF-8")
+    public ResponseEntity<byte[]> exportCalendar(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).build();
+
+        var applications = studentAuthService.getApprovedApplications(userOpt.get().getUsername());
+        String ics = calendarExportService.buildIcsForApplications(applications);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"imkhun_schedule.ics\"")
+                .body(ics.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    // ---------- 출석 스트릭 / 배지 ----------
+
+    @GetMapping("/attendance/streak")
+    public ResponseEntity<?> getAttendanceStreak(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).build();
+        return ResponseEntity.ok(attendanceStreakService.getStreakForStudent(userOpt.get().getUsername()));
+    }
+
+    // ---------- 단어장 / 플래시카드 ----------
+
+    @GetMapping("/vocabulary/{language}")
+    public ResponseEntity<?> getFlashcards(HttpServletRequest request, @PathVariable String language) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(vocabularyService.getFlashcards(userOpt.get().getUsername(), language));
+    }
+
+    @GetMapping("/vocabulary/{language}/stats")
+    public ResponseEntity<?> getVocabularyStats(HttpServletRequest request, @PathVariable String language) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(vocabularyService.getStats(userOpt.get().getUsername(), language));
+    }
+
+    @PostMapping("/vocabulary/{wordId}/progress")
+    public ResponseEntity<?> markVocabularyLearned(HttpServletRequest request, @PathVariable Long wordId,
+                                                   @RequestBody java.util.Map<String, Boolean> body) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        boolean learned = Boolean.TRUE.equals(body.get("learned"));
+        vocabularyService.markLearned(userOpt.get().getUsername(), wordId, learned);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- 나의 성장 리포트 ----------
+
+    @GetMapping("/growth-report")
+    public ResponseEntity<?> getGrowthReport(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(growthReportService.getReport(userOpt.get().getUsername()));
     }
 }

@@ -22,7 +22,9 @@ import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyNoteService;
 import com.imkhun.imkhun.service.StudentLevelService;
 import com.imkhun.imkhun.service.StudyPostService;
+import com.imkhun.imkhun.service.SurveyService;
 import com.imkhun.imkhun.service.TimetableService;
+import com.imkhun.imkhun.service.VocabularyService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +57,8 @@ public class AdminController {
     private final AssignmentService assignmentService;
     private final ClassChangeRequestService classChangeRequestService;
     private final StudentLevelService studentLevelService;
+    private final SurveyService surveyService;
+    private final VocabularyService vocabularyService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -65,7 +69,8 @@ public class AdminController {
                            AttendanceService attendanceService, AdminFileService adminFileService,
                            PaymentReminderService paymentReminderService, ReceiptService receiptService,
                            LessonNoteService lessonNoteService, AssignmentService assignmentService,
-                           ClassChangeRequestService classChangeRequestService, StudentLevelService studentLevelService) {
+                           ClassChangeRequestService classChangeRequestService, StudentLevelService studentLevelService,
+                           SurveyService surveyService, VocabularyService vocabularyService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -87,6 +92,8 @@ public class AdminController {
         this.assignmentService = assignmentService;
         this.classChangeRequestService = classChangeRequestService;
         this.studentLevelService = studentLevelService;
+        this.surveyService = surveyService;
+        this.vocabularyService = vocabularyService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -859,6 +866,45 @@ public class AdminController {
     public ResponseEntity<?> deleteLevelRecord(HttpServletRequest request, @PathVariable Long id) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         studentLevelService.deleteRecord(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- 학생 만족도 설문 ----------
+
+    @GetMapping("/survey/summary")
+    public ResponseEntity<?> getSurveySummary(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(surveyService.getSummaryForAdmin());
+    }
+
+    @GetMapping("/survey/responses")
+    public ResponseEntity<?> getSurveyResponses(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(surveyService.getAllResponsesForAdmin());
+    }
+
+    // ---------- 단어장 / 플래시카드 ----------
+
+    @GetMapping("/vocabulary")
+    public ResponseEntity<?> getVocabularyWords(HttpServletRequest request, @RequestParam String language) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(vocabularyService.getWordsForAdmin(language));
+    }
+
+    @PostMapping("/vocabulary")
+    public ResponseEntity<?> addVocabularyWord(HttpServletRequest request, @RequestBody CreateVocabularyWordRequest wordRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(vocabularyService.addWord(wordRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/vocabulary/{id}")
+    public ResponseEntity<?> deleteVocabularyWord(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        vocabularyService.deleteWord(id);
         return ResponseEntity.ok().build();
     }
 
