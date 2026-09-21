@@ -216,7 +216,10 @@
     color: var(--kwzm-ink);
 }
 
+/* active일 때 기본으로 깔리는 배경 — 아래 언어별 규칙이 보통 이걸 덮어쓰지만,
+   혹시 언어 코드가 안 맞는 경우에도 글자가 안 보이는 일이 없도록 기본값을 확실히 깔아둠 */
 .student-lang-sidebar-item.active {
+    background: var(--kwzm-gradient);
     color: #fff;
 }
 

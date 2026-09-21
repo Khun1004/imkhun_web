@@ -10,48 +10,64 @@
         <div class="student-photo-banner-textbox">
             <p class="eyebrow student-photo-banner-eyebrow">Vocabulary</p>
             <h2 class="student-photo-banner-title">단어장</h2>
-            <p class="student-photo-banner-desc">카드를 넘기면서 오늘의 단어를 외워보세요.</p>
+            <p class="student-photo-banner-desc">Part를 골라서 단어를 보고, 퀴즈로 실력을 확인해보세요.</p>
         </div>
     </div>
     <div class="student-photo-banner-dots" id="vocabBannerDots">
         <button type="button" class="student-photo-banner-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
         <button type="button" class="student-photo-banner-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
         <button type="button" class="student-photo-banner-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="3" aria-label="배경 사진 4"></button>
     </div>
 </div>
 
 <div class="student-vocab-layout">
     <div class="student-vocab-lang-pills" id="vocabLanguagePills"></div>
 
-    <div class="student-vocab-stats" id="vocabStats"></div>
+    <!-- Part 목록 화면 -->
+    <div id="vocabSetListArea">
+        <p class="admin-empty-text" id="vocabSetEmpty" hidden>이 언어에 등록된 Part가 아직 없어요.</p>
+        <div class="student-vocab-set-list" id="vocabSetList"></div>
+    </div>
 
-    <p class="admin-empty-text" id="vocabEmpty" hidden>이 언어에 등록된 단어가 아직 없어요.</p>
+    <!-- 선택된 Part의 단어 목록 -->
+    <div class="student-vocab-words-area" id="vocabWordsArea" hidden>
+        <button type="button" class="student-vocab-back-btn" id="vocabBackToSetsBtn">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Part 목록으로
+        </button>
 
-    <div class="student-vocab-card-area" id="vocabCardArea" hidden>
-        <p class="student-vocab-progress-label" id="vocabProgressLabel"></p>
-
-        <div class="student-vocab-card" id="vocabCard">
-            <div class="student-vocab-card-inner" id="vocabCardInner">
-                <div class="student-vocab-card-face student-vocab-card-front">
-                    <p class="student-vocab-card-word" id="vocabCardWord"></p>
-                    <p class="student-vocab-card-hint">눌러서 뜻 보기</p>
-                </div>
-                <div class="student-vocab-card-face student-vocab-card-back">
-                    <p class="student-vocab-card-meaning" id="vocabCardMeaning"></p>
-                    <p class="student-vocab-card-example" id="vocabCardExample"></p>
-                </div>
+        <div class="student-vocab-words-header">
+            <div>
+                <p class="student-vocab-words-title" id="vocabWordsTitle"></p>
+                <p class="student-vocab-words-subtitle" id="vocabWordsSubtitle"></p>
             </div>
+            <button type="button" class="student-vocab-quiz-btn" id="vocabQuizStartBtn" disabled>
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                퀴즈 보기
+            </button>
+        </div>
+        <p class="student-vocab-quiz-hint" id="vocabQuizHint">단어를 전부 눌러서 확인하면 퀴즈를 볼 수 있어요 (0/0)</p>
+
+        <p class="admin-empty-text" id="vocabWordsEmpty" hidden>이 Part에 등록된 단어가 아직 없어요.</p>
+        <div class="student-vocab-word-grid" id="vocabWordGrid"></div>
+    </div>
+</div>
+
+<!-- 퀴즈 전체화면 오버레이 -->
+<div class="vocab-quiz-overlay" id="vocabQuizOverlay" hidden>
+    <div class="vocab-quiz-panel">
+        <div class="vocab-quiz-header">
+            <p class="vocab-quiz-progress" id="vocabQuizProgress">1 / 10</p>
+            <p class="vocab-quiz-timer" id="vocabQuizTimer">05:00</p>
         </div>
 
-        <div class="student-vocab-actions">
-            <button type="button" class="student-vocab-nav-btn" id="vocabPrevBtn" aria-label="이전 카드">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="student-vocab-learn-btn student-vocab-learn-btn--no" id="vocabNotYetBtn">아직이에요</button>
-            <button type="button" class="student-vocab-learn-btn student-vocab-learn-btn--yes" id="vocabLearnedBtn">외웠어요!</button>
-            <button type="button" class="student-vocab-nav-btn" id="vocabNextBtn" aria-label="다음 카드">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
+        <div class="vocab-quiz-body">
+            <p class="vocab-quiz-label">이 단어의 뜻은?</p>
+            <p class="vocab-quiz-word" id="vocabQuizWord"></p>
+            <div class="vocab-quiz-options" id="vocabQuizOptions"></div>
         </div>
+
+        <button type="button" class="vocab-quiz-complete-btn" id="vocabQuizCompleteBtn" disabled>모든 문제를 풀면 완료할 수 있어요</button>
     </div>
 </div>

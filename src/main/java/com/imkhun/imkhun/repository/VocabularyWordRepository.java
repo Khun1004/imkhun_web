@@ -7,5 +7,9 @@ import java.util.List;
 
 public interface VocabularyWordRepository extends JpaRepository<VocabularyWord, Long> {
 
-    List<VocabularyWord> findByLanguageOrderByCreatedAtDesc(String language);
+    List<VocabularyWord> findBySetIdOrderByCreatedAtAsc(Long setId);
+
+    long countBySetId(Long setId);
+
+    void deleteBySetId(Long setId);
 }

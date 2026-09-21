@@ -1,50 +1,88 @@
 package com.imkhun.imkhun.service;
 
-import com.imkhun.imkhun.domain.VocabularyProgress;
+import com.imkhun.imkhun.domain.VocabularySet;
 import com.imkhun.imkhun.domain.VocabularyWord;
-import com.imkhun.imkhun.dto.CreateVocabularyWordRequest;
-import com.imkhun.imkhun.dto.FlashcardResponse;
-import com.imkhun.imkhun.dto.VocabularyStatsResponse;
-import com.imkhun.imkhun.dto.VocabularyWordResponse;
-import com.imkhun.imkhun.repository.VocabularyProgressRepository;
+import com.imkhun.imkhun.dto.*;
+import com.imkhun.imkhun.repository.VocabularyQuizResultRepository;
+import com.imkhun.imkhun.repository.VocabularySetRepository;
 import com.imkhun.imkhun.repository.VocabularyWordRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class VocabularyService {
 
-    private final VocabularyWordRepository vocabularyWordRepository;
-    private final VocabularyProgressRepository vocabularyProgressRepository;
+    private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    public VocabularyService(VocabularyWordRepository vocabularyWordRepository,
-                             VocabularyProgressRepository vocabularyProgressRepository) {
+    private final VocabularySetRepository vocabularySetRepository;
+    private final VocabularyWordRepository vocabularyWordRepository;
+    private final VocabularyQuizResultRepository vocabularyQuizResultRepository;
+
+    public VocabularyService(VocabularySetRepository vocabularySetRepository, VocabularyWordRepository vocabularyWordRepository,
+                             VocabularyQuizResultRepository vocabularyQuizResultRepository) {
+        this.vocabularySetRepository = vocabularySetRepository;
         this.vocabularyWordRepository = vocabularyWordRepository;
-        this.vocabularyProgressRepository = vocabularyProgressRepository;
+        this.vocabularyQuizResultRepository = vocabularyQuizResultRepository;
     }
 
-    // ---------- 관리자 ----------
+    // ---------- Part(세트) 관리 ----------
+
+    @Transactional
+    public VocabularySetResponse createSet(CreateVocabularySetRequest request) {
+        if (request.language() == null || request.language().isBlank()
+                || request.name() == null || request.name().isBlank()
+                || request.category() == null || request.category().isBlank()) {
+            throw new IllegalStateException("언어, Part 이름, 종류를 모두 입력해주세요.");
+        }
+        if (request.quizTimeLimitMinutes() <= 0) {
+            throw new IllegalStateException("퀴즈 제한시간은 1분 이상이어야 해요.");
+        }
+        VocabularySet saved = vocabularySetRepository.save(
+                VocabularySet.create(request.language(), request.name(), request.category(), request.quizTimeLimitMinutes()));
+        return toSetResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<VocabularySetResponse> getSetsForLanguage(String language) {
+        return vocabularySetRepository.findByLanguageOrderByCreatedAtAsc(language).stream()
+                .map(this::toSetResponse)
+                .toList();
+    }
+
+    @Transactional
+    public void deleteSet(Long setId) {
+        vocabularyWordRepository.deleteBySetId(setId);
+        vocabularyQuizResultRepository.deleteBySetId(setId);
+        vocabularySetRepository.deleteById(setId);
+    }
+
+    private VocabularySetResponse toSetResponse(VocabularySet set) {
+        long wordCount = vocabularyWordRepository.countBySetId(set.getId());
+        return new VocabularySetResponse(set.getId(), set.getLanguage(), set.getName(), set.getCategory(),
+                set.getQuizTimeLimitMinutes(), wordCount);
+    }
+
+    // ---------- 단어 관리 ----------
 
     @Transactional
     public VocabularyWordResponse addWord(CreateVocabularyWordRequest request) {
-        if (request.language() == null || request.language().isBlank()
-                || request.word() == null || request.word().isBlank()
-                || request.meaning() == null || request.meaning().isBlank()) {
-            throw new IllegalStateException("언어, 단어, 뜻을 모두 입력해주세요.");
+        if (request.setId() == null || !vocabularySetRepository.existsById(request.setId())) {
+            throw new IllegalStateException("Part를 먼저 선택해주세요.");
+        }
+        if (request.word() == null || request.word().isBlank() || request.meaning() == null || request.meaning().isBlank()) {
+            throw new IllegalStateException("단어와 뜻을 모두 입력해주세요.");
         }
         VocabularyWord saved = vocabularyWordRepository.save(
-                VocabularyWord.create(request.language(), request.word(), request.meaning(), request.example()));
+                VocabularyWord.create(request.setId(), request.word(), request.meaning(), request.example()));
         return toWordResponse(saved);
     }
 
     @Transactional(readOnly = true)
-    public List<VocabularyWordResponse> getWordsForAdmin(String language) {
-        return vocabularyWordRepository.findByLanguageOrderByCreatedAtDesc(language).stream()
+    public List<VocabularyWordResponse> getWordsForSetAdmin(Long setId) {
+        return vocabularyWordRepository.findBySetIdOrderByCreatedAtAsc(setId).stream()
                 .map(this::toWordResponse)
                 .toList();
     }
@@ -57,45 +95,34 @@ public class VocabularyService {
     // ---------- 학생 ----------
 
     @Transactional(readOnly = true)
-    public List<FlashcardResponse> getFlashcards(String username, String language) {
-        List<VocabularyWord> words = vocabularyWordRepository.findByLanguageOrderByCreatedAtDesc(language);
-        Map<Long, Boolean> learnedByWordId = vocabularyProgressRepository.findByUsername(username).stream()
-                .collect(Collectors.toMap(VocabularyProgress::getWordId, VocabularyProgress::isLearned));
+    public List<VocabularySetResponse> getSetsForStudent(String language) {
+        return getSetsForLanguage(language);
+    }
 
-        return words.stream()
-                .map(w -> new FlashcardResponse(w.getId(), w.getWord(), w.getMeaning(), w.getExample(),
-                        learnedByWordId.getOrDefault(w.getId(), false)))
+    @Transactional(readOnly = true)
+    public List<FlashcardResponse> getFlashcards(Long setId) {
+        return vocabularyWordRepository.findBySetIdOrderByCreatedAtAsc(setId).stream()
+                .map(w -> new FlashcardResponse(w.getId(), w.getWord(), w.getMeaning(), w.getExample()))
                 .toList();
     }
 
     @Transactional
-    public void markLearned(String username, Long wordId, boolean learned) {
-        VocabularyProgress progress = vocabularyProgressRepository.findByUsernameAndWordId(username, wordId)
-                .orElseGet(() -> VocabularyProgress.create(username, wordId, learned));
-        progress.update(learned);
-        vocabularyProgressRepository.save(progress);
+    public void submitQuizResult(Long setId, String username, SubmitQuizResultRequest request) {
+        if (!vocabularySetRepository.existsById(setId)) {
+            throw new IllegalStateException("Part를 찾을 수 없어요.");
+        }
+        vocabularyQuizResultRepository.save(
+                com.imkhun.imkhun.domain.VocabularyQuizResult.create(setId, username, request.score(), request.totalQuestions()));
     }
 
     @Transactional(readOnly = true)
-    public VocabularyStatsResponse getStats(String username, String language) {
-        List<VocabularyWord> words = vocabularyWordRepository.findByLanguageOrderByCreatedAtDesc(language);
-        List<Long> wordIds = words.stream().map(VocabularyWord::getId).toList();
-
-        List<VocabularyProgress> myProgress = vocabularyProgressRepository.findByUsername(username).stream()
-                .filter(p -> wordIds.contains(p.getWordId()))
-                .toList();
-
-        long learnedTotal = myProgress.stream().filter(VocabularyProgress::isLearned).count();
-        LocalDate today = LocalDate.now();
-        long learnedToday = myProgress.stream()
-                .filter(VocabularyProgress::isLearned)
-                .filter(p -> p.getUpdatedAt().toLocalDate().equals(today))
-                .count();
-
-        return new VocabularyStatsResponse(words.size(), learnedTotal, learnedToday);
+    public QuizResultResponse getBestQuizResult(Long setId, String username) {
+        return vocabularyQuizResultRepository.findTopBySetIdAndUsernameOrderByCompletedAtDesc(setId, username)
+                .map(r -> new QuizResultResponse(r.getScore(), r.getTotalQuestions(), r.getCompletedAt().format(DATETIME_FORMAT)))
+                .orElse(new QuizResultResponse(null, null, null));
     }
 
     private VocabularyWordResponse toWordResponse(VocabularyWord word) {
-        return new VocabularyWordResponse(word.getId(), word.getLanguage(), word.getWord(), word.getMeaning(), word.getExample());
+        return new VocabularyWordResponse(word.getId(), word.getSetId(), word.getWord(), word.getMeaning(), word.getExample());
     }
 }

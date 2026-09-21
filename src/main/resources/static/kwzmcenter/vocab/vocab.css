@@ -1,224 +1,429 @@
-/* ===================== 단어장 / 플래시카드 ===================== */
+/* ===================== 단어장 (Part 목록 + 단어 그리드 + 퀴즈) ===================== */
 
 .student-vocab-layout {
-    max-width: 720px;
+    max-width: 880px;
     margin: 0 auto;
-    padding: 40px 24px 80px;
+    padding: 22px 24px 80px;
 }
 
 .student-vocab-lang-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: 36px;
 }
 
 .student-vocab-lang-pill {
-    padding: 9px 20px;
-    border: 1px solid var(--kwzm-line);
+    flex: 1 1 130px;
+    max-width: 170px;
+    padding: 13px 22px;
+    border: 2px solid var(--kwzm-line);
     border-radius: 999px;
     background: var(--kwzm-bg-3);
     color: var(--kwzm-ink-soft);
     font-family: "Noto Sans KR", sans-serif;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition: background 0.25s, color 0.2s, border-color 0.2s, transform 0.18s, box-shadow 0.2s;
+}
+
+.student-vocab-lang-pill:hover {
+    transform: translateY(-2px);
+    border-color: var(--kwzm-accent, #2f9aa0);
 }
 
 .student-vocab-lang-pill.active {
     background: var(--kwzm-gradient);
     border-color: transparent;
     color: #fff;
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 14px 26px -12px rgba(47, 154, 160, 0.55);
 }
 
-.student-vocab-stats {
+/* ---------- Part 목록 ---------- */
+
+.student-vocab-set-list {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 28px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
 }
 
-.student-vocab-stat-item {
+.student-vocab-set-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 3px;
-    padding: 14px 8px;
-    background: var(--kwzm-bg-3);
+    gap: 14px;
+    padding: 18px 20px;
     border: 1px solid var(--kwzm-line);
-    border-radius: 14px;
-}
-
-.student-vocab-stat-value {
-    font-family: "Noto Serif KR", serif;
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--kwzm-primary, #16386b);
-}
-
-.student-vocab-stat-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--kwzm-ink-faint);
-}
-
-.student-vocab-card-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.student-vocab-progress-label {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--kwzm-ink-faint);
-    margin-bottom: 14px;
-}
-
-.student-vocab-card {
-    width: 100%;
-    max-width: 420px;
-    aspect-ratio: 16 / 10;
-    perspective: 1200px;
+    border-left: 5px solid var(--kwzm-accent, #2f9aa0);
+    border-radius: 16px;
+    background: var(--kwzm-bg-3);
     cursor: pointer;
+    text-align: left;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
-.student-vocab-card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-    transform-style: preserve-3d;
+.student-vocab-set-item:hover {
+    transform: translateY(-3px) scale(1.015);
+    border-color: var(--kwzm-accent, #2f9aa0);
+    box-shadow: 0 16px 32px -16px rgba(47, 154, 160, 0.4);
 }
 
-.student-vocab-card-inner.is-flipped {
-    transform: rotateY(180deg);
+.student-vocab-set-item:nth-child(4n+2) {
+    border-left-color: #e0a72c;
 }
 
-.student-vocab-card-face {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 30px;
-    border-radius: 24px;
-    backface-visibility: hidden;
-    box-shadow: 0 20px 40px -20px rgba(15, 37, 71, 0.35);
-    text-align: center;
+.student-vocab-set-item:nth-child(4n+3) {
+    border-left-color: #b8566a;
 }
 
-.student-vocab-card-front {
-    background: var(--kwzm-gradient);
-    color: #fff;
+.student-vocab-set-item:nth-child(4n+4) {
+    border-left-color: #6b5b95;
 }
 
-.student-vocab-card-back {
-    background: var(--kwzm-bg-3);
-    border: 1px solid var(--kwzm-line);
-    transform: rotateY(180deg);
-}
-
-.student-vocab-card-word {
-    font-family: "Noto Serif KR", serif;
-    font-size: 32px;
-    font-weight: 800;
-    margin: 0;
-}
-
-.student-vocab-card-hint {
-    font-size: 12px;
-    opacity: 0.85;
-    margin: 0;
-}
-
-.student-vocab-card-meaning {
-    font-family: "Noto Serif KR", serif;
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--kwzm-primary, #16386b);
-    margin: 0;
-}
-
-.student-vocab-card-example {
-    font-size: 13px;
-    color: var(--kwzm-ink-soft);
-    line-height: 1.6;
-    margin: 0;
-}
-
-.student-vocab-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 24px;
-}
-
-.student-vocab-nav-btn {
+.student-vocab-set-item-icon {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 42px;
     height: 42px;
-    flex-shrink: 0;
-    border: 1px solid var(--kwzm-line);
-    border-radius: 50%;
-    background: var(--kwzm-bg-3);
-    color: var(--kwzm-ink-soft);
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-
-.student-vocab-nav-btn svg {
-    width: 18px;
-    height: 18px;
-}
-
-.student-vocab-nav-btn:hover {
+    border-radius: 12px;
     background: var(--kwzm-gradient);
     color: #fff;
-    border-color: transparent;
 }
 
-.student-vocab-learn-btn {
+.student-vocab-set-item:nth-child(4n+2) .student-vocab-set-item-icon {
+    background: linear-gradient(135deg, #e0a72c, #c98a2f);
+}
+
+.student-vocab-set-item:nth-child(4n+3) .student-vocab-set-item-icon {
+    background: linear-gradient(135deg, #d9425a, #b8283f);
+}
+
+.student-vocab-set-item:nth-child(4n+4) .student-vocab-set-item-icon {
+    background: linear-gradient(135deg, #8b7bc7, #6b5b95);
+}
+
+.student-vocab-set-item-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.student-vocab-set-item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.student-vocab-set-item-name {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.student-vocab-set-item-meta {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+}
+
+/* ---------- 선택된 Part: 단어 목록 ---------- */
+
+.student-vocab-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    padding: 8px 16px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 999px;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-soft);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.student-vocab-back-btn:hover {
+    background: var(--kwzm-bg-2);
+}
+
+.student-vocab-back-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.student-vocab-words-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.student-vocab-words-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+    margin: 0 0 4px;
+}
+
+.student-vocab-words-subtitle {
+    font-size: 12px;
+    color: var(--kwzm-ink-faint);
+    margin: 0;
+}
+
+.student-vocab-quiz-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 12px 20px;
     border: none;
     border-radius: 999px;
+    background: linear-gradient(135deg, #e0a72c, #c98a2f);
+    color: #fff;
+    font-family: "Noto Sans KR", sans-serif;
     font-size: 13px;
     font-weight: 800;
     cursor: pointer;
+    box-shadow: 0 12px 26px -14px rgba(200, 138, 47, 0.6);
     transition: transform 0.15s;
 }
 
-.student-vocab-learn-btn:hover {
+.student-vocab-quiz-btn:hover {
     transform: translateY(-2px);
 }
 
-.student-vocab-learn-btn--no {
+.student-vocab-quiz-btn:disabled {
     background: var(--kwzm-bg-2);
-    color: var(--kwzm-ink-soft);
+    color: var(--kwzm-ink-faint);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
 }
 
-.student-vocab-learn-btn--yes {
-    background: linear-gradient(135deg, #3fae7a, #2c8f61);
+.student-vocab-quiz-hint {
+    text-align: right;
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    margin: -14px 0 22px;
+}
+
+.student-vocab-quiz-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+.student-vocab-word-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.student-vocab-word-card {
+    padding: 22px 20px;
+    border: 2px solid var(--kwzm-line);
+    border-radius: 16px;
+    background: var(--kwzm-bg-3);
+    cursor: pointer;
+    text-align: center;
+    min-height: 108px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.student-vocab-word-card:hover {
+    border-color: var(--kwzm-accent, #2f9aa0);
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px -16px rgba(47, 154, 160, 0.35);
+}
+
+.student-vocab-word-card.is-revealed {
+    background: linear-gradient(135deg, rgba(47, 154, 160, 0.08), rgba(224, 167, 44, 0.08));
+    border-color: var(--kwzm-accent, #2f9aa0);
+}
+
+.student-vocab-word-card-word {
+    font-family: "Noto Serif KR", serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+    margin: 0;
+}
+
+.student-vocab-word-card-meaning {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--kwzm-accent-2, #1c6b70);
+    margin: 0;
+}
+
+.student-vocab-word-card-example {
+    font-size: 11.5px;
+    color: var(--kwzm-ink-soft);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.student-vocab-word-card-hint {
+    font-size: 10.5px;
+    color: var(--kwzm-ink-faint);
+    margin: 4px 0 0;
+}
+
+@media (max-width: 480px) {
+    .student-vocab-word-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- 퀴즈 오버레이 ---------- */
+
+.vocab-quiz-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 25, 40, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.vocab-quiz-overlay[hidden] {
+    display: none;
+}
+
+.vocab-quiz-panel {
+    width: min(520px, 100%);
+    background: var(--kwzm-bg-3);
+    border-radius: 24px;
+    padding: 32px 30px;
+    box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.5);
+}
+
+.vocab-quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.vocab-quiz-progress {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--kwzm-ink-faint);
+    margin: 0;
+}
+
+.vocab-quiz-timer {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 18px;
+    font-weight: 800;
+    color: #d9425a;
+    margin: 0;
+}
+
+.vocab-quiz-label {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--kwzm-ink-faint);
+    margin: 0 0 8px;
+}
+
+.vocab-quiz-word {
+    text-align: center;
+    font-family: "Noto Serif KR", serif;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+    margin: 0 0 28px;
+}
+
+.vocab-quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.vocab-quiz-option {
+    padding: 14px 18px;
+    border: 1.5px solid var(--kwzm-line);
+    border-radius: 14px;
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.vocab-quiz-option:hover:not(:disabled) {
+    border-color: var(--kwzm-accent, #2f9aa0);
+    transform: translateY(-1px);
+}
+
+.vocab-quiz-option:disabled {
+    cursor: default;
+}
+
+.vocab-quiz-option.is-correct {
+    background: rgba(63, 174, 122, 0.16);
+    border-color: #3fae7a;
+    color: #2c8f61;
+    font-weight: 800;
+}
+
+.vocab-quiz-option.is-wrong {
+    background: rgba(217, 66, 90, 0.12);
+    border-color: #d9425a;
+    color: #b8283f;
+    font-weight: 800;
+}
+
+.vocab-quiz-complete-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 999px;
+    background: var(--kwzm-gradient);
     color: #fff;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.vocab-quiz-complete-btn:disabled {
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink-faint);
+    cursor: not-allowed;
 }
 
 @media (max-width: 560px) {
-    .student-vocab-card-word {
-        font-size: 26px;
+    .vocab-quiz-panel {
+        padding: 26px 20px;
     }
 
-    .student-vocab-card-meaning {
-        font-size: 20px;
-    }
-
-    .student-vocab-actions {
-        flex-wrap: wrap;
-        justify-content: center;
+    .vocab-quiz-word {
+        font-size: 24px;
     }
 }

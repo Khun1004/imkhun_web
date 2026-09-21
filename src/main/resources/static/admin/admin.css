@@ -4687,6 +4687,72 @@ textarea.admin-note-textarea.admin-register-text {
     background: var(--paper-2);
 }
 
+.admin-vocab-set-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 20px 0 14px;
+}
+
+.admin-vocab-set-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+}
+
+.admin-vocab-set-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-vocab-set-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.admin-vocab-set-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.admin-vocab-set-card.active {
+    border-color: var(--teal-deep);
+    box-shadow: 0 0 0 2px rgba(28, 107, 112, 0.18);
+}
+
+.admin-vocab-set-card-info {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.admin-vocab-set-card-name {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 4px;
+}
+
+.admin-vocab-set-card-meta {
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin: 0;
+}
+
 .admin-vocab-columns {
     display: grid;
     grid-template-columns: 340px 1fr;
@@ -4744,4 +4810,446 @@ textarea.admin-note-textarea.admin-register-text {
         position: static;
         max-height: none;
     }
+}
+
+/* 발음/음성 녹음 제출 (관리자) */
+
+.admin-voice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.admin-voice-item {
+    padding: 16px 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+}
+
+.admin-voice-item-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.admin-voice-item-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-voice-item-meta {
+    font-size: 11px;
+    color: var(--ink-faint);
+}
+
+.admin-voice-item audio {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.admin-voice-comment-row {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-voice-comment-input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--paper);
+}
+
+.admin-voice-comment-input:focus {
+    outline: none;
+    border-color: var(--teal-deep);
+}
+
+/* ---------- 단어장 등록하기 모달 ---------- */
+
+.admin-vocab-register-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 320;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 16px 40px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.admin-vocab-register-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.admin-vocab-register-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 37, 71, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+.admin-vocab-register-panel {
+    position: relative;
+    width: min(640px, 96vw);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: 0 44px 90px -28px rgba(15, 37, 71, 0.5);
+}
+
+.admin-vocab-register-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: var(--teal-deep);
+    border-radius: 18px 18px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.admin-vocab-register-head h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.admin-vocab-register-body {
+    padding: 24px 28px 30px;
+}
+
+.admin-vocab-register-set-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 140px;
+    gap: 14px;
+}
+
+.admin-vocab-register-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 14px 0;
+}
+
+.admin-vocab-register-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.4fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.admin-vocab-register-row input {
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--paper);
+}
+
+.admin-vocab-register-row input:focus {
+    outline: none;
+    border-color: var(--teal-deep);
+}
+
+@media (max-width: 620px) {
+    .admin-vocab-register-set-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-vocab-register-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Part 상세: 헤더 + 퀴즈 미리보기 버튼 ---------- */
+
+.admin-vocab-manage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-vocab-manage-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ---------- 관리자 퀴즈 미리보기 오버레이 (학생용 vocab-quiz-* 재사용) ---------- */
+
+.vocab-quiz-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 25, 40, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.vocab-quiz-overlay[hidden] {
+    display: none;
+}
+
+.vocab-quiz-panel {
+    width: min(520px, 100%);
+    background: var(--card);
+    border-radius: 24px;
+    padding: 28px 30px;
+    box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.5);
+}
+
+.vocab-quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.vocab-quiz-progress {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ink-faint);
+    margin: 0;
+}
+
+.vocab-quiz-timer {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 17px;
+    font-weight: 800;
+    color: #d9425a;
+    margin: 0;
+}
+
+.vocab-quiz-label {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin: 0 0 8px;
+}
+
+.vocab-quiz-word {
+    text-align: center;
+    font-family: "Noto Serif KR", serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 24px;
+}
+
+.vocab-quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vocab-quiz-option {
+    padding: 13px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper-2);
+    color: var(--ink);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.vocab-quiz-option:hover:not(:disabled) {
+    border-color: var(--teal-deep);
+}
+
+.vocab-quiz-option:disabled {
+    cursor: default;
+}
+
+.vocab-quiz-option.is-correct {
+    background: rgba(63, 174, 122, 0.16);
+    border-color: #3fae7a;
+    color: #2c8f61;
+    font-weight: 800;
+}
+
+.vocab-quiz-option.is-wrong {
+    background: rgba(217, 66, 90, 0.12);
+    border-color: #d9425a;
+    color: #b8283f;
+    font-weight: 800;
+}
+
+/* ---------- 숙제 제출물 검색/필터 ---------- */
+
+.admin-submission-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0 10px;
+}
+
+.admin-submission-search {
+    flex: 1;
+    min-width: 220px;
+    padding: 9px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--paper);
+}
+
+.admin-submission-search:focus {
+    outline: none;
+    border-color: var(--teal-deep);
+}
+
+.admin-submission-filter-tabs {
+    display: flex;
+    gap: 6px;
+}
+
+.admin-submission-count {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin: 0 0 14px;
+}
+
+.admin-submission-unread-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #d9425a;
+    vertical-align: middle;
+}
+
+.admin-submission-content {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+}
+
+/* ---------- 숙제 보기 모달: 사진 라이트박스 ---------- */
+
+.assignment-view-lightbox {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 14px 0;
+    padding: 10px;
+    background: var(--paper-2);
+    border-radius: 12px;
+}
+
+.assignment-view-lightbox-img {
+    max-width: 100%;
+    max-height: 420px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.assignment-view-lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(15, 37, 71, 0.65);
+    color: #fff;
+    cursor: pointer;
+}
+
+.assignment-view-lightbox-nav:hover {
+    background: rgba(15, 37, 71, 0.85);
+}
+
+.assignment-view-lightbox-prev {
+    left: 12px;
+}
+
+.assignment-view-lightbox-next {
+    right: 12px;
+}
+
+.assignment-view-lightbox-nav svg {
+    width: 18px;
+    height: 18px;
+}
+
+.assignment-view-lightbox-count {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(15, 37, 71, 0.65);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.assignment-view-file-links {
+    margin: 10px 0;
+}
+
+/* ---------- 모달 닫기(X) 버튼 — admin-vocab-register-head 같은 어두운 헤더 위에 얹는 원형 버튼 ---------- */
+
+.board-modal-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.board-modal-close:hover {
+    background: rgba(255, 255, 255, 0.36);
+}
+
+.board-modal-close svg {
+    width: 15px;
+    height: 15px;
 }

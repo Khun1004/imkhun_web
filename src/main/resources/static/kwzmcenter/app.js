@@ -96,6 +96,7 @@ const NOTIF_TYPE_ICON = {
     CHECKIN_AVAILABLE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     NEW_NOTICE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v10H9l-4 4V5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     RENEWAL_REMINDER: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 17v-5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    VOICE_COMMENT_ADDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.6"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     CLASS_CHANGE_RESPONDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 15l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 const NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
@@ -126,6 +127,8 @@ async function loadStudentPortalData() {
         renderStudentHome(data.nickname);
         renderStudentLanguagePills();
         renderVocabLanguagePills();
+        loadTodaySummary();
+        initStudentCalendar();
         renderTodaysTip();
         loadRecentMaterials();
         loadStudentNotifUnreadCount();
@@ -143,6 +146,90 @@ async function loadStudentPortalData() {
 
 let checkinPollTimer = null;
 let studentNicknameForCheckin = "";
+
+const TODAY_SUMMARY_STATUS_LABEL = { PRESENT: "출석 완료", LATE: "지각 처리됨", ABSENT: "결석 처리됨", MAKEUP: "보강 처리됨" };
+
+async function loadTodaySummary() {
+    const sectionEl = document.getElementById("studentTodaySummary");
+    const cardsEl = document.getElementById("studentTodaySummaryCards");
+    if (!sectionEl || !cardsEl) return;
+
+    try {
+        const res = await fetch("/api/student/today-summary");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const cards = [];
+
+        const todayClasses = data.checkinStatus?.scheduledToday || [];
+        if (todayClasses.length > 0) {
+            const cls = todayClasses[0];
+            const statusLabel = cls.status ? TODAY_SUMMARY_STATUS_LABEL[cls.status] || cls.status : "체크 전";
+            cards.push(`
+        <div class="student-today-summary-card student-today-summary-card--class">
+          <span class="student-today-summary-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <p class="student-today-summary-card-title">오늘 수업 — ${escapeHtmlForStudent(cls.courseName)}</p>
+            <p class="student-today-summary-card-desc">${cls.classTime ? cls.classTime.slice(0, 5) + " · " : ""}${statusLabel}</p>
+          </div>
+        </div>
+      `);
+        }
+
+        const upcoming = data.upcomingAssignments || [];
+        if (upcoming.length > 0) {
+            const nearest = upcoming[0];
+            cards.push(`
+        <div class="student-today-summary-card student-today-summary-card--assignment">
+          <span class="student-today-summary-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </span>
+          <div>
+            <p class="student-today-summary-card-title">마감 임박 숙제 ${upcoming.length}개</p>
+            <p class="student-today-summary-card-desc">${escapeHtmlForStudent(nearest.title)} · ${nearest.dueDate}까지</p>
+          </div>
+        </div>
+      `);
+        }
+
+        if (data.unreadNotificationCount > 0) {
+            cards.push(`
+        <div class="student-today-summary-card student-today-summary-card--notif">
+          <span class="student-today-summary-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.7"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </span>
+          <div>
+            <p class="student-today-summary-card-title">안 읽은 알림 ${data.unreadNotificationCount}개</p>
+            <p class="student-today-summary-card-desc">알림 종 눌러서 확인해보세요</p>
+          </div>
+        </div>
+      `);
+        }
+
+        if (cards.length === 0) {
+            cardsEl.innerHTML = `
+        <div class="student-today-summary-card student-today-summary-card--empty">
+          <span class="student-today-summary-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <p class="student-today-summary-card-title">오늘은 할 일이 없어요</p>
+            <p class="student-today-summary-card-desc">편히 쉬세요!</p>
+          </div>
+        </div>
+      `;
+            sectionEl.hidden = false;
+            return;
+        }
+
+        cardsEl.innerHTML = cards.join("");
+        sectionEl.hidden = false;
+    } catch (err) {
+        console.error(err);
+    }
+}
 
 async function loadCheckinOptions() {
     const dock = document.getElementById("studentCheckinDock");
@@ -868,33 +955,107 @@ async function loadRecentMaterials() {
     }
 }
 
-let vocabCards = [];
-let vocabCurrentIndex = 0;
 let vocabSelectedLanguage = null;
-let vocabIsFlipped = false;
+let vocabSets = [];
+let vocabSelectedSetId = null;
+let vocabWords = [];
+let vocabRevealedWordIds = new Set();
+
+let vocabQuizQuestions = [];
+let vocabQuizCurrentIndex = 0;
+let vocabQuizTimerInterval = null;
+let vocabQuizSecondsLeft = 0;
+
+let calendarViewYear = new Date().getFullYear();
+let calendarViewMonth = new Date().getMonth() + 1;
+
+function initStudentCalendar() {
+    const grid = document.getElementById("calendarGrid");
+    if (!grid) return; // 아직 달력 화면을 안 열어봤으면 DOM이 없을 수 있음
+    renderStudentCalendarMonth();
+}
+
+async function renderStudentCalendarMonth() {
+    const gridEl = document.getElementById("calendarGrid");
+    const titleEl = document.getElementById("calendarNavTitle");
+    if (!gridEl || !titleEl) return;
+
+    titleEl.textContent = `${calendarViewYear}년 ${calendarViewMonth}월`;
+    gridEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/student/calendar?year=${calendarViewYear}&month=${calendarViewMonth}`);
+        const events = res.ok ? await res.json() : [];
+
+        const eventsByDate = {};
+        events.forEach((e) => {
+            if (!eventsByDate[e.date]) eventsByDate[e.date] = [];
+            eventsByDate[e.date].push(e);
+        });
+
+        const firstOfMonth = new Date(calendarViewYear, calendarViewMonth - 1, 1);
+        const daysInMonth = new Date(calendarViewYear, calendarViewMonth, 0).getDate();
+        const startWeekday = firstOfMonth.getDay(); // 0=일
+        const todayStr = new Date().toISOString().slice(0, 10);
+
+        gridEl.innerHTML = "";
+
+        for (let i = 0; i < startWeekday; i++) {
+            const empty = document.createElement("div");
+            empty.className = "calendar-cell calendar-cell--empty";
+            gridEl.appendChild(empty);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${calendarViewYear}-${String(calendarViewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const dayEvents = eventsByDate[dateStr] || [];
+
+            const cell = document.createElement("div");
+            cell.className = "calendar-cell";
+            if (dateStr === todayStr) cell.classList.add("is-today");
+
+            const chips = dayEvents
+                .map((e) => {
+                    if (e.type === "CLASS") {
+                        const statusClass = e.status ? `calendar-dot--${e.status.toLowerCase()}` : "calendar-dot--upcoming";
+                        return `<span class="calendar-chip"><i class="calendar-dot ${statusClass}"></i>${escapeHtmlForStudent(e.title)}</span>`;
+                    }
+                    return `<span class="calendar-chip"><i class="calendar-dot calendar-dot--assignment"></i>${escapeHtmlForStudent(e.title)}</span>`;
+                })
+                .join("");
+
+            cell.innerHTML = `
+        <span class="calendar-cell-day">${day}</span>
+        <div class="calendar-cell-chips">${chips}</div>
+      `;
+            gridEl.appendChild(cell);
+        }
+    } catch (err) {
+        console.error(err);
+        gridEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+function goToCalendarMonth(offset) {
+    calendarViewMonth += offset;
+    if (calendarViewMonth > 12) {
+        calendarViewMonth = 1;
+        calendarViewYear++;
+    } else if (calendarViewMonth < 1) {
+        calendarViewMonth = 12;
+        calendarViewYear--;
+    }
+    renderStudentCalendarMonth();
+}
 
 async function renderVocabLanguagePills() {
     const pillsEl = document.getElementById("vocabLanguagePills");
     if (!pillsEl) return;
 
-    // "내 수강 정보" 카드용 studentCourses는 자료 초대가 있어야만 나오는데,
-    // 단어장은 초대 여부랑 상관없이 승인된 신청이면 다 보여줘야 해서 이 API를 따로 씀
-    let enrolledLanguages = new Set();
-    try {
-        const res = await fetch("/api/student/enrolled-courses");
-        if (res.ok) {
-            const courses = await res.json();
-            enrolledLanguages = new Set(courses.map((c) => c.language));
-        }
-    } catch (err) {
-        console.error(err);
-    }
-
     pillsEl.innerHTML = "";
 
-    Object.keys(STUDENT_LANGUAGE_LABEL).forEach((lang) => {
-        if (!enrolledLanguages.has(lang)) return; // 신청 안 한 언어는 단어장에 아예 안 보여줌
-
+    // 신청 여부랑 상관없이 4개 언어 탭을 항상 다 보여줌
+    ["korean", "japanese", "thai", "english"].forEach((lang) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "student-vocab-lang-pill";
@@ -903,7 +1064,8 @@ async function renderVocabLanguagePills() {
         btn.addEventListener("click", () => {
             pillsEl.querySelectorAll(".student-vocab-lang-pill").forEach((p) => p.classList.remove("active"));
             btn.classList.add("active");
-            loadVocabFlashcards(lang);
+            backToVocabSets();
+            loadVocabSets(lang);
         });
         pillsEl.appendChild(btn);
     });
@@ -912,84 +1074,245 @@ async function renderVocabLanguagePills() {
     if (firstBtn) firstBtn.click();
 }
 
-function renderVocabStats(s) {
-    const statsEl = document.getElementById("vocabStats");
-    if (!statsEl) return;
-    statsEl.innerHTML = `
-      <div class="student-vocab-stat-item"><span class="student-vocab-stat-value">${s.totalWords}</span><span class="student-vocab-stat-label">전체</span></div>
-      <div class="student-vocab-stat-item"><span class="student-vocab-stat-value">${s.learnedWords}</span><span class="student-vocab-stat-label">외운 단어</span></div>
-      <div class="student-vocab-stat-item"><span class="student-vocab-stat-value">${s.learnedToday}</span><span class="student-vocab-stat-label">오늘 외움</span></div>
-    `;
-}
-
-async function loadVocabFlashcards(language) {
+async function loadVocabSets(language) {
     vocabSelectedLanguage = language;
-    const emptyEl = document.getElementById("vocabEmpty");
-    const cardAreaEl = document.getElementById("vocabCardArea");
+    const listEl = document.getElementById("vocabSetList");
+    const emptyEl = document.getElementById("vocabSetEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
 
     try {
-        const [cardsRes, statsRes] = await Promise.all([
-            fetch(`/api/student/vocabulary/${language}`),
-            fetch(`/api/student/vocabulary/${language}/stats`),
-        ]);
+        const res = await fetch(`/api/student/vocabulary/sets/${language}`);
+        const sets = res.ok ? await res.json() : [];
+        vocabSets = sets;
 
-        vocabCards = cardsRes.ok ? await cardsRes.json() : [];
-        vocabCurrentIndex = 0;
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = sets.length > 0;
 
-        if (statsRes.ok) renderVocabStats(await statsRes.json());
-
-        if (vocabCards.length === 0) {
-            if (emptyEl) emptyEl.hidden = false;
-            if (cardAreaEl) cardAreaEl.hidden = true;
-        } else {
-            if (emptyEl) emptyEl.hidden = true;
-            if (cardAreaEl) cardAreaEl.hidden = false;
-            showVocabCard(0);
-        }
+        sets.forEach((s) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = "student-vocab-set-item";
+            item.innerHTML = `
+        <span class="student-vocab-set-item-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="student-vocab-set-item-text">
+          <span class="student-vocab-set-item-name">${escapeHtmlForStudent(s.name)}</span>
+          <span class="student-vocab-set-item-meta">${escapeHtmlForStudent(s.category)} · 단어 ${s.wordCount}개</span>
+        </span>
+      `;
+            item.addEventListener("click", () => openVocabSet(s));
+            listEl.appendChild(item);
+        });
     } catch (err) {
         console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
     }
 }
 
-function showVocabCard(index) {
-    if (vocabCards.length === 0) return;
-    vocabCurrentIndex = (index + vocabCards.length) % vocabCards.length;
-    const card = vocabCards[vocabCurrentIndex];
-    vocabIsFlipped = false;
+async function openVocabSet(set) {
+    vocabSelectedSetId = set.id;
+    vocabRevealedWordIds = new Set();
+    document.getElementById("vocabSetListArea").hidden = true;
+    document.getElementById("vocabWordsArea").hidden = false;
+    document.getElementById("vocabWordsTitle").textContent = set.name;
+    document.getElementById("vocabWordsSubtitle").textContent =
+        `${set.category} · 단어 ${set.wordCount}개 · 퀴즈 제한시간 ${set.quizTimeLimitMinutes}분`;
 
-    const inner = document.getElementById("vocabCardInner");
-    if (inner) inner.classList.remove("is-flipped");
-    document.getElementById("vocabCardWord").textContent = card.word;
-    document.getElementById("vocabCardMeaning").textContent = card.meaning;
-    document.getElementById("vocabCardExample").textContent = card.example || "";
-    document.getElementById("vocabProgressLabel").textContent =
-        `${vocabCurrentIndex + 1} / ${vocabCards.length}${card.learned ? " · 외운 단어" : ""}`;
-}
-
-function flipVocabCard() {
-    vocabIsFlipped = !vocabIsFlipped;
-    document.getElementById("vocabCardInner")?.classList.toggle("is-flipped", vocabIsFlipped);
-}
-
-async function markVocabLearned(learned) {
-    const card = vocabCards[vocabCurrentIndex];
-    if (!card) return;
+    const gridEl = document.getElementById("vocabWordGrid");
+    const emptyEl = document.getElementById("vocabWordsEmpty");
+    gridEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
 
     try {
-        await fetch(`/api/student/vocabulary/${card.id}/progress`, {
+        const res = await fetch(`/api/student/vocabulary/sets/${set.id}/words`);
+        const words = res.ok ? await res.json() : [];
+        vocabWords = words;
+
+        gridEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = words.length > 0;
+
+        words.forEach((w) => {
+            const card = document.createElement("div");
+            card.className = "student-vocab-word-card";
+            card.innerHTML = `
+        <p class="student-vocab-word-card-word">${escapeHtmlForStudent(w.word)}</p>
+        <p class="student-vocab-word-card-meaning" hidden>${escapeHtmlForStudent(w.meaning)}</p>
+        ${w.example ? `<p class="student-vocab-word-card-example" hidden>${escapeHtmlForStudent(w.example)}</p>` : ""}
+        <p class="student-vocab-word-card-hint">눌러서 뜻 보기</p>
+      `;
+            card.addEventListener("click", () => {
+                const isRevealed = card.classList.toggle("is-revealed");
+                const meaningEl = card.querySelector(".student-vocab-word-card-meaning");
+                const exampleEl = card.querySelector(".student-vocab-word-card-example");
+                const hintEl = card.querySelector(".student-vocab-word-card-hint");
+                if (meaningEl) meaningEl.hidden = !isRevealed;
+                if (exampleEl) exampleEl.hidden = !isRevealed;
+                if (hintEl) hintEl.textContent = isRevealed ? "눌러서 단어 보기" : "눌러서 뜻 보기";
+                if (isRevealed) {
+                    vocabRevealedWordIds.add(w.id);
+                    updateVocabQuizGate();
+                }
+            });
+            gridEl.appendChild(card);
+        });
+
+        updateVocabQuizGate();
+    } catch (err) {
+        console.error(err);
+        gridEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+function updateVocabQuizGate() {
+    const btn = document.getElementById("vocabQuizStartBtn");
+    const hintEl = document.getElementById("vocabQuizHint");
+    if (!btn || !hintEl) return;
+
+    const total = vocabWords.length;
+    const revealedCount = vocabWords.filter((w) => vocabRevealedWordIds.has(w.id)).length;
+    const allRevealed = total > 0 && revealedCount === total;
+
+    btn.disabled = !allRevealed;
+    hintEl.hidden = allRevealed;
+    hintEl.textContent = `단어를 전부 눌러서 확인하면 퀴즈를 볼 수 있어요 (${revealedCount}/${total})`;
+}
+
+function backToVocabSets() {
+    document.getElementById("vocabWordsArea").hidden = true;
+    document.getElementById("vocabSetListArea").hidden = false;
+}
+
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function startVocabQuiz() {
+    if (vocabWords.length < 2) {
+        alert("퀴즈를 보려면 단어가 2개 이상 필요해요.");
+        return;
+    }
+
+    const set = vocabSets.find((s) => s.id === vocabSelectedSetId);
+    const quizWordPool = shuffleArray(vocabWords).slice(0, 10);
+    const allMeanings = vocabWords.map((w) => w.meaning);
+
+    vocabQuizQuestions = quizWordPool.map((w) => {
+        const distractors = shuffleArray(allMeanings.filter((m) => m !== w.meaning)).slice(0, 3);
+        const options = shuffleArray([w.meaning, ...distractors]);
+        return { wordId: w.id, word: w.word, correctMeaning: w.meaning, options, answered: false, correct: false, selectedOption: null };
+    });
+    vocabQuizCurrentIndex = 0;
+    vocabQuizSecondsLeft = (set?.quizTimeLimitMinutes || 5) * 60;
+
+    document.getElementById("vocabQuizOverlay").hidden = false;
+    document.body.style.overflow = "hidden";
+    renderVocabQuizQuestion();
+
+    clearInterval(vocabQuizTimerInterval);
+    updateVocabQuizTimerDisplay();
+    vocabQuizTimerInterval = setInterval(() => {
+        vocabQuizSecondsLeft--;
+        updateVocabQuizTimerDisplay();
+        if (vocabQuizSecondsLeft <= 0) {
+            clearInterval(vocabQuizTimerInterval);
+            finishVocabQuizForcibly();
+        }
+    }, 1000);
+}
+
+function updateVocabQuizTimerDisplay() {
+    const m = String(Math.max(0, Math.floor(vocabQuizSecondsLeft / 60))).padStart(2, "0");
+    const s = String(Math.max(0, vocabQuizSecondsLeft % 60)).padStart(2, "0");
+    const timerEl = document.getElementById("vocabQuizTimer");
+    if (timerEl) timerEl.textContent = `${m}:${s}`;
+}
+
+function renderVocabQuizQuestion() {
+    const q = vocabQuizQuestions[vocabQuizCurrentIndex];
+    if (!q) return;
+
+    document.getElementById("vocabQuizProgress").textContent = `${vocabQuizCurrentIndex + 1} / ${vocabQuizQuestions.length}`;
+    document.getElementById("vocabQuizWord").textContent = q.word;
+
+    const optionsEl = document.getElementById("vocabQuizOptions");
+    optionsEl.innerHTML = "";
+    q.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "vocab-quiz-option";
+        btn.textContent = opt;
+        if (q.answered) {
+            btn.disabled = true;
+            if (opt === q.correctMeaning) btn.classList.add("is-correct");
+            if (opt === q.selectedOption && !q.correct) btn.classList.add("is-wrong");
+        } else {
+            btn.addEventListener("click", () => answerVocabQuizQuestion(opt));
+        }
+        optionsEl.appendChild(btn);
+    });
+
+    updateVocabQuizCompleteBtn();
+}
+
+function answerVocabQuizQuestion(selected) {
+    const q = vocabQuizQuestions[vocabQuizCurrentIndex];
+    if (!q || q.answered) return;
+
+    q.answered = true;
+    q.selectedOption = selected;
+    q.correct = selected === q.correctMeaning;
+    renderVocabQuizQuestion();
+
+    setTimeout(() => {
+        if (vocabQuizCurrentIndex < vocabQuizQuestions.length - 1) {
+            vocabQuizCurrentIndex++;
+            renderVocabQuizQuestion();
+        }
+    }, 900);
+}
+
+function updateVocabQuizCompleteBtn() {
+    const allAnswered = vocabQuizQuestions.every((q) => q.answered);
+    const btn = document.getElementById("vocabQuizCompleteBtn");
+    if (!btn) return;
+    btn.disabled = !allAnswered;
+    btn.textContent = allAnswered ? "완료" : "모든 문제를 풀면 완료할 수 있어요";
+}
+
+function finishVocabQuizForcibly() {
+    vocabQuizQuestions.forEach((q) => {
+        if (!q.answered) {
+            q.answered = true;
+            q.correct = false;
+        }
+    });
+    completeVocabQuiz(true);
+}
+
+async function completeVocabQuiz(timedOut) {
+    clearInterval(vocabQuizTimerInterval);
+    const score = vocabQuizQuestions.filter((q) => q.correct).length;
+    const total = vocabQuizQuestions.length;
+
+    try {
+        await fetch(`/api/student/vocabulary/sets/${vocabSelectedSetId}/quiz-result`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ learned }),
+            body: JSON.stringify({ score, totalQuestions: total }),
         });
-        card.learned = learned;
-
-        const statsRes = await fetch(`/api/student/vocabulary/${vocabSelectedLanguage}/stats`);
-        if (statsRes.ok) renderVocabStats(await statsRes.json());
-
-        showVocabCard(vocabCurrentIndex + 1);
     } catch (err) {
         console.error(err);
     }
+
+    document.getElementById("vocabQuizOverlay").hidden = true;
+    document.body.style.overflow = "";
+    alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈 완료! ${total}문제 중 ${score}개 맞혔어요.`);
 }
 
 function renderStudentLanguagePills() {
@@ -1970,14 +2293,15 @@ async function loadMyAssignments() {
             const row = document.createElement("div");
             row.className = "mypage-assignment-row";
             row.innerHTML = `
-        <label class="mypage-assignment-checkbox">
-          <input type="checkbox" data-assignment-id="${a.id}" ${a.completed ? "checked" : ""}>
-          <span></span>
-        </label>
         <div class="mypage-assignment-info">
           <p class="mypage-assignment-course">${escapeHtmlForStudent(a.courseName)}${a.dueDate ? ` · 기한 ${a.dueDate}` : ""}</p>
           <p class="mypage-assignment-title ${a.completed ? "is-done" : ""}">${escapeHtmlForStudent(a.title)}</p>
           ${a.description ? `<p class="mypage-assignment-desc">${escapeHtmlForStudent(a.description)}</p>` : ""}
+        </div>
+        <div class="mypage-assignment-submit-area">
+          ${a.hasSubmission
+                ? `<span class="mypage-assignment-submitted-badge">제출 완료</span><button type="button" class="mypage-assignment-view-btn" data-open-assignment-submit="${a.id}" data-assignment-title="${escapeHtmlForStudent(a.title)}">제출물 보기/수정</button>`
+                : `<button type="button" class="mypage-classchange-submit-btn" data-open-assignment-submit="${a.id}" data-assignment-title="${escapeHtmlForStudent(a.title)}">숙제 제출하기</button>`}
         </div>
       `;
             listEl.appendChild(row);
@@ -1988,17 +2312,111 @@ async function loadMyAssignments() {
     }
 }
 
-async function toggleAssignmentComplete(id, completed) {
+let assignmentSubmitTargetId = null;
+let assignmentSubmitSelectedFiles = [];
+
+function openAssignmentSubmitModal(assignmentId, title) {
+    assignmentSubmitTargetId = assignmentId;
+    assignmentSubmitSelectedFiles = [];
+    const modal = document.getElementById("assignmentSubmitModal");
+    if (!modal) return;
+
+    document.getElementById("assignmentSubmitModalTitle").textContent = `숙제 제출 · ${title}`;
+    document.getElementById("assignmentSubmitTextInput").value = "";
+    document.getElementById("assignmentSubmitFileInput").value = "";
+    document.getElementById("assignmentSubmitError").hidden = true;
+    document.getElementById("assignmentSubmitExistingComment").hidden = true;
+    renderAssignmentSubmitFileList();
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    fetch(`/api/student/assignments/${assignmentId}/submission`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((existing) => {
+            if (!existing) return;
+            document.getElementById("assignmentSubmitTextInput").value = existing.textAnswer || "";
+            if (existing.attachments && existing.attachments.length > 0) {
+                const fileListEl = document.getElementById("assignmentSubmitFileList");
+                const notice = document.createElement("p");
+                notice.className = "assignment-submit-file-name";
+                notice.textContent = `기존 첨부 ${existing.attachments.length}개 있음 (새로 첨부하면 전부 교체돼요)`;
+                fileListEl.appendChild(notice);
+            }
+            if (existing.adminComment) {
+                document.getElementById("assignmentSubmitExistingComment").hidden = false;
+                document.getElementById("assignmentSubmitExistingCommentText").textContent = existing.adminComment;
+            }
+        })
+        .catch((err) => console.error(err));
+}
+
+function closeAssignmentSubmitModal() {
+    const modal = document.getElementById("assignmentSubmitModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+function renderAssignmentSubmitFileList() {
+    const listEl = document.getElementById("assignmentSubmitFileList");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    assignmentSubmitSelectedFiles.forEach((file, index) => {
+        const row = document.createElement("div");
+        row.className = "assignment-submit-file-row";
+        row.innerHTML = `
+      <span>${escapeHtmlForStudent(file.name)}</span>
+      <button type="button" class="assignment-submit-file-remove" data-remove-file-index="${index}" aria-label="삭제">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    `;
+        listEl.appendChild(row);
+    });
+}
+
+async function submitAssignmentWork() {
+    if (!assignmentSubmitTargetId) return;
+    const textAnswer = document.getElementById("assignmentSubmitTextInput").value.trim();
+    const errorEl = document.getElementById("assignmentSubmitError");
+    const submitBtn = document.getElementById("assignmentSubmitBtn");
+
+    if (!textAnswer && assignmentSubmitSelectedFiles.length === 0) {
+        errorEl.textContent = "답을 적거나 파일을 첨부해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "제출하는 중...";
+
     try {
-        const res = await fetch(`/api/student/assignments/${id}/${completed ? "complete" : "incomplete"}`, { method: "POST" });
+        const attachments = [];
+        for (const file of assignmentSubmitSelectedFiles) {
+            const data = await blobToBase64(file);
+            attachments.push({ data, name: file.name });
+        }
+
+        const res = await fetch(`/api/student/assignments/${assignmentSubmitTargetId}/submit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ textAnswer, attachments }),
+        });
+
         if (!res.ok) {
-            alert((await res.text()) || "처리에 실패했어요.");
+            errorEl.textContent = (await res.text()) || "제출에 실패했어요.";
+            errorEl.hidden = false;
             return;
         }
+
+        closeAssignmentSubmitModal();
         loadMyAssignments();
     } catch (err) {
         console.error(err);
-        alert("서버에 연결할 수 없어요.");
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "제출하기";
     }
 }
 
@@ -2019,6 +2437,107 @@ function renderSurveyStars() {
       </button>`;
         }).join("");
     });
+}
+
+const GOAL_TYPE_LABEL = {
+    ATTENDANCE_STREAK: "연속 출석",
+    ATTENDANCE_COUNT: "누적 출석",
+    VOCAB_WORDS: "단어 맞추기",
+    ASSIGNMENT_COUNT: "숙제 완료",
+};
+
+async function loadGoals() {
+    const listEl = document.getElementById("goalsList");
+    const emptyEl = document.getElementById("goalsEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/goals");
+        const goals = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = goals.length > 0;
+
+        goals.forEach((g) => {
+            const percent = Math.min(100, Math.round((g.currentProgress / g.targetValue) * 100));
+            const card = document.createElement("div");
+            card.className = `goal-card ${g.achieved ? "is-achieved" : ""}`;
+            card.innerHTML = `
+        <div class="goal-card-head">
+          <div>
+            <p class="goal-card-type">${GOAL_TYPE_LABEL[g.type] || g.type}${g.achieved ? " · 달성! 🎉" : ""}</p>
+            <p class="goal-card-title">${escapeHtmlForStudent(g.title)}</p>
+          </div>
+          <button type="button" class="admin-attendance-row-delete" data-delete-goal="${g.id}" aria-label="삭제">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ${percent}%"></div></div>
+        <p class="goal-progress-label">${g.currentProgress} / ${g.targetValue}${g.achieved ? "" : ` (${percent}%)`}</p>
+      `;
+            listEl.appendChild(card);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+async function submitGoal() {
+    const type = document.getElementById("goalTypeSelect").value;
+    const title = document.getElementById("goalTitleInput").value.trim();
+    const targetValue = Number(document.getElementById("goalTargetInput").value);
+    const errorEl = document.getElementById("goalError");
+    const saveBtn = document.getElementById("goalSaveBtn");
+
+    if (!title || !targetValue || targetValue <= 0) {
+        errorEl.textContent = "목표 이름과 목표 값을 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "만드는 중...";
+
+    try {
+        const res = await fetch("/api/student/goals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type, title, targetValue }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "만들기에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        document.getElementById("goalTitleInput").value = "";
+        document.getElementById("goalTargetInput").value = "";
+        document.getElementById("goalForm").hidden = true;
+        loadGoals();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "목표 만들기";
+    }
+}
+
+async function deleteGoal(id) {
+    if (!confirm("이 목표를 삭제할까요?")) return;
+    try {
+        const res = await fetch(`/api/student/goals/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadGoals();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
 }
 
 async function loadGrowthReport() {
@@ -2068,6 +2587,200 @@ async function loadGrowthReport() {
     } catch (err) {
         console.error(err);
         statsEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+let voiceMediaRecorder = null;
+let voiceChunks = [];
+let voiceRecordedBlob = null;
+let voiceTimerInterval = null;
+let voiceSeconds = 0;
+let voiceIsRecording = false;
+
+async function populateVoiceApplicationSelect() {
+    const select = document.getElementById("voiceApplicationSelect");
+    if (!select) return;
+
+    select.innerHTML = `<option value="">불러오는 중...</option>`;
+    select.disabled = true;
+
+    try {
+        const res = await fetch("/api/student/enrolled-courses");
+        const courses = res.ok ? await res.json() : [];
+
+        if (courses.length === 0) {
+            select.innerHTML = `<option value="">수강 중인 강의가 없어요</option>`;
+            return;
+        }
+
+        select.disabled = false;
+        select.innerHTML = courses
+            .map((c) => `<option value="${c.applicationId}">${escapeHtmlForStudent(c.courseName)}</option>`)
+            .join("");
+    } catch (err) {
+        console.error(err);
+        select.innerHTML = `<option value="">불러오지 못했어요</option>`;
+    }
+}
+
+function formatVoiceTimer(totalSeconds) {
+    const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const s = String(totalSeconds % 60).padStart(2, "0");
+    return `${m}:${s}`;
+}
+
+async function toggleVoiceRecording() {
+    const btn = document.getElementById("voiceRecordBtn");
+    const label = document.getElementById("voiceRecordBtnLabel");
+    const timerEl = document.getElementById("voiceRecordTimer");
+    const previewEl = document.getElementById("voiceRecordPreview");
+    const submitBtn = document.getElementById("voiceSubmitBtn");
+    const errorEl = document.getElementById("voiceError");
+
+    if (voiceIsRecording) {
+        // 녹음 중지
+        voiceMediaRecorder?.stop();
+        return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+        errorEl.textContent = "이 브라우저에서는 녹음이 지원되지 않아요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        voiceChunks = [];
+        voiceMediaRecorder = new MediaRecorder(stream);
+
+        voiceMediaRecorder.addEventListener("dataavailable", (e) => {
+            if (e.data.size > 0) voiceChunks.push(e.data);
+        });
+
+        voiceMediaRecorder.addEventListener("stop", () => {
+            voiceRecordedBlob = new Blob(voiceChunks, { type: "audio/webm" });
+            previewEl.src = URL.createObjectURL(voiceRecordedBlob);
+            previewEl.hidden = false;
+            submitBtn.disabled = false;
+            stream.getTracks().forEach((track) => track.stop());
+
+            clearInterval(voiceTimerInterval);
+            voiceIsRecording = false;
+            btn.classList.remove("is-recording");
+            label.textContent = "다시 녹음하기";
+        });
+
+        voiceMediaRecorder.start();
+        voiceIsRecording = true;
+        voiceSeconds = 0;
+        btn.classList.add("is-recording");
+        label.textContent = "녹음 중지";
+        timerEl.hidden = false;
+        timerEl.textContent = formatVoiceTimer(0);
+        previewEl.hidden = true;
+        submitBtn.disabled = true;
+
+        voiceTimerInterval = setInterval(() => {
+            voiceSeconds++;
+            timerEl.textContent = formatVoiceTimer(voiceSeconds);
+        }, 1000);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "마이크 접근 권한이 필요해요.";
+        errorEl.hidden = false;
+    }
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function submitVoiceRecording() {
+    const applicationId = document.getElementById("voiceApplicationSelect").value;
+    const title = document.getElementById("voiceTitleInput").value.trim();
+    const errorEl = document.getElementById("voiceError");
+    const submitBtn = document.getElementById("voiceSubmitBtn");
+
+    if (!applicationId) {
+        errorEl.textContent = "강의를 골라주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    if (!voiceRecordedBlob) {
+        errorEl.textContent = "먼저 녹음을 해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "제출하는 중...";
+
+    try {
+        const audioData = await blobToBase64(voiceRecordedBlob);
+        const res = await fetch("/api/student/voice-submissions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applicationId: Number(applicationId), title, audioData }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "제출에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        document.getElementById("voiceTitleInput").value = "";
+        document.getElementById("voiceRecordPreview").hidden = true;
+        document.getElementById("voiceRecordTimer").hidden = true;
+        document.getElementById("voiceRecordBtnLabel").textContent = "녹음 시작";
+        voiceRecordedBlob = null;
+        loadMyVoiceSubmissions();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "녹음 제출하기";
+    }
+}
+
+async function loadMyVoiceSubmissions() {
+    const listEl = document.getElementById("voiceSubmissionsList");
+    const emptyEl = document.getElementById("voiceSubmissionsEmpty");
+    if (!listEl) return;
+
+    try {
+        const res = await fetch("/api/student/voice-submissions");
+        const submissions = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = submissions.length > 0;
+
+        submissions.forEach((s) => {
+            const item = document.createElement("div");
+            item.className = "voice-submission-item";
+            item.innerHTML = `
+        <div class="voice-submission-item-head">
+          <span class="voice-submission-item-title">${escapeHtmlForStudent(s.title || s.courseName)}</span>
+          <span class="voice-submission-item-date">${s.createdAt}</span>
+        </div>
+        <audio controls src="${s.audioData}"></audio>
+        ${s.adminComment
+                ? `<div class="voice-submission-comment"><strong>선생님 코멘트</strong><p>${escapeHtmlForStudent(s.adminComment)}</p></div>`
+                : `<p class="voice-submission-pending">아직 선생님이 안 들어보셨어요.</p>`}
+      `;
+            listEl.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
     }
 }
 
@@ -2628,8 +3341,13 @@ document.addEventListener("fragments:loaded", () => {
 
     // 홈/언어/영상/Post/커뮤니티 탭 전환
     document.querySelectorAll(".student-subnav-link").forEach((tab) => {
-        tab.addEventListener("click", () => switchStudentMainTab(tab.dataset.studentMainTab));
+        tab.addEventListener("click", () => {
+            switchStudentMainTab(tab.dataset.studentMainTab);
+            if (tab.dataset.studentMainTab === "calendar") renderStudentCalendarMonth();
+        });
     });
+    document.getElementById("calendarPrevBtn")?.addEventListener("click", () => goToCalendarMonth(-1));
+    document.getElementById("calendarNextBtn")?.addEventListener("click", () => goToCalendarMonth(1));
 
     // 홈/마이페이지 화면의 바로가기 버튼
     document.addEventListener("click", (e) => {
@@ -2705,6 +3423,13 @@ document.addEventListener("fragments:loaded", () => {
         if (key === "growth") {
             loadGrowthReport();
         }
+        if (key === "goals") {
+            loadGoals();
+        }
+        if (key === "voice") {
+            populateVoiceApplicationSelect();
+            loadMyVoiceSubmissions();
+        }
     });
 
     document.addEventListener("keydown", (e) => {
@@ -2733,12 +3458,20 @@ document.addEventListener("fragments:loaded", () => {
         });
     });
     document.getElementById("classChangeSubmitBtn")?.addEventListener("click", submitClassChangeRequest);
-    document.getElementById("vocabCard")?.addEventListener("click", flipVocabCard);
-    document.getElementById("vocabPrevBtn")?.addEventListener("click", () => showVocabCard(vocabCurrentIndex - 1));
-    document.getElementById("vocabNextBtn")?.addEventListener("click", () => showVocabCard(vocabCurrentIndex + 1));
-    document.getElementById("vocabLearnedBtn")?.addEventListener("click", () => markVocabLearned(true));
-    document.getElementById("vocabNotYetBtn")?.addEventListener("click", () => markVocabLearned(false));
+    document.addEventListener("click", (e) => {
+        const gotoBtn = e.target.closest("[data-goto-panel]");
+        if (gotoBtn) {
+            e.preventDefault();
+            switchStudentMainTab(gotoBtn.dataset.gotoPanel);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    });
+    document.getElementById("vocabBackToSetsBtn")?.addEventListener("click", backToVocabSets);
+    document.getElementById("vocabQuizStartBtn")?.addEventListener("click", startVocabQuiz);
+    document.getElementById("vocabQuizCompleteBtn")?.addEventListener("click", () => completeVocabQuiz(false));
     document.getElementById("surveySubmitBtn")?.addEventListener("click", submitSurvey);
+    document.getElementById("voiceRecordBtn")?.addEventListener("click", toggleVoiceRecording);
+    document.getElementById("voiceSubmitBtn")?.addEventListener("click", submitVoiceRecording);
     document.getElementById("surveyApplicationSelect")?.addEventListener("change", (e) => {
         checkSurveyStatusAndRenderForm(e.target.value);
     });
@@ -2750,9 +3483,45 @@ document.addEventListener("fragments:loaded", () => {
         }
     });
 
-    document.addEventListener("change", (e) => {
-        const checkbox = e.target.closest("[data-assignment-id]");
-        if (checkbox) toggleAssignmentComplete(checkbox.dataset.assignmentId, checkbox.checked);
+    document.addEventListener("click", (e) => {
+        const openBtn = e.target.closest("[data-open-assignment-submit]");
+        if (openBtn) {
+            openAssignmentSubmitModal(openBtn.dataset.openAssignmentSubmit, openBtn.dataset.assignmentTitle);
+        }
+    });
+    document.querySelectorAll("[data-assignment-submit-close]").forEach((btn) => {
+        btn.addEventListener("click", closeAssignmentSubmitModal);
+    });
+    document.getElementById("assignmentSubmitFileInput")?.addEventListener("change", (e) => {
+        const newFiles = Array.from(e.target.files || []);
+        for (const file of newFiles) {
+            if (assignmentSubmitSelectedFiles.length >= 5) {
+                alert("첨부파일은 최대 5개까지만 가능해요.");
+                break;
+            }
+            assignmentSubmitSelectedFiles.push(file);
+        }
+        e.target.value = "";
+        renderAssignmentSubmitFileList();
+    });
+    document.getElementById("assignmentSubmitFileList")?.addEventListener("click", (e) => {
+        const removeBtn = e.target.closest("[data-remove-file-index]");
+        if (!removeBtn) return;
+        assignmentSubmitSelectedFiles.splice(Number(removeBtn.dataset.removeFileIndex), 1);
+        renderAssignmentSubmitFileList();
+    });
+    document.getElementById("assignmentSubmitBtn")?.addEventListener("click", submitAssignmentWork);
+    document.getElementById("goalNewBtn")?.addEventListener("click", () => {
+        document.getElementById("goalForm").hidden = false;
+    });
+    document.getElementById("goalCancelBtn")?.addEventListener("click", () => {
+        document.getElementById("goalForm").hidden = true;
+        document.getElementById("goalError").hidden = true;
+    });
+    document.getElementById("goalSaveBtn")?.addEventListener("click", submitGoal);
+    document.getElementById("goalsList")?.addEventListener("click", (e) => {
+        const deleteBtn = e.target.closest("[data-delete-goal]");
+        if (deleteBtn) deleteGoal(deleteBtn.dataset.deleteGoal);
     });
 
     checkStudentSessionOnLoad();

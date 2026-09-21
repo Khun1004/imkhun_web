@@ -528,3 +528,157 @@ button:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
+
+/* ===================== 회사소개 / 사업소개 — 오른쪽 독 ===================== */
+
+.info-dock {
+    position: relative;
+    z-index: 55;
+    pointer-events: none;
+}
+
+.info-dock-tab {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 2;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 10px;
+    border: none;
+    border-radius: 12px 0 0 12px;
+    background: var(--accent-3);
+    color: #fff;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: -6px 0 18px -8px rgba(23, 20, 15, 0.35);
+    transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.info-dock.is-open .info-dock-tab {
+    right: 380px;
+}
+
+.info-dock-tab-arrow {
+    display: flex;
+    color: var(--accent);
+    transition: transform 0.3s;
+}
+
+.info-dock-tab-arrow svg {
+    width: 14px;
+    height: 14px;
+}
+
+.info-dock.is-open .info-dock-tab-arrow {
+    transform: rotate(180deg);
+}
+
+.info-dock-tab-label {
+    text-align: center;
+}
+
+.info-dock-panel {
+    pointer-events: auto;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 380px;
+    max-width: calc(100vw - 40px);
+    height: 100%;
+    overflow-y: auto;
+    background: var(--paper-3);
+    box-shadow: -20px 0 48px -18px rgba(23, 20, 15, 0.45);
+    padding: 60px 32px 40px;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.info-dock.is-open .info-dock-panel {
+    transform: translateX(0);
+}
+
+.info-dock-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.info-dock-close:hover {
+    background: var(--line);
+    color: var(--ink);
+}
+
+.info-dock-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.info-dock-section {
+    margin-bottom: 40px;
+}
+
+.info-dock-section:last-child {
+    margin-bottom: 0;
+}
+
+.info-dock-eyebrow {
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 6px;
+}
+
+.info-dock-heading {
+    font-family: "Noto Serif KR", serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 14px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid transparent;
+    border-image: var(--gradient-main) 1;
+}
+
+.info-dock-section p {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.85;
+    margin: 0 0 12px;
+}
+
+.info-dock-section p:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+    .info-dock-panel {
+        width: 300px;
+    }
+
+    .info-dock.is-open .info-dock-tab {
+        right: 300px;
+    }
+}

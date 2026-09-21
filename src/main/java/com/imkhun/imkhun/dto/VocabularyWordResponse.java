@@ -1,4 +1,4 @@
 package com.imkhun.imkhun.dto;
 
-public record VocabularyWordResponse(Long id, String language, String word, String meaning, String example) {
+public record VocabularyWordResponse(Long id, Long setId, String word, String meaning, String example) {
 }

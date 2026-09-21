@@ -1,0 +1,48 @@
+<div class="student-photo-banner">
+    <div class="student-photo-banner-slides" id="calendarBannerSlides">
+        <div class="student-photo-banner-slide is-active" style="background-image:url('images/1.png')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/2.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/3.jpg')"></div>
+        <div class="student-photo-banner-slide" style="background-image:url('images/4.jpg')"></div>
+    </div>
+    <div class="student-photo-banner-overlay" aria-hidden="true"></div>
+    <div class="student-photo-banner-inner">
+        <div class="student-photo-banner-textbox">
+            <p class="eyebrow student-photo-banner-eyebrow">Calendar</p>
+            <h2 class="student-photo-banner-title">달력</h2>
+            <p class="student-photo-banner-desc">내 수업 일정과 숙제 마감일을 한눈에 확인해보세요.</p>
+        </div>
+    </div>
+    <div class="student-photo-banner-dots" id="calendarBannerDots">
+        <button type="button" class="student-photo-banner-dot is-active" data-slide-index="0" aria-label="배경 사진 1"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="1" aria-label="배경 사진 2"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="2" aria-label="배경 사진 3"></button>
+        <button type="button" class="student-photo-banner-dot" data-slide-index="3" aria-label="배경 사진 4"></button>
+    </div>
+</div>
+
+<div class="calendar-layout">
+    <div class="calendar-nav">
+        <button type="button" class="calendar-nav-btn" id="calendarPrevBtn" aria-label="이전 달">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p class="calendar-nav-title" id="calendarNavTitle">2026년 9월</p>
+        <button type="button" class="calendar-nav-btn" id="calendarNextBtn" aria-label="다음 달">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+    </div>
+
+    <div class="calendar-legend">
+        <span class="calendar-legend-item"><i class="calendar-dot calendar-dot--present"></i>출석</span>
+        <span class="calendar-legend-item"><i class="calendar-dot calendar-dot--late"></i>지각</span>
+        <span class="calendar-legend-item"><i class="calendar-dot calendar-dot--absent"></i>결석</span>
+        <span class="calendar-legend-item"><i class="calendar-dot calendar-dot--upcoming"></i>예정된 수업</span>
+        <span class="calendar-legend-item"><i class="calendar-dot calendar-dot--assignment"></i>숙제 마감</span>
+    </div>
+
+    <div class="calendar-weekday-row">
+        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid"></div>
+</div>

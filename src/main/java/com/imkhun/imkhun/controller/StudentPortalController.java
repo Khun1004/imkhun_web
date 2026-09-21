@@ -6,6 +6,8 @@ import com.imkhun.imkhun.dto.*;
 import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AssignmentService;
+import com.imkhun.imkhun.service.AssignmentSubmissionService;
+import com.imkhun.imkhun.service.LearningGoalService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.AttendanceStreakService;
 import com.imkhun.imkhun.service.CalendarExportService;
@@ -14,10 +16,13 @@ import com.imkhun.imkhun.service.GrowthReportService;
 import com.imkhun.imkhun.service.KwzmInviteService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.StudentAuthService;
+import com.imkhun.imkhun.service.StudentDashboardService;
+import com.imkhun.imkhun.service.StudentCalendarService;
 import com.imkhun.imkhun.service.StudyMaterialService;
 import com.imkhun.imkhun.service.StudyPostService;
 import com.imkhun.imkhun.service.SurveyService;
 import com.imkhun.imkhun.service.VocabularyService;
+import com.imkhun.imkhun.service.VoiceSubmissionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +52,11 @@ public class StudentPortalController {
     private final AttendanceStreakService attendanceStreakService;
     private final VocabularyService vocabularyService;
     private final GrowthReportService growthReportService;
+    private final VoiceSubmissionService voiceSubmissionService;
+    private final StudentDashboardService studentDashboardService;
+    private final StudentCalendarService studentCalendarService;
+    private final AssignmentSubmissionService assignmentSubmissionService;
+    private final LearningGoalService learningGoalService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -55,7 +65,9 @@ public class StudentPortalController {
                                    AssignmentService assignmentService, ClassChangeRequestService classChangeRequestService,
                                    SurveyService surveyService, CalendarExportService calendarExportService,
                                    AttendanceStreakService attendanceStreakService, VocabularyService vocabularyService,
-                                   GrowthReportService growthReportService) {
+                                   GrowthReportService growthReportService, VoiceSubmissionService voiceSubmissionService,
+                                   StudentDashboardService studentDashboardService, StudentCalendarService studentCalendarService,
+                                   AssignmentSubmissionService assignmentSubmissionService, LearningGoalService learningGoalService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -68,6 +80,11 @@ public class StudentPortalController {
         this.attendanceStreakService = attendanceStreakService;
         this.vocabularyService = vocabularyService;
         this.growthReportService = growthReportService;
+        this.voiceSubmissionService = voiceSubmissionService;
+        this.studentDashboardService = studentDashboardService;
+        this.studentCalendarService = studentCalendarService;
+        this.assignmentSubmissionService = assignmentSubmissionService;
+        this.learningGoalService = learningGoalService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -522,28 +539,38 @@ public class StudentPortalController {
 
     // ---------- 단어장 / 플래시카드 ----------
 
-    @GetMapping("/vocabulary/{language}")
-    public ResponseEntity<?> getFlashcards(HttpServletRequest request, @PathVariable String language) {
+    @GetMapping("/vocabulary/sets/{language}")
+    public ResponseEntity<?> getVocabularySetsForLanguage(HttpServletRequest request, @PathVariable String language) {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
-        return ResponseEntity.ok(vocabularyService.getFlashcards(userOpt.get().getUsername(), language));
+        return ResponseEntity.ok(vocabularyService.getSetsForStudent(language));
     }
 
-    @GetMapping("/vocabulary/{language}/stats")
-    public ResponseEntity<?> getVocabularyStats(HttpServletRequest request, @PathVariable String language) {
+    @GetMapping("/vocabulary/sets/{setId}/words")
+    public ResponseEntity<?> getFlashcards(HttpServletRequest request, @PathVariable Long setId) {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
-        return ResponseEntity.ok(vocabularyService.getStats(userOpt.get().getUsername(), language));
+        return ResponseEntity.ok(vocabularyService.getFlashcards(setId));
     }
 
-    @PostMapping("/vocabulary/{wordId}/progress")
-    public ResponseEntity<?> markVocabularyLearned(HttpServletRequest request, @PathVariable Long wordId,
-                                                   @RequestBody java.util.Map<String, Boolean> body) {
+    @GetMapping("/vocabulary/sets/{setId}/quiz-result")
+    public ResponseEntity<?> getBestQuizResult(HttpServletRequest request, @PathVariable Long setId) {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
-        boolean learned = Boolean.TRUE.equals(body.get("learned"));
-        vocabularyService.markLearned(userOpt.get().getUsername(), wordId, learned);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(vocabularyService.getBestQuizResult(setId, userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/vocabulary/sets/{setId}/quiz-result")
+    public ResponseEntity<?> submitQuizResult(HttpServletRequest request, @PathVariable Long setId,
+                                              @RequestBody SubmitQuizResultRequest resultRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            vocabularyService.submitQuizResult(setId, userOpt.get().getUsername(), resultRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // ---------- 나의 성장 리포트 ----------
@@ -553,5 +580,98 @@ public class StudentPortalController {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         return ResponseEntity.ok(growthReportService.getReport(userOpt.get().getUsername()));
+    }
+
+    // ---------- 발음/음성 녹음 제출 ----------
+
+    @PostMapping("/voice-submissions")
+    public ResponseEntity<?> submitVoiceRecording(HttpServletRequest request, @RequestBody CreateVoiceSubmissionRequest submissionRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            voiceSubmissionService.submit(userOpt.get().getUsername(), submissionRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/voice-submissions")
+    public ResponseEntity<?> getMyVoiceSubmissions(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(voiceSubmissionService.getForStudent(userOpt.get().getUsername()));
+    }
+
+    // ---------- 오늘 할 일 요약 ----------
+
+    @GetMapping("/today-summary")
+    public ResponseEntity<?> getTodaySummary(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(studentDashboardService.getTodaySummary(userOpt.get().getUsername()));
+    }
+
+    // ---------- 달력 보기 ----------
+
+    @GetMapping("/calendar")
+    public ResponseEntity<?> getCalendarEvents(HttpServletRequest request, @RequestParam int year, @RequestParam int month) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(studentCalendarService.getMonthEvents(userOpt.get().getUsername(), year, month));
+    }
+
+    // ---------- 숙제 제출 ----------
+
+    @PostMapping("/assignments/{id}/submit")
+    public ResponseEntity<?> submitAssignmentWork(HttpServletRequest request, @PathVariable Long id,
+                                                  @RequestBody CreateSubmissionRequest submissionRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            assignmentSubmissionService.submit(id, userOpt.get().getUsername(), submissionRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/assignments/{id}/submission")
+    public ResponseEntity<?> getMyAssignmentSubmission(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(assignmentSubmissionService.getForStudent(id, userOpt.get().getUsername()));
+    }
+
+    // ---------- 학습 목표 ----------
+
+    @GetMapping("/goals")
+    public ResponseEntity<?> getMyGoals(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(learningGoalService.getGoalsForStudent(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/goals")
+    public ResponseEntity<?> createGoal(HttpServletRequest request, @RequestBody CreateGoalRequest goalRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(learningGoalService.createGoal(userOpt.get().getUsername(), goalRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/goals/{id}")
+    public ResponseEntity<?> deleteGoal(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            learningGoalService.deleteGoal(id, userOpt.get().getUsername());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

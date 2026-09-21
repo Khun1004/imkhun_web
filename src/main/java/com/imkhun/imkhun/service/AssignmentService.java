@@ -6,6 +6,7 @@ import com.imkhun.imkhun.dto.AssignmentResponse;
 import com.imkhun.imkhun.dto.CreateAssignmentRequest;
 import com.imkhun.imkhun.repository.ApplicationRepository;
 import com.imkhun.imkhun.repository.AssignmentRepository;
+import com.imkhun.imkhun.repository.AssignmentSubmissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,12 +23,14 @@ public class AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
     private final ApplicationRepository applicationRepository;
+    private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final NotificationService notificationService;
 
     public AssignmentService(AssignmentRepository assignmentRepository, ApplicationRepository applicationRepository,
-                             NotificationService notificationService) {
+                             AssignmentSubmissionRepository assignmentSubmissionRepository, NotificationService notificationService) {
         this.assignmentRepository = assignmentRepository;
         this.applicationRepository = applicationRepository;
+        this.assignmentSubmissionRepository = assignmentSubmissionRepository;
         this.notificationService = notificationService;
     }
 
@@ -102,10 +105,12 @@ public class AssignmentService {
     }
 
     public void deleteAssignment(Long id) {
+        assignmentSubmissionRepository.deleteByAssignmentId(id);
         assignmentRepository.deleteById(id);
     }
 
     private AssignmentResponse toResponse(Assignment assignment, String courseName) {
+        boolean hasSubmission = assignmentSubmissionRepository.findByAssignmentId(assignment.getId()).isPresent();
         return new AssignmentResponse(
                 assignment.getId(),
                 assignment.getApplicationId(),
@@ -114,7 +119,8 @@ public class AssignmentService {
                 assignment.getDescription(),
                 assignment.getDueDate() != null ? assignment.getDueDate().toString() : null,
                 assignment.isCompleted(),
-                assignment.getCreatedAt().format(DATETIME_FORMAT)
+                assignment.getCreatedAt().format(DATETIME_FORMAT),
+                hasSubmission
         );
     }
 }

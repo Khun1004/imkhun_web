@@ -996,6 +996,83 @@
     }
 }
 
+/* ===================== 오늘 할 일 요약 ===================== */
+
+.student-today-summary {
+    max-width: 1080px;
+    margin: 28px auto 0;
+    padding: 0 24px;
+}
+
+.student-today-summary-heading {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+    margin: 0 0 12px;
+}
+
+.student-today-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.student-today-summary-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
+}
+
+.student-today-summary-card-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #fff;
+}
+
+.student-today-summary-card-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.student-today-summary-card--class .student-today-summary-card-icon {
+    background: var(--kwzm-gradient);
+}
+
+.student-today-summary-card--assignment .student-today-summary-card-icon {
+    background: linear-gradient(135deg, #e0a72c, #c98a2f);
+}
+
+.student-today-summary-card--notif .student-today-summary-card-icon {
+    background: linear-gradient(135deg, #b8566a, #9c3f52);
+}
+
+.student-today-summary-card--empty .student-today-summary-card-icon {
+    background: linear-gradient(135deg, #3fae7a, #2c8f61);
+}
+
+.student-today-summary-card-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+    margin: 0 0 2px;
+}
+
+.student-today-summary-card-desc {
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    margin: 0;
+}
+
 /* ===================== 색깔 있는 안내 카드 3개 ===================== */
 
 .student-info-panels {

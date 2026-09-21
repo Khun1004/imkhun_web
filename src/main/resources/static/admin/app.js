@@ -2711,6 +2711,238 @@ function renderStarsReadonly(rating) {
     return "★".repeat(rating) + "☆".repeat(5 - rating);
 }
 
+let assignmentSubmissionsData = [];
+let assignmentSubmissionFilter = "ALL";
+
+async function loadAssignmentSubmissionsAdmin() {
+    const listEl = document.getElementById("adminAssignmentSubmissionsList");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/admin/assignment-submissions");
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        assignmentSubmissionsData = await res.json();
+        renderAssignmentSubmissions();
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+function renderAssignmentSubmissions() {
+    const listEl = document.getElementById("adminAssignmentSubmissionsList");
+    const emptyEl = document.getElementById("adminAssignmentSubmissionsEmpty");
+    const countEl = document.getElementById("assignmentSubmissionCount");
+    if (!listEl) return;
+
+    const keyword = (document.getElementById("assignmentSubmissionSearch")?.value || "").trim().toLowerCase();
+
+    let filtered = assignmentSubmissionsData;
+    if (assignmentSubmissionFilter === "UNREVIEWED") filtered = filtered.filter((s) => !s.adminComment);
+    if (assignmentSubmissionFilter === "REVIEWED") filtered = filtered.filter((s) => !!s.adminComment);
+    if (keyword) {
+        filtered = filtered.filter((s) =>
+            s.studentUsername.toLowerCase().includes(keyword)
+            || s.assignmentTitle.toLowerCase().includes(keyword)
+            || s.courseName.toLowerCase().includes(keyword)
+        );
+    }
+
+    if (countEl) {
+        const unreviewedCount = assignmentSubmissionsData.filter((s) => !s.adminComment).length;
+        countEl.textContent = `전체 ${assignmentSubmissionsData.length}건 · 코멘트 안 남긴 것 ${unreviewedCount}건 · 지금 ${filtered.length}건 표시 중`;
+    }
+
+    listEl.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = assignmentSubmissionsData.length > 0;
+
+    if (assignmentSubmissionsData.length > 0 && filtered.length === 0) {
+        listEl.innerHTML = `<p class="admin-note-hint">조건에 맞는 제출물이 없어요.</p>`;
+        return;
+    }
+
+    filtered.forEach((s) => {
+        const item = document.createElement("div");
+        item.className = "admin-voice-item";
+        item.innerHTML = `
+        <div class="admin-voice-item-head">
+          <span class="admin-voice-item-title">${escapeHtmlForAdmin(s.assignmentTitle)}${!s.adminComment ? ` <span class="admin-submission-unread-dot" title="아직 코멘트 안 남김"></span>` : ""}</span>
+          <span class="admin-voice-item-meta">${escapeHtmlForAdmin(s.studentUsername)} · ${escapeHtmlForAdmin(s.courseName)} · ${s.submittedAt}${s.attachments && s.attachments.length ? ` · 첨부 ${s.attachments.length}개` : ""}</span>
+        </div>
+        <button type="button" class="admin-material-action-btn" data-view-assignment-submission="${s.id}">숙제 보기</button>
+      `;
+        listEl.appendChild(item);
+    });
+}
+
+let assignmentViewCurrentId = null;
+let assignmentViewCurrentImages = [];
+let assignmentViewCurrentImageIndex = 0;
+
+function openAssignmentViewModal(id) {
+    const s = assignmentSubmissionsData.find((x) => x.id === Number(id));
+    if (!s) return;
+    assignmentViewCurrentId = s.id;
+
+    document.getElementById("assignmentViewModalTitle").textContent = s.assignmentTitle;
+    document.getElementById("assignmentViewMeta").textContent = `${s.studentUsername} · ${s.courseName} · ${s.submittedAt}`;
+    document.getElementById("assignmentViewTextAnswer").textContent = s.textAnswer || "글로 쓴 답은 없어요.";
+    document.getElementById("assignmentViewCommentInput").value = s.adminComment || "";
+
+    const attachments = s.attachments || [];
+    const images = attachments.filter((a) => a.data && a.data.startsWith("data:image"));
+    const files = attachments.filter((a) => !a.data || !a.data.startsWith("data:image"));
+
+    assignmentViewCurrentImages = images;
+    assignmentViewCurrentImageIndex = 0;
+
+    const lightboxEl = document.getElementById("assignmentViewLightbox");
+    if (images.length > 0) {
+        lightboxEl.hidden = false;
+        renderAssignmentViewLightbox();
+    } else {
+        lightboxEl.hidden = true;
+    }
+
+    const fileLinksEl = document.getElementById("assignmentViewFileLinks");
+    fileLinksEl.innerHTML = files
+        .map((f) => `<a href="${f.data}" target="_blank" rel="noopener" class="admin-material-action-btn" style="display: inline-block; margin: 4px 6px 0 0;">${escapeHtmlForAdmin(f.name || "파일")} · 새 창에서 열기</a>`)
+        .join("");
+
+    const modal = document.getElementById("assignmentViewModal");
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeAssignmentViewModal() {
+    const modal = document.getElementById("assignmentViewModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+function renderAssignmentViewLightbox() {
+    const img = document.getElementById("assignmentViewLightboxImg");
+    const countEl = document.getElementById("assignmentViewLightboxCount");
+    const current = assignmentViewCurrentImages[assignmentViewCurrentImageIndex];
+    if (!current) return;
+    img.src = current.data;
+    countEl.textContent = `${assignmentViewCurrentImageIndex + 1} / ${assignmentViewCurrentImages.length}`;
+
+    const showNav = assignmentViewCurrentImages.length > 1;
+    document.getElementById("assignmentViewLightboxPrev").hidden = !showNav;
+    document.getElementById("assignmentViewLightboxNext").hidden = !showNav;
+}
+
+function navigateAssignmentViewLightbox(direction) {
+    const total = assignmentViewCurrentImages.length;
+    if (total === 0) return;
+    assignmentViewCurrentImageIndex = (assignmentViewCurrentImageIndex + direction + total) % total;
+    renderAssignmentViewLightbox();
+}
+
+async function saveAssignmentViewComment() {
+    if (!assignmentViewCurrentId) return;
+    const input = document.getElementById("assignmentViewCommentInput");
+    try {
+        const commentValue = input.value.trim();
+        const res = await fetch(`/api/admin/assignment-submissions/${assignmentViewCurrentId}/comment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ comment: commentValue }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "저장에 실패했어요.");
+            return;
+        }
+        const target = assignmentSubmissionsData.find((s) => s.id === assignmentViewCurrentId);
+        if (target) target.adminComment = commentValue;
+        renderAssignmentSubmissions();
+        alert("코멘트를 저장했어요.");
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function loadVoiceSubmissionsAdmin() {
+    const listEl = document.getElementById("adminVoiceList");
+    const emptyEl = document.getElementById("adminVoiceEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/admin/voice-submissions");
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const submissions = await res.json();
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = submissions.length > 0;
+
+        submissions.forEach((s) => {
+            const item = document.createElement("div");
+            item.className = "admin-voice-item";
+            item.innerHTML = `
+        <div class="admin-voice-item-head">
+          <span class="admin-voice-item-title">${escapeHtmlForAdmin(s.title || s.courseName)}</span>
+          <span class="admin-voice-item-meta">${escapeHtmlForAdmin(s.studentUsername)} · ${escapeHtmlForAdmin(s.courseName)} · ${s.createdAt}</span>
+        </div>
+        <audio controls src="${s.audioData}"></audio>
+        <div class="admin-voice-comment-row">
+          <input type="text" class="admin-voice-comment-input" id="voiceCommentInput-${s.id}" placeholder="코멘트를 입력해주세요" value="${s.adminComment ? escapeHtmlForAdmin(s.adminComment) : ""}">
+          <button type="button" class="admin-material-action-btn" data-save-voice-comment="${s.id}">저장</button>
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-voice-id="${s.id}">삭제</button>
+        </div>
+      `;
+            listEl.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function saveVoiceComment(id) {
+    const input = document.getElementById(`voiceCommentInput-${id}`);
+    if (!input) return;
+    try {
+        const res = await fetch(`/api/admin/voice-submissions/${id}/comment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ comment: input.value.trim() }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "저장에 실패했어요.");
+            return;
+        }
+        alert("코멘트를 저장했어요.");
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function deleteVoiceSubmission(id) {
+    if (!confirm("이 녹음을 삭제할까요?")) return;
+    try {
+        const res = await fetch(`/api/admin/voice-submissions/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadVoiceSubmissionsAdmin();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
 async function loadSurveyData() {
     const summaryEl = document.getElementById("adminSurveySummary");
     const listEl = document.getElementById("adminSurveyResponseList");
@@ -2961,21 +3193,237 @@ async function sendPaymentRemindersNow() {
 }
 
 let vocabAdminSelectedLanguage = "korean";
+let vocabAdminSelectedSetId = null;
+let vocabAdminSetsData = [];
+let vocabAdminCurrentWords = [];
+let vocabRegisterMode = "create";
+let vocabRegisterTargetSetId = null;
+let vocabRegisterRowCounter = 0;
 
-async function loadVocabAdminWords(language) {
+async function loadVocabAdminSets(language) {
     vocabAdminSelectedLanguage = language;
+    vocabAdminSelectedSetId = null;
+    document.getElementById("vocabWordManageSection").hidden = true;
+
+    const listEl = document.getElementById("vocabSetList");
+    const emptyEl = document.getElementById("vocabSetEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/vocabulary/sets?language=${language}`);
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const sets = await res.json();
+        vocabAdminSetsData = sets;
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = sets.length > 0;
+
+        sets.forEach((s) => {
+            const card = document.createElement("div");
+            card.className = "admin-vocab-set-card";
+            card.dataset.setId = s.id;
+            card.innerHTML = `
+        <div class="admin-vocab-set-card-info" data-select-vocab-set="${s.id}">
+          <p class="admin-vocab-set-card-name">${escapeHtmlForAdmin(s.name)}</p>
+          <p class="admin-vocab-set-card-meta">${escapeHtmlForAdmin(s.category)} · 단어 ${s.wordCount}개 · 퀴즈 ${s.quizTimeLimitMinutes}분</p>
+        </div>
+        <button type="button" class="admin-attendance-row-delete" data-delete-vocab-set="${s.id}" aria-label="Part 삭제">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      `;
+            listEl.appendChild(card);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+function selectVocabSet(setId) {
+    vocabAdminSelectedSetId = setId;
+    const set = vocabAdminSetsData.find((s) => s.id === setId);
+    document.querySelectorAll(".admin-vocab-set-card").forEach((c) => {
+        c.classList.toggle("active", c.dataset.setId === String(setId));
+    });
+    document.getElementById("vocabWordManageTitle").textContent = set ? `${set.name} · 등록된 단어` : "등록된 단어";
+    document.getElementById("vocabWordManageSection").hidden = false;
+    loadVocabAdminWords(setId);
+}
+
+function openVocabRegisterModal(mode) {
+    vocabRegisterMode = mode;
+    const modal = document.getElementById("vocabRegisterModal");
+    const nameInput = document.getElementById("vocabSetNameInput");
+    const categoryInput = document.getElementById("vocabSetCategoryInput");
+    const timeLimitInput = document.getElementById("vocabSetTimeLimitInput");
+    const saveBtn = document.getElementById("vocabSetSaveBtn");
+    const heading = modal.querySelector(".admin-vocab-register-head h3");
+
+    document.getElementById("vocabSetError").hidden = true;
+    document.getElementById("vocabRegisterRows").innerHTML = "";
+
+    if (mode === "add") {
+        const set = vocabAdminSetsData.find((s) => s.id === vocabAdminSelectedSetId);
+        vocabRegisterTargetSetId = vocabAdminSelectedSetId;
+        heading.textContent = set ? `${set.name}에 단어 추가` : "단어 추가";
+        nameInput.value = set ? set.name : "";
+        categoryInput.value = set ? set.category : "";
+        timeLimitInput.value = set ? set.quizTimeLimitMinutes : 5;
+        nameInput.disabled = true;
+        categoryInput.disabled = true;
+        timeLimitInput.disabled = true;
+        saveBtn.textContent = "단어 추가하기";
+        addVocabRegisterRow();
+    } else {
+        vocabRegisterTargetSetId = null;
+        heading.textContent = "단어장 등록하기";
+        nameInput.value = "";
+        categoryInput.value = "";
+        timeLimitInput.value = "5";
+        nameInput.disabled = false;
+        categoryInput.disabled = false;
+        timeLimitInput.disabled = false;
+        saveBtn.textContent = "등록하기";
+        addVocabRegisterRow();
+        addVocabRegisterRow();
+        addVocabRegisterRow();
+    }
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeVocabRegisterModal() {
+    const modal = document.getElementById("vocabRegisterModal");
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+function addVocabRegisterRow() {
+    vocabRegisterRowCounter++;
+    const rowsEl = document.getElementById("vocabRegisterRows");
+    const row = document.createElement("div");
+    row.className = "admin-vocab-register-row";
+    row.innerHTML = `
+      <input type="text" class="vocab-register-word-input" placeholder="단어">
+      <input type="text" class="vocab-register-meaning-input" placeholder="뜻">
+      <input type="text" class="vocab-register-example-input" placeholder="예문 (선택)">
+      <button type="button" class="admin-attendance-row-delete" data-remove-vocab-row aria-label="줄 삭제">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    `;
+    rowsEl.appendChild(row);
+}
+
+async function submitVocabRegister() {
+    const errorEl = document.getElementById("vocabSetError");
+    const saveBtn = document.getElementById("vocabSetSaveBtn");
+    const rows = [...document.querySelectorAll("#vocabRegisterRows .admin-vocab-register-row")];
+    const wordRows = rows
+        .map((row) => ({
+            word: row.querySelector(".vocab-register-word-input").value.trim(),
+            meaning: row.querySelector(".vocab-register-meaning-input").value.trim(),
+            example: row.querySelector(".vocab-register-example-input").value.trim(),
+        }))
+        .filter((r) => r.word && r.meaning);
+
+    if (wordRows.length === 0) {
+        errorEl.textContent = "단어를 최소 1개 이상 입력해주세요 (단어, 뜻은 필수예요).";
+        errorEl.hidden = false;
+        return;
+    }
+
+    let setId = vocabRegisterTargetSetId;
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "등록하는 중...";
+
+    try {
+        if (vocabRegisterMode === "create") {
+            const name = document.getElementById("vocabSetNameInput").value.trim();
+            const category = document.getElementById("vocabSetCategoryInput").value.trim();
+            const quizTimeLimitMinutes = Number(document.getElementById("vocabSetTimeLimitInput").value);
+
+            if (!name || !category || !quizTimeLimitMinutes || quizTimeLimitMinutes <= 0) {
+                errorEl.textContent = "Part 이름, 종류, 퀴즈 제한시간을 모두 입력해주세요.";
+                errorEl.hidden = false;
+                return;
+            }
+
+            const setRes = await fetch("/api/admin/vocabulary/sets", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ language: vocabAdminSelectedLanguage, name, category, quizTimeLimitMinutes }),
+            });
+            if (!setRes.ok) {
+                errorEl.textContent = (await setRes.text()) || "Part 생성에 실패했어요.";
+                errorEl.hidden = false;
+                return;
+            }
+            const newSet = await setRes.json();
+            setId = newSet.id;
+        }
+
+        for (const wordRow of wordRows) {
+            await fetch("/api/admin/vocabulary/words", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ setId, word: wordRow.word, meaning: wordRow.meaning, example: wordRow.example }),
+            });
+        }
+
+        closeVocabRegisterModal();
+        await loadVocabAdminSets(vocabAdminSelectedLanguage);
+        if (vocabRegisterMode === "add" && setId) {
+            selectVocabSet(setId);
+        }
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = vocabRegisterMode === "add" ? "단어 추가하기" : "등록하기";
+    }
+}
+
+async function deleteVocabSet(setId) {
+    if (!confirm("이 Part를 삭제할까요? 안에 있는 단어도 전부 같이 삭제돼요.")) return;
+    try {
+        const res = await fetch(`/api/admin/vocabulary/sets/${setId}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        if (vocabAdminSelectedSetId === Number(setId)) {
+            document.getElementById("vocabWordManageSection").hidden = true;
+            vocabAdminSelectedSetId = null;
+        }
+        loadVocabAdminSets(vocabAdminSelectedLanguage);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function loadVocabAdminWords(setId) {
     const listEl = document.getElementById("vocabAdminWordList");
     const emptyEl = document.getElementById("vocabAdminEmpty");
     if (!listEl) return;
     listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
 
     try {
-        const res = await fetch(`/api/admin/vocabulary?language=${language}`);
+        const res = await fetch(`/api/admin/vocabulary/sets/${setId}/words`);
         if (!res.ok) {
             listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
             return;
         }
         const words = await res.json();
+        vocabAdminCurrentWords = words;
 
         listEl.innerHTML = "";
         if (emptyEl) emptyEl.hidden = words.length > 0;
@@ -3000,62 +3448,123 @@ async function loadVocabAdminWords(language) {
     }
 }
 
-async function submitVocabWord() {
-    const word = document.getElementById("vocabWordInput").value.trim();
-    const meaning = document.getElementById("vocabMeaningInput").value.trim();
-    const example = document.getElementById("vocabExampleInput").value.trim();
-    const errorEl = document.getElementById("vocabAdminError");
-    const addBtn = document.getElementById("vocabAdminAddBtn");
-
-    if (!word || !meaning) {
-        errorEl.textContent = "단어와 뜻을 모두 입력해주세요.";
-        errorEl.hidden = false;
-        return;
-    }
-    errorEl.hidden = true;
-    addBtn.disabled = true;
-    addBtn.textContent = "추가하는 중...";
-
-    try {
-        const res = await fetch("/api/admin/vocabulary", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ language: vocabAdminSelectedLanguage, word, meaning, example }),
-        });
-
-        if (!res.ok) {
-            errorEl.textContent = (await res.text()) || "추가에 실패했어요.";
-            errorEl.hidden = false;
-            return;
-        }
-
-        document.getElementById("vocabWordInput").value = "";
-        document.getElementById("vocabMeaningInput").value = "";
-        document.getElementById("vocabExampleInput").value = "";
-        loadVocabAdminWords(vocabAdminSelectedLanguage);
-    } catch (err) {
-        console.error(err);
-        errorEl.textContent = "서버에 연결할 수 없어요.";
-        errorEl.hidden = false;
-    } finally {
-        addBtn.disabled = false;
-        addBtn.textContent = "단어 추가하기";
-    }
-}
-
 async function deleteVocabWord(id) {
+
     if (!confirm("이 단어를 삭제할까요?")) return;
     try {
-        const res = await fetch(`/api/admin/vocabulary/${id}`, { method: "DELETE" });
+        const res = await fetch(`/api/admin/vocabulary/words/${id}`, { method: "DELETE" });
         if (!res.ok) {
             alert((await res.text()) || "삭제에 실패했어요.");
             return;
         }
-        loadVocabAdminWords(vocabAdminSelectedLanguage);
+        loadVocabAdminWords(vocabAdminSelectedSetId);
+        loadVocabAdminSets(vocabAdminSelectedLanguage);
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
     }
+}
+
+let vocabPreviewQuizQuestions = [];
+let vocabPreviewQuizCurrentIndex = 0;
+let vocabPreviewQuizTimerInterval = null;
+let vocabPreviewQuizSecondsLeft = 0;
+
+function shuffleArrayForAdmin(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function startVocabQuizPreview() {
+    if (vocabAdminCurrentWords.length < 2) {
+        alert("퀴즈 미리보기를 하려면 단어가 2개 이상 필요해요.");
+        return;
+    }
+
+    const set = vocabAdminSetsData.find((s) => s.id === vocabAdminSelectedSetId);
+    const pool = shuffleArrayForAdmin(vocabAdminCurrentWords).slice(0, 10);
+    const allMeanings = vocabAdminCurrentWords.map((w) => w.meaning);
+
+    vocabPreviewQuizQuestions = pool.map((w) => {
+        const distractors = shuffleArrayForAdmin(allMeanings.filter((m) => m !== w.meaning)).slice(0, 3);
+        const options = shuffleArrayForAdmin([w.meaning, ...distractors]);
+        return { word: w.word, correctMeaning: w.meaning, options, answered: false, correct: false, selectedOption: null };
+    });
+    vocabPreviewQuizCurrentIndex = 0;
+    vocabPreviewQuizSecondsLeft = (set?.quizTimeLimitMinutes || 5) * 60;
+
+    document.getElementById("vocabPreviewQuizOverlay").hidden = false;
+    renderVocabPreviewQuizQuestion();
+
+    clearInterval(vocabPreviewQuizTimerInterval);
+    updateVocabPreviewQuizTimerDisplay();
+    vocabPreviewQuizTimerInterval = setInterval(() => {
+        vocabPreviewQuizSecondsLeft--;
+        updateVocabPreviewQuizTimerDisplay();
+        if (vocabPreviewQuizSecondsLeft <= 0) {
+            clearInterval(vocabPreviewQuizTimerInterval);
+        }
+    }, 1000);
+}
+
+function updateVocabPreviewQuizTimerDisplay() {
+    const m = String(Math.max(0, Math.floor(vocabPreviewQuizSecondsLeft / 60))).padStart(2, "0");
+    const s = String(Math.max(0, vocabPreviewQuizSecondsLeft % 60)).padStart(2, "0");
+    const timerEl = document.getElementById("vocabPreviewQuizTimer");
+    if (timerEl) timerEl.textContent = `${m}:${s}`;
+}
+
+function renderVocabPreviewQuizQuestion() {
+    const q = vocabPreviewQuizQuestions[vocabPreviewQuizCurrentIndex];
+    if (!q) return;
+
+    document.getElementById("vocabPreviewQuizProgress").textContent = `${vocabPreviewQuizCurrentIndex + 1} / ${vocabPreviewQuizQuestions.length}`;
+    document.getElementById("vocabPreviewQuizWord").textContent = q.word;
+
+    const optionsEl = document.getElementById("vocabPreviewQuizOptions");
+    optionsEl.innerHTML = "";
+    q.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "vocab-quiz-option";
+        btn.textContent = opt;
+        if (q.answered) {
+            btn.disabled = true;
+            if (opt === q.correctMeaning) btn.classList.add("is-correct");
+            if (opt === q.selectedOption && !q.correct) btn.classList.add("is-wrong");
+        } else {
+            btn.addEventListener("click", () => answerVocabPreviewQuizQuestion(opt));
+        }
+        optionsEl.appendChild(btn);
+    });
+}
+
+function answerVocabPreviewQuizQuestion(selected) {
+    const q = vocabPreviewQuizQuestions[vocabPreviewQuizCurrentIndex];
+    if (!q || q.answered) return;
+
+    q.answered = true;
+    q.selectedOption = selected;
+    q.correct = selected === q.correctMeaning;
+    renderVocabPreviewQuizQuestion();
+
+    setTimeout(() => {
+        if (vocabPreviewQuizCurrentIndex < vocabPreviewQuizQuestions.length - 1) {
+            vocabPreviewQuizCurrentIndex++;
+            renderVocabPreviewQuizQuestion();
+        } else {
+            closeVocabQuizPreview();
+        }
+    }, 900);
+}
+
+function closeVocabQuizPreview() {
+    clearInterval(vocabPreviewQuizTimerInterval);
+    document.getElementById("vocabPreviewQuizOverlay").hidden = true;
 }
 
 async function loadDashboard() {
@@ -3718,6 +4227,8 @@ document.addEventListener("fragments:loaded", () => {
             loadAdminReviews();
             loadAdminPosts();
             loadSurveyData();
+            loadVoiceSubmissionsAdmin();
+            loadAssignmentSubmissionsAdmin();
         }
         if (key === "my") loadAdminMe();
         if (key === "notices") loadAdminNotices();
@@ -3957,17 +4468,62 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
     document.getElementById("lessonNoteSaveBtn")?.addEventListener("click", submitLessonNote);
     document.getElementById("adminBackupRunBtn")?.addEventListener("click", runBackupNow);
+    document.getElementById("adminVoiceList")?.addEventListener("click", (e) => {
+        const saveBtn = e.target.closest("[data-save-voice-comment]");
+        if (saveBtn) saveVoiceComment(saveBtn.dataset.saveVoiceComment);
+        const deleteBtn = e.target.closest("[data-delete-voice-id]");
+        if (deleteBtn) deleteVoiceSubmission(deleteBtn.dataset.deleteVoiceId);
+    });
+    document.getElementById("adminAssignmentSubmissionsList")?.addEventListener("click", (e) => {
+        const viewBtn = e.target.closest("[data-view-assignment-submission]");
+        if (viewBtn) openAssignmentViewModal(viewBtn.dataset.viewAssignmentSubmission);
+    });
+    document.querySelectorAll("[data-assignment-view-close]").forEach((btn) => {
+        btn.addEventListener("click", closeAssignmentViewModal);
+    });
+    document.getElementById("assignmentViewLightboxPrev")?.addEventListener("click", () => navigateAssignmentViewLightbox(-1));
+    document.getElementById("assignmentViewLightboxNext")?.addEventListener("click", () => navigateAssignmentViewLightbox(1));
+    document.getElementById("assignmentViewCommentSaveBtn")?.addEventListener("click", saveAssignmentViewComment);
+    document.getElementById("assignmentSubmissionSearch")?.addEventListener("input", renderAssignmentSubmissions);
+    document.querySelectorAll("[data-submission-filter]").forEach((tab) => {
+        tab.addEventListener("click", () => {
+            assignmentSubmissionFilter = tab.dataset.submissionFilter;
+            document.querySelectorAll("[data-submission-filter]").forEach((t) => t.classList.toggle("active", t === tab));
+            renderAssignmentSubmissions();
+        });
+    });
     document.getElementById("vocabAdminLanguagePills")?.addEventListener("click", (e) => {
         const pill = e.target.closest("[data-lang]");
         if (!pill) return;
         document.querySelectorAll("#vocabAdminLanguagePills .admin-pill").forEach((p) => p.classList.toggle("active", p === pill));
-        loadVocabAdminWords(pill.dataset.lang);
+        loadVocabAdminSets(pill.dataset.lang);
     });
-    document.getElementById("vocabAdminAddBtn")?.addEventListener("click", submitVocabWord);
     document.getElementById("vocabAdminWordList")?.addEventListener("click", (e) => {
         const deleteBtn = e.target.closest("[data-delete-vocab-id]");
         if (deleteBtn) deleteVocabWord(deleteBtn.dataset.deleteVocabId);
     });
+    document.getElementById("vocabSetNewBtn")?.addEventListener("click", () => openVocabRegisterModal("create"));
+    document.getElementById("vocabWordAddMoreBtn")?.addEventListener("click", () => openVocabRegisterModal("add"));
+    document.querySelectorAll("[data-vocab-register-close]").forEach((btn) => {
+        btn.addEventListener("click", closeVocabRegisterModal);
+    });
+    document.getElementById("vocabRegisterAddRowBtn")?.addEventListener("click", addVocabRegisterRow);
+    document.getElementById("vocabRegisterRows")?.addEventListener("click", (e) => {
+        const removeBtn = e.target.closest("[data-remove-vocab-row]");
+        if (removeBtn) removeBtn.closest(".admin-vocab-register-row")?.remove();
+    });
+    document.getElementById("vocabSetSaveBtn")?.addEventListener("click", submitVocabRegister);
+    document.getElementById("vocabSetList")?.addEventListener("click", (e) => {
+        const deleteBtn = e.target.closest("[data-delete-vocab-set]");
+        if (deleteBtn) {
+            deleteVocabSet(deleteBtn.dataset.deleteVocabSet);
+            return;
+        }
+        const info = e.target.closest("[data-select-vocab-set]");
+        if (info) selectVocabSet(Number(info.dataset.selectVocabSet));
+    });
+    document.getElementById("vocabQuizPreviewBtn")?.addEventListener("click", startVocabQuizPreview);
+    document.getElementById("vocabPreviewQuizCloseBtn")?.addEventListener("click", closeVocabQuizPreview);
     document.getElementById("levelRecordSaveBtn")?.addEventListener("click", submitLevelRecord);
     document.getElementById("assignmentSaveBtn")?.addEventListener("click", submitAssignment);
     document.getElementById("sendFileSubmitBtn")?.addEventListener("click", submitSendFile);

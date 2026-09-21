@@ -7,6 +7,7 @@ import com.imkhun.imkhun.service.AdminAuthService;
 import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AssignmentService;
+import com.imkhun.imkhun.service.AssignmentSubmissionService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.ClassChangeRequestService;
 import com.imkhun.imkhun.service.DashboardService;
@@ -25,6 +26,7 @@ import com.imkhun.imkhun.service.StudyPostService;
 import com.imkhun.imkhun.service.SurveyService;
 import com.imkhun.imkhun.service.TimetableService;
 import com.imkhun.imkhun.service.VocabularyService;
+import com.imkhun.imkhun.service.VoiceSubmissionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +61,8 @@ public class AdminController {
     private final StudentLevelService studentLevelService;
     private final SurveyService surveyService;
     private final VocabularyService vocabularyService;
+    private final VoiceSubmissionService voiceSubmissionService;
+    private final AssignmentSubmissionService assignmentSubmissionService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -70,7 +74,8 @@ public class AdminController {
                            PaymentReminderService paymentReminderService, ReceiptService receiptService,
                            LessonNoteService lessonNoteService, AssignmentService assignmentService,
                            ClassChangeRequestService classChangeRequestService, StudentLevelService studentLevelService,
-                           SurveyService surveyService, VocabularyService vocabularyService) {
+                           SurveyService surveyService, VocabularyService vocabularyService,
+                           VoiceSubmissionService voiceSubmissionService, AssignmentSubmissionService assignmentSubmissionService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -94,6 +99,8 @@ public class AdminController {
         this.studentLevelService = studentLevelService;
         this.surveyService = surveyService;
         this.vocabularyService = vocabularyService;
+        this.voiceSubmissionService = voiceSubmissionService;
+        this.assignmentSubmissionService = assignmentSubmissionService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -885,13 +892,36 @@ public class AdminController {
 
     // ---------- 단어장 / 플래시카드 ----------
 
-    @GetMapping("/vocabulary")
-    public ResponseEntity<?> getVocabularyWords(HttpServletRequest request, @RequestParam String language) {
+    @GetMapping("/vocabulary/sets")
+    public ResponseEntity<?> getVocabularySets(HttpServletRequest request, @RequestParam String language) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
-        return ResponseEntity.ok(vocabularyService.getWordsForAdmin(language));
+        return ResponseEntity.ok(vocabularyService.getSetsForLanguage(language));
     }
 
-    @PostMapping("/vocabulary")
+    @PostMapping("/vocabulary/sets")
+    public ResponseEntity<?> createVocabularySet(HttpServletRequest request, @RequestBody CreateVocabularySetRequest setRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(vocabularyService.createSet(setRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/vocabulary/sets/{setId}")
+    public ResponseEntity<?> deleteVocabularySet(HttpServletRequest request, @PathVariable Long setId) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        vocabularyService.deleteSet(setId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/vocabulary/sets/{setId}/words")
+    public ResponseEntity<?> getVocabularyWords(HttpServletRequest request, @PathVariable Long setId) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(vocabularyService.getWordsForSetAdmin(setId));
+    }
+
+    @PostMapping("/vocabulary/words")
     public ResponseEntity<?> addVocabularyWord(HttpServletRequest request, @RequestBody CreateVocabularyWordRequest wordRequest) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         try {
@@ -901,10 +931,37 @@ public class AdminController {
         }
     }
 
-    @DeleteMapping("/vocabulary/{id}")
+    @DeleteMapping("/vocabulary/words/{id}")
     public ResponseEntity<?> deleteVocabularyWord(HttpServletRequest request, @PathVariable Long id) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         vocabularyService.deleteWord(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- 발음/음성 녹음 제출 ----------
+
+    @GetMapping("/voice-submissions")
+    public ResponseEntity<?> getAllVoiceSubmissions(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(voiceSubmissionService.getAllForAdmin());
+    }
+
+    @PostMapping("/voice-submissions/{id}/comment")
+    public ResponseEntity<?> addVoiceSubmissionComment(HttpServletRequest request, @PathVariable Long id,
+                                                       @RequestBody java.util.Map<String, String> body) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            voiceSubmissionService.addComment(id, body.get("comment"));
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/voice-submissions/{id}")
+    public ResponseEntity<?> deleteVoiceSubmission(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        voiceSubmissionService.delete(id);
         return ResponseEntity.ok().build();
     }
 
@@ -932,6 +989,24 @@ public class AdminController {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         assignmentService.deleteAssignment(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/assignment-submissions")
+    public ResponseEntity<?> getAllAssignmentSubmissions(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(assignmentSubmissionService.getAllForAdmin());
+    }
+
+    @PostMapping("/assignment-submissions/{id}/comment")
+    public ResponseEntity<?> addAssignmentSubmissionComment(HttpServletRequest request, @PathVariable Long id,
+                                                            @RequestBody java.util.Map<String, String> body) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            assignmentSubmissionService.addComment(id, body.get("comment"));
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // ---------- 수업 취소/변경 요청 ----------

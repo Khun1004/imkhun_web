@@ -860,3 +860,377 @@
     line-height: 1.6;
     margin: 0;
 }
+
+/* 발음/음성 녹음 제출 */
+
+.voice-record-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 24px;
+    background: var(--kwzm-bg-2);
+    border-radius: 16px;
+}
+
+.voice-record-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border: none;
+    border-radius: 999px;
+    background: var(--kwzm-gradient);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s;
+}
+
+.voice-record-btn:hover {
+    transform: translateY(-2px);
+}
+
+.voice-record-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.voice-record-btn.is-recording {
+    background: linear-gradient(135deg, #d9425a, #b8283f);
+    animation: voice-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes voice-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217, 66, 90, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(217, 66, 90, 0); }
+}
+
+.voice-record-timer {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0;
+}
+
+.voice-record-preview {
+    width: 100%;
+    max-width: 320px;
+}
+
+.voice-submission-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.voice-submission-item {
+    padding: 16px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 14px;
+}
+
+.voice-submission-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.voice-submission-item-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.voice-submission-item-date {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+    font-family: "JetBrains Mono", monospace;
+}
+
+.voice-submission-item audio {
+    width: 100%;
+}
+
+.voice-submission-comment {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: var(--kwzm-bg-2);
+    border-radius: 10px;
+}
+
+.voice-submission-comment strong {
+    display: block;
+    font-size: 11px;
+    color: var(--kwzm-accent, #2f9aa0);
+    margin-bottom: 4px;
+}
+
+.voice-submission-comment p {
+    font-size: 12.5px;
+    color: var(--kwzm-ink-soft);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.voice-submission-pending {
+    margin: 10px 0 0;
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+}
+
+/* 숙제 제출 */
+
+.mypage-assignment-row {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.mypage-assignment-submit-area {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mypage-assignment-submitted-badge {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(63, 174, 122, 0.14);
+    color: #2c8f61;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.assignment-submit-existing-comment {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: var(--kwzm-bg-2);
+    border-radius: 10px;
+}
+
+.assignment-submit-existing-comment strong {
+    display: block;
+    font-size: 11px;
+    color: var(--kwzm-accent, #2f9aa0);
+    margin-bottom: 4px;
+}
+
+.assignment-submit-existing-comment p {
+    font-size: 12.5px;
+    color: var(--kwzm-ink-soft);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.assignment-submit-file-name {
+    margin: 6px 0 0;
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+}
+
+.assignment-submit-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.assignment-submit-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--kwzm-bg-2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--kwzm-ink-soft);
+}
+
+.assignment-submit-file-remove {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--kwzm-ink-faint);
+    cursor: pointer;
+}
+
+.assignment-submit-file-remove:hover {
+    background: var(--kwzm-line);
+    color: var(--kwzm-ink);
+}
+
+.assignment-submit-file-remove svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* 숙제 제출 모달 — 내용이 잘리지 않고 확실히 스크롤되도록 직접 크기를 지정해둠 */
+
+#assignmentSubmitModal .board-modal-panel {
+    max-height: 82vh;
+    overflow-y: auto;
+}
+
+#assignmentSubmitModal .board-modal-body {
+    max-height: none;
+}
+
+#assignmentSubmitTextInput {
+    min-height: 90px;
+    max-height: 160px;
+    resize: vertical;
+}
+
+.mypage-assignment-view-btn {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: 1.5px solid var(--kwzm-accent, #2f9aa0);
+    border-radius: 999px;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-accent-2, #1c6b70);
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+
+.mypage-assignment-view-btn:hover {
+    background: var(--kwzm-gradient);
+    border-color: transparent;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* 제출 모달 닫기(X) 버튼 — 둥글고 확실하게 보이게 */
+#assignmentSubmitModal .board-modal-close {
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+#assignmentSubmitModal .board-modal-close:hover {
+    background: rgba(255, 255, 255, 0.36);
+}
+
+#assignmentSubmitModal .board-modal-close svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* 학습 목표 */
+
+.goal-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.goal-toolbar .admin-note-hint {
+    margin: 0;
+}
+
+.goal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: var(--kwzm-bg-2);
+    border-radius: 14px;
+}
+
+.goal-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.goal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.goal-card {
+    padding: 18px 20px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 14px;
+}
+
+.goal-card.is-achieved {
+    background: linear-gradient(135deg, rgba(63, 174, 122, 0.08), rgba(224, 167, 44, 0.08));
+    border-color: #3fae7a;
+}
+
+.goal-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.goal-card-type {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--kwzm-accent, #2f9aa0);
+    margin: 0 0 3px;
+}
+
+.goal-card.is-achieved .goal-card-type {
+    color: #2c8f61;
+}
+
+.goal-card-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0;
+}
+
+.goal-progress-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--kwzm-bg-2);
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.goal-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--kwzm-gradient);
+    transition: width 0.3s ease;
+}
+
+.goal-card.is-achieved .goal-progress-fill {
+    background: linear-gradient(90deg, #3fae7a, #2c8f61);
+}
+
+.goal-progress-label {
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    margin: 0;
+    text-align: right;
+}

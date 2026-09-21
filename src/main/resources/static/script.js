@@ -133,3 +133,29 @@ if (chatFab && chatMenu) {
         }
     });
 }
+
+// "회사소개 / 사업소개" 오른쪽 독 — 출석체크 독이랑 같은 방식(탭 누르면 옆에서 슬라이드로 펼쳐짐)
+(function setupInfoDock() {
+    const dock = document.getElementById("infoDock");
+    const tab = document.getElementById("infoDockTab");
+    const closeBtn = document.getElementById("infoDockClose");
+    if (!dock || !tab) return;
+
+    const openDock = () => dock.classList.add("is-open");
+    const closeDock = () => dock.classList.remove("is-open");
+
+    tab.addEventListener("click", () => {
+        dock.classList.contains("is-open") ? closeDock() : openDock();
+    });
+    closeBtn?.addEventListener("click", closeDock);
+
+    document.addEventListener("click", (e) => {
+        if (dock.classList.contains("is-open") && !e.target.closest(".info-dock")) {
+            closeDock();
+        }
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && dock.classList.contains("is-open")) closeDock();
+    });
+})();

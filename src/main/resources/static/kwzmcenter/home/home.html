@@ -92,14 +92,10 @@
     </div>
 </div>
 
-<!-- 선생님 소개 -->
-<div class="student-teacher-card">
-    <img class="student-teacher-photo" src="https://picsum.photos/seed/kwzm-teacher/200/200" alt="쿤 선생님">
-    <div>
-        <p class="eyebrow student-tip-eyebrow">Teacher</p>
-        <p class="student-teacher-name">쿤 선생님 (Khun San Wai)</p>
-        <p class="student-teacher-desc">한국어와 컴퓨터를 재미있게 가르치는 걸 좋아해요. 궁금한 건 언제든 물어보세요!</p>
-    </div>
+<!-- 오늘 할 일 요약 -->
+<div class="student-today-summary" id="studentTodaySummary" hidden>
+    <p class="student-today-summary-heading">오늘 할 일</p>
+    <div class="student-today-summary-cards" id="studentTodaySummaryCards"></div>
 </div>
 
 <!-- 바로가기 카드 4개 -->
@@ -114,19 +110,19 @@
         <p class="student-quicklink-phone">02-1234-5678</p>
     </div>
 
-    <a class="student-quicklink" href="../page/info_01">
+    <a class="student-quicklink" href="#" data-goto-panel="aboutcompany">
         <p class="student-quicklink-title">회사소개</p>
         <p class="student-quicklink-desc">KWZM Center가 어떤 곳인지 소개해드려요.</p>
         <span class="student-quicklink-btn">더보기</span>
     </a>
 
-    <a class="student-quicklink" href="../page/buss_01">
+    <a class="student-quicklink" href="#" data-goto-panel="aboutbusiness">
         <p class="student-quicklink-title">사업소개</p>
         <p class="student-quicklink-desc">KWZM Center가 하고 있는 사업들을 확인해보세요.</p>
         <span class="student-quicklink-btn">더보기</span>
     </a>
 
-    <a class="student-quicklink" href="#">
+    <a class="student-quicklink" href="#" data-goto-panel="futureplan">
         <p class="student-quicklink-title">미래 계획</p>
         <p class="student-quicklink-desc">앞으로 KWZM Center가 나아갈 방향이에요.</p>
         <span class="student-quicklink-btn">더보기</span>

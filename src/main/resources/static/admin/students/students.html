@@ -54,6 +54,29 @@
     <div class="admin-survey-response-list" id="adminSurveyResponseList"></div>
 </div>
 
+<div class="admin-inline-panel" data-students-panel="voice" hidden>
+    <p class="admin-note-hint">학생들이 제출한 발음 녹음이에요. 들어보시고 코멘트를 남겨주세요.</p>
+    <p class="admin-empty-text" id="adminVoiceEmpty" hidden>아직 제출된 녹음이 없어요.</p>
+    <div class="admin-voice-list" id="adminVoiceList"></div>
+</div>
+
+<div class="admin-inline-panel" data-students-panel="assignment-submissions" hidden>
+    <p class="admin-note-hint">학생들이 제출한 숙제예요. 확인하시고 코멘트를 남겨주세요.</p>
+
+    <div class="admin-submission-toolbar">
+        <input type="text" class="admin-submission-search" id="assignmentSubmissionSearch" placeholder="학생 아이디, 숙제 제목, 강의명으로 검색">
+        <div class="admin-submission-filter-tabs">
+            <button type="button" class="admin-attendance-filter-tab active" data-submission-filter="ALL">전체</button>
+            <button type="button" class="admin-attendance-filter-tab" data-submission-filter="UNREVIEWED">코멘트 안 남김</button>
+            <button type="button" class="admin-attendance-filter-tab" data-submission-filter="REVIEWED">코멘트 남김</button>
+        </div>
+    </div>
+    <p class="admin-submission-count" id="assignmentSubmissionCount"></p>
+
+    <p class="admin-empty-text" id="adminAssignmentSubmissionsEmpty" hidden>아직 제출된 숙제가 없어요.</p>
+    <div class="admin-voice-list" id="adminAssignmentSubmissionsList"></div>
+</div>
+
 <div class="admin-inline-panel" data-students-panel="posts" hidden>
     <p class="admin-note-hint">학생들이 게시판에 쓴 글이에요. 문제가 있는 글은 삭제할 수 있어요.</p>
     <p class="admin-empty-text" id="adminPostsEmpty" hidden>아직 등록된 글이 없어요.</p>
