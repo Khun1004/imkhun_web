@@ -162,9 +162,23 @@
 }
 
 @media (max-width: 640px) {
+    .calendar-layout {
+        padding: 16px 12px 56px;
+    }
+
+    .calendar-grid {
+        gap: 4px;
+    }
+
     .calendar-cell {
-        min-height: 64px;
-        padding: 5px;
+        min-height: 56px;
+        padding: 4px 3px;
+        border-radius: 8px;
+        gap: 2px;
+    }
+
+    .calendar-cell-day {
+        font-size: 11px;
     }
 
     .calendar-chip span,
@@ -174,5 +188,48 @@
 
     .calendar-legend {
         gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .calendar-legend-item {
+        font-size: 10px;
+    }
+
+    .calendar-nav {
+        gap: 12px;
+    }
+
+    .calendar-nav-title {
+        min-width: 110px;
+        font-size: 17px;
+    }
+}
+
+/* 아주 좁은 화면에서는 칸이 너무 좁아 글자가 안 예쁘게 잘리니까,
+   제목 글자는 숨기고 색깔 점만 보여줌 (점 색깔은 위 범례에서 무슨 뜻인지 확인 가능) */
+@media (max-width: 420px) {
+    .calendar-cell {
+        min-height: 44px;
+        padding: 4px 2px;
+    }
+
+    .calendar-cell-chips {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 3px;
+        justify-content: center;
+    }
+
+    .calendar-chip {
+        padding: 0;
+    }
+
+    .calendar-chip-label {
+        display: none;
+    }
+
+    .calendar-dot {
+        width: 6px;
+        height: 6px;
     }
 }

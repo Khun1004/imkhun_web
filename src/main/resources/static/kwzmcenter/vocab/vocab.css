@@ -284,6 +284,30 @@
     margin: 4px 0 0;
 }
 
+/* 좁은 화면에서는 4개 탭이 똑같은 크기로 있으면 글자가 눌리니까, 원래 크기 그대로 옆으로 스크롤되게 바꿈 */
+@media (max-width: 640px) {
+    .student-vocab-lang-pills {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 28px;
+    }
+
+    .student-vocab-lang-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .student-vocab-lang-pill {
+        flex: 0 0 auto;
+        max-width: none;
+        white-space: nowrap;
+        padding: 11px 18px;
+        font-size: 13px;
+    }
+}
+
 @media (max-width: 480px) {
     .student-vocab-word-grid {
         grid-template-columns: 1fr;

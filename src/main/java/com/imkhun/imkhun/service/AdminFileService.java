@@ -21,15 +21,17 @@ public class AdminFileService {
     private final AdminSentFileRepository adminSentFileRepository;
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
+    private final FileStorageService fileStorageService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final Set<String> VALID_CATEGORIES = Set.of("CERTIFICATE", "EXAM");
     private static final Map<String, String> CATEGORY_LABEL = Map.of("CERTIFICATE", "자격증", "EXAM", "시험 자료");
 
     public AdminFileService(AdminSentFileRepository adminSentFileRepository, ApplicationRepository applicationRepository,
-                            NotificationService notificationService) {
+                            NotificationService notificationService, FileStorageService fileStorageService) {
         this.adminSentFileRepository = adminSentFileRepository;
         this.applicationRepository = applicationRepository;
         this.notificationService = notificationService;
+        this.fileStorageService = fileStorageService;
     }
 
     // 관리자 - 특정 학생의 강의(신청)에 파일 보내기
@@ -70,10 +72,10 @@ public class AdminFileService {
 
     @Transactional
     public void deleteFile(Long fileId) {
-        if (!adminSentFileRepository.existsById(fileId)) {
-            throw new IllegalStateException("파일을 찾을 수 없어요.");
-        }
+        AdminSentFile file = adminSentFileRepository.findById(fileId)
+                .orElseThrow(() -> new IllegalStateException("파일을 찾을 수 없어요."));
         adminSentFileRepository.deleteById(fileId);
+        fileStorageService.delete(file.getFileData());
     }
 
     // 학생 - 본인의 모든 강의에 대해 받은 파일 전체 조회

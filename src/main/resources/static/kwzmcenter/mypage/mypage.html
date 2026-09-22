@@ -50,31 +50,6 @@
                     <button type="button" class="mypage-classchange-submit-btn" id="goalNewBtn">+ 목표 만들기</button>
                 </div>
 
-                <div class="goal-form" id="goalForm" hidden>
-                    <div class="auth-form-field">
-                        <label for="goalTypeSelect">목표 종류</label>
-                        <select id="goalTypeSelect">
-                            <option value="ATTENDANCE_STREAK">연속 출석 (예: 연속 10일 출석)</option>
-                            <option value="ATTENDANCE_COUNT">누적 출석 횟수 (예: 이번 달 15번 출석)</option>
-                            <option value="VOCAB_WORDS">단어 맞추기 개수 (예: 단어 50개 맞추기)</option>
-                            <option value="ASSIGNMENT_COUNT">숙제 완료 개수 (예: 숙제 10개 완료하기)</option>
-                        </select>
-                    </div>
-                    <div class="auth-form-field">
-                        <label for="goalTitleInput">목표 이름</label>
-                        <input type="text" id="goalTitleInput" placeholder="예: 이번 달 단어 50개 외우기">
-                    </div>
-                    <div class="auth-form-field">
-                        <label for="goalTargetInput">목표 값 (숫자)</label>
-                        <input type="number" id="goalTargetInput" min="1" placeholder="예: 50">
-                    </div>
-                    <p class="auth-form-error" id="goalError" hidden></p>
-                    <div class="goal-form-actions">
-                        <button type="button" class="mypage-classchange-submit-btn" id="goalSaveBtn">목표 만들기</button>
-                        <button type="button" class="admin-material-action-btn" id="goalCancelBtn">취소</button>
-                    </div>
-                </div>
-
                 <p class="admin-empty-text" id="goalsEmpty" hidden>아직 만든 목표가 없어요. "목표 만들기"로 시작해보세요.</p>
                 <div class="goal-list" id="goalsList"></div>
             </div>
@@ -85,34 +60,9 @@
             </div>
 
             <div class="mypage-tab-panel" data-mypage-panel="classchange" hidden>
-                <p class="admin-note-hint">수업을 못 가게 됐거나 다른 날로 옮기고 싶으면 여기서 요청해주세요. 선생님이 확인하고 답을 남겨드려요.</p>
-
-                <div class="mypage-classchange-form">
-                    <div class="mypage-classchange-form-row">
-                        <label for="classChangeApplicationSelect">어떤 강의인가요?</label>
-                        <select id="classChangeApplicationSelect"></select>
-                    </div>
-                    <div class="mypage-classchange-form-row">
-                        <label>요청 종류</label>
-                        <div class="mypage-classchange-type-toggle">
-                            <button type="button" class="mypage-classchange-type-btn active" data-change-type="CANCEL">취소</button>
-                            <button type="button" class="mypage-classchange-type-btn" data-change-type="RESCHEDULE">변경</button>
-                        </div>
-                    </div>
-                    <div class="mypage-classchange-form-row">
-                        <label for="classChangeDateInput">원래 수업 날짜</label>
-                        <input type="date" id="classChangeDateInput">
-                    </div>
-                    <div class="mypage-classchange-form-row" id="classChangeNewDateRow" hidden>
-                        <label for="classChangeNewDateInput">희망하는 새 날짜</label>
-                        <input type="date" id="classChangeNewDateInput">
-                    </div>
-                    <div class="mypage-classchange-form-row">
-                        <label for="classChangeReasonInput">사유 (선택)</label>
-                        <textarea id="classChangeReasonInput" rows="2" placeholder="예: 갑자기 일이 생겨서요"></textarea>
-                    </div>
-                    <p class="auth-form-error" id="classChangeError" hidden></p>
-                    <button type="button" class="mypage-classchange-submit-btn" id="classChangeSubmitBtn">요청 보내기</button>
+                <div class="goal-toolbar">
+                    <p class="admin-note-hint">수업을 못 가게 됐거나 다른 날로 옮기고 싶으면 여기서 요청해주세요. 선생님이 확인하고 답을 남겨드려요.</p>
+                    <button type="button" class="mypage-classchange-submit-btn" id="classChangeNewBtn">+ 요청하기</button>
                 </div>
 
                 <p class="admin-empty-text" id="mypageClassChangeEmpty" hidden>아직 보낸 요청이 없어요.</p>
@@ -120,80 +70,22 @@
             </div>
 
             <div class="mypage-tab-panel" data-mypage-panel="survey" hidden>
-                <p class="admin-note-hint">수업이 어땠는지 솔직한 의견을 남겨주세요. 선생님이 더 좋은 수업을 만드는 데 큰 도움이 돼요.</p>
-
-                <div class="mypage-classchange-form">
-                    <div class="mypage-classchange-form-row">
-                        <label for="surveyApplicationSelect">어떤 강의인가요?</label>
-                        <select id="surveyApplicationSelect"></select>
-                    </div>
-
-                    <div id="surveyAlreadySubmitted" class="mypage-survey-submitted" hidden>
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        이미 이 강의의 설문을 제출하셨어요. 소중한 의견 감사해요!
-                    </div>
-
-                    <div id="surveyForm">
-                        <div class="mypage-survey-rating-row">
-                            <label>강의 내용 만족도</label>
-                            <div class="mypage-survey-stars" data-survey-rating="content"></div>
-                        </div>
-                        <div class="mypage-survey-rating-row">
-                            <label>선생님 만족도</label>
-                            <div class="mypage-survey-stars" data-survey-rating="teacher"></div>
-                        </div>
-                        <div class="mypage-survey-rating-row">
-                            <label>교재/자료 만족도</label>
-                            <div class="mypage-survey-stars" data-survey-rating="material"></div>
-                        </div>
-                        <div class="mypage-survey-rating-row">
-                            <label>전반적 만족도</label>
-                            <div class="mypage-survey-stars" data-survey-rating="overall"></div>
-                        </div>
-
-                        <div class="mypage-classchange-form-row">
-                            <label for="surveyCommentInput">의견 (선택)</label>
-                            <textarea id="surveyCommentInput" rows="3" placeholder="더 해주고 싶은 말씀이 있으면 자유롭게 적어주세요"></textarea>
-                        </div>
-
-                        <label class="mypage-survey-anonymous-label">
-                            <input type="checkbox" id="surveyAnonymousInput">
-                            <span>익명으로 제출하기 (선생님이 누가 썼는지 못 봐요)</span>
-                        </label>
-
-                        <p class="auth-form-error" id="surveyError" hidden></p>
-                        <button type="button" class="mypage-classchange-submit-btn" id="surveySubmitBtn">설문 제출하기</button>
-                    </div>
+                <div class="goal-toolbar">
+                    <p class="admin-note-hint">수업이 어땠는지 솔직한 의견을 남겨주세요. 선생님이 더 좋은 수업을 만드는 데 큰 도움이 돼요.</p>
+                    <button type="button" class="mypage-classchange-submit-btn" id="surveyNewBtn">+ 설문 작성하기</button>
                 </div>
+
+                <p class="admin-empty-text" id="surveyStatusEmpty" hidden>수강 중인 강의가 없어요.</p>
+                <div class="mypage-classchange-list" id="surveyStatusList"></div>
             </div>
 
             <div class="mypage-tab-panel" data-mypage-panel="voice" hidden>
-                <p class="admin-note-hint">발음이 궁금한 문장을 녹음해서 선생님한테 보내보세요. 선생님이 듣고 코멘트를 남겨주실 거예요.</p>
-
-                <div class="mypage-classchange-form">
-                    <div class="mypage-classchange-form-row">
-                        <label for="voiceApplicationSelect">어떤 강의인가요?</label>
-                        <select id="voiceApplicationSelect"></select>
-                    </div>
-                    <div class="mypage-classchange-form-row">
-                        <label for="voiceTitleInput">제목 (선택)</label>
-                        <input type="text" id="voiceTitleInput" placeholder="예: 1과 인사말 연습">
-                    </div>
-
-                    <div class="voice-record-box">
-                        <button type="button" class="voice-record-btn" id="voiceRecordBtn">
-                            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>
-                            <span id="voiceRecordBtnLabel">녹음 시작</span>
-                        </button>
-                        <p class="voice-record-timer" id="voiceRecordTimer" hidden>00:00</p>
-                        <audio class="voice-record-preview" id="voiceRecordPreview" controls hidden></audio>
-                    </div>
-
-                    <p class="auth-form-error" id="voiceError" hidden></p>
-                    <button type="button" class="mypage-classchange-submit-btn" id="voiceSubmitBtn" disabled>녹음 제출하기</button>
+                <div class="goal-toolbar">
+                    <p class="admin-note-hint">발음이 궁금한 문장을 녹음해서 선생님한테 보내보세요. 선생님이 듣고 코멘트를 남겨주실 거예요.</p>
+                    <button type="button" class="mypage-classchange-submit-btn" id="voiceNewBtn">+ 녹음 제출하기</button>
                 </div>
 
-                <p class="admin-materials-heading" style="margin-top: 28px;">내가 제출한 녹음</p>
+                <p class="admin-materials-heading" style="margin-top: 8px;">내가 제출한 녹음</p>
                 <p class="admin-empty-text" id="voiceSubmissionsEmpty" hidden>아직 제출한 녹음이 없어요.</p>
                 <div class="voice-submission-list" id="voiceSubmissionsList"></div>
             </div>

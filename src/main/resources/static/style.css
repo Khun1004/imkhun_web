@@ -682,3 +682,38 @@ button:focus-visible {
         right: 300px;
     }
 }
+/* ======================================================================
+   반응형 정리 — 태블릿(760px)은 이미 있어서, 더 좁은 폰 화면(~480px) 단계를 추가함
+   ====================================================================== */
+@media (max-width: 480px) {
+    .masthead {
+        padding: 12px 20px;
+    }
+
+    .wordmark {
+        font-size: 22px;
+    }
+
+    .auth-actions {
+        gap: 6px;
+    }
+
+    .btn-ghost {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .subnav {
+        gap: 12px;
+        padding: 0 16px 14px;
+    }
+
+    .subnav a {
+        font-size: 12.5px;
+        letter-spacing: 0.04em;
+    }
+
+    main {
+        padding: 32px 20px 44px;
+    }
+}

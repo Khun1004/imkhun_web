@@ -371,7 +371,8 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    justify-content: safe center;
     background: var(--kwzm-bg-3);
     border-radius: 20px 0 0 20px;
     box-shadow: -20px 0 48px -18px rgba(15, 37, 71, 0.45);
@@ -1126,8 +1127,19 @@
     width: 22px;
     height: 22px;
     border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
     font-size: 14px;
     line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.student-info-panel-plus:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: rotate(90deg);
 }
 
 .student-info-panel-list {

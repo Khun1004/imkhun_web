@@ -38,19 +38,17 @@
     <div class="student-info-panel student-info-panel--navy">
         <div class="student-info-panel-head">
             <span class="student-info-panel-title">공지사항</span>
-            <span class="student-info-panel-plus" aria-hidden="true">+</span>
+            <button type="button" class="student-info-panel-plus" data-open-more="notice" aria-label="공지사항 전체 보기">+</button>
         </div>
-        <ul class="student-info-panel-list">
-            <li><span class="student-info-panel-date">2026<br>03.02</span><span>새 학기 시간표가 안내됐어요</span></li>
-            <li><span class="student-info-panel-date">2026<br>02.20</span><span>설 연휴 휴관 안내</span></li>
-            <li><span class="student-info-panel-date">2026<br>02.10</span><span>KWZM Center가 새롭게 열렸어요</span></li>
+        <ul class="student-info-panel-list" id="studentHomeNoticeList">
+            <li class="admin-empty-text">불러오는 중...</li>
         </ul>
     </div>
 
     <div class="student-info-panel student-info-panel--teal">
         <div class="student-info-panel-head">
             <span class="student-info-panel-title">내 수강 정보</span>
-            <span class="student-info-panel-plus" aria-hidden="true">+</span>
+            <button type="button" class="student-info-panel-plus" data-goto-panel="mypage" aria-label="내 수강 정보 전체 보기">+</button>
         </div>
         <ul class="student-info-panel-list" id="studentHomeCourseList"></ul>
     </div>
@@ -58,12 +56,10 @@
     <div class="student-info-panel student-info-panel--gray">
         <div class="student-info-panel-head">
             <span class="student-info-panel-title">이벤트 &amp; 행사</span>
-            <span class="student-info-panel-plus" aria-hidden="true">+</span>
+            <button type="button" class="student-info-panel-plus" data-open-more="event" aria-label="이벤트 & 행사 전체 보기">+</button>
         </div>
-        <ul class="student-info-panel-list">
-            <li><span class="student-info-panel-date">2026<br>03.15</span><span>봄맞이 특강 안내</span></li>
-            <li><span class="student-info-panel-date">2026<br>03.01</span><span>학습 성취도 테스트 예정</span></li>
-            <li><span class="student-info-panel-date">2026<br>02.14</span><span>온라인 스터디 모임 모집</span></li>
+        <ul class="student-info-panel-list" id="studentHomeEventList">
+            <li class="admin-empty-text">불러오는 중...</li>
         </ul>
     </div>
 </div>

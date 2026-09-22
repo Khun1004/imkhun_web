@@ -86,11 +86,11 @@
                     </button>
                 </div>
                 <button type="button" class="admin-register-btn" id="adminRegisterBtn">
-                    <span aria-hidden="true">+</span> 등록하기
+                    <span aria-hidden="true">+</span> <span class="admin-register-btn-label">등록하기</span>
                 </button>
                 <button type="button" class="admin-back-btn" id="adminBackBtn">
                     <svg viewBox="0 0 24 24" fill="none"><path d="M9 21V13.6c0-.6.4-1 1-1h4c.6 0 1 .4 1 1V21M4.5 10.5 12 4l7.5 6.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    로그아웃
+                    <span class="admin-back-btn-label">로그아웃</span>
                 </button>
             </div>
         </div>
@@ -119,6 +119,7 @@
             <button type="button" class="admin-maintab active" data-imkhun-tab="posts" role="tab" aria-selected="true">공지 글</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="timetable" role="tab" aria-selected="false">강의 시간표</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="faq" role="tab" aria-selected="false">FAQ</button>
+            <button type="button" class="admin-maintab" data-imkhun-tab="events" role="tab" aria-selected="false">이벤트 &amp; 행사</button>
         </nav>
 
         <nav class="admin-subtabs" id="adminSubtabsStudents" role="tablist" aria-label="학생 관리 메뉴" hidden>
@@ -529,6 +530,18 @@
                 <p class="admin-empty-text" id="adminFaqEmpty" hidden>아직 등록된 질문이 없어요.</p>
                 <div class="admin-faq-list" id="adminFaqList"></div>
             </div>
+
+            <div class="admin-inline-panel" data-notice-panel="events" hidden>
+                <div class="admin-materials-head-row">
+                    <p class="admin-materials-heading">이벤트 &amp; 행사</p>
+                    <button type="button" class="admin-register-btn" id="adminEventNewBtn">
+                        <span aria-hidden="true">+</span> 새 이벤트 등록
+                    </button>
+                </div>
+                <p class="admin-note-hint">KWZM Center 홈 화면의 "이벤트 & 행사" 카드에 나와요. 학생만 볼 수 있어요.</p>
+                <p class="admin-empty-text" id="adminEventsEmpty" hidden>아직 등록된 이벤트가 없어요.</p>
+                <div class="admin-notice-list" id="adminEventList"></div>
+            </div>
         </section>
 
         <!-- 학생 관리 / 마이 (fragment) -->
@@ -862,6 +875,42 @@
             <div class="admin-note-footer">
                 <span></span>
                 <button type="button" class="admin-note-save-btn" id="noticeSaveBtn">등록하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== 이벤트 & 행사 등록 (관리자 전용) ===================== -->
+<div class="admin-invite-modal" id="eventModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-event-modal-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3>새 이벤트 등록</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-event-modal-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <div class="auth-form-field">
+                <label for="eventTitleInput">제목</label>
+                <input type="text" id="eventTitleInput" placeholder="예: 봄맞이 특강 안내">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="eventDateInput">행사 날짜</label>
+                <input type="date" id="eventDateInput">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="eventContentInput">내용 (선택)</label>
+                <textarea class="admin-note-textarea" id="eventContentInput" placeholder="이벤트 상세 내용을 입력해주세요."></textarea>
+            </div>
+
+            <p class="auth-form-error" id="eventError" hidden></p>
+
+            <div class="admin-note-footer">
+                <span></span>
+                <button type="button" class="admin-note-save-btn" id="eventSaveBtn">등록하기</button>
             </div>
         </div>
     </div>

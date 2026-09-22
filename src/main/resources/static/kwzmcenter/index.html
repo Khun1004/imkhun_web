@@ -117,7 +117,7 @@
                 <button type="button" class="student-masthead-name" id="studentTopheaderName" data-student-main-tab="mypage"></button>
                 <button type="button" class="student-back-btn" id="studentBackBtn">
                     <svg viewBox="0 0 24 24" fill="none"><path d="M9 21V13.6c0-.6.4-1 1-1h4c.6 0 1 .4 1 1V21M4.5 10.5 12 4l7.5 6.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    로그아웃
+                    <span class="student-back-btn-label">로그아웃</span>
                 </button>
             </div>
         </div>
@@ -223,6 +223,188 @@
             <p class="auth-form-error" id="assignmentSubmitError" hidden></p>
 
             <button type="button" class="auth-form-submit" id="assignmentSubmitBtn">제출하기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 학습 목표 만들기 모달 -->
+<div class="board-modal" id="goalCreateModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-goal-create-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="목표 만들기">
+        <div class="board-modal-head">
+            <h3>목표 만들기</h3>
+            <button type="button" class="board-modal-close" data-goal-create-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <div class="auth-form-field">
+                <label for="goalTypeSelect">목표 종류</label>
+                <select id="goalTypeSelect">
+                    <option value="ATTENDANCE_STREAK">연속 출석 (예: 연속 10일 출석)</option>
+                    <option value="ATTENDANCE_COUNT">누적 출석 횟수 (예: 이번 달 15번 출석)</option>
+                    <option value="VOCAB_WORDS">단어 맞추기 개수 (예: 단어 50개 맞추기)</option>
+                    <option value="ASSIGNMENT_COUNT">숙제 완료 개수 (예: 숙제 10개 완료하기)</option>
+                </select>
+            </div>
+            <div class="auth-form-field">
+                <label for="goalTitleInput">목표 이름</label>
+                <input type="text" id="goalTitleInput" placeholder="예: 이번 달 단어 50개 외우기">
+            </div>
+            <div class="auth-form-field">
+                <label for="goalTargetInput">목표 값 (숫자)</label>
+                <input type="number" id="goalTargetInput" min="1" placeholder="예: 50">
+            </div>
+            <p class="auth-form-error" id="goalError" hidden></p>
+            <button type="button" class="auth-form-submit" id="goalSaveBtn">목표 만들기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 홈 화면 "공지사항"/"이벤트 & 행사" 카드의 + 버튼 — 전체 목록 보기 모달 -->
+<div class="board-modal" id="homeMoreModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-home-more-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true">
+        <div class="board-modal-head">
+            <h3 id="homeMoreModalTitle">공지사항</h3>
+            <button type="button" class="board-modal-close" data-home-more-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <p class="admin-empty-text" id="homeMoreEmpty" hidden>아직 등록된 내용이 없어요.</p>
+            <div class="mypage-classchange-list" id="homeMoreList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 수업 변경 요청 모달 -->
+<div class="board-modal" id="classChangeModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-classchange-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="수업 변경 요청">
+        <div class="board-modal-head">
+            <h3>수업 취소/변경 요청</h3>
+            <button type="button" class="board-modal-close" data-classchange-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <div class="mypage-classchange-form-row">
+                <label for="classChangeApplicationSelect">어떤 강의인가요?</label>
+                <select id="classChangeApplicationSelect"></select>
+            </div>
+            <div class="mypage-classchange-form-row">
+                <label>요청 종류</label>
+                <div class="mypage-classchange-type-toggle">
+                    <button type="button" class="mypage-classchange-type-btn active" data-change-type="CANCEL">취소</button>
+                    <button type="button" class="mypage-classchange-type-btn" data-change-type="RESCHEDULE">변경</button>
+                </div>
+            </div>
+            <div class="mypage-classchange-form-row">
+                <label for="classChangeDateInput">원래 수업 날짜</label>
+                <input type="date" id="classChangeDateInput">
+            </div>
+            <div class="mypage-classchange-form-row" id="classChangeNewDateRow" hidden>
+                <label for="classChangeNewDateInput">희망하는 새 날짜</label>
+                <input type="date" id="classChangeNewDateInput">
+            </div>
+            <div class="mypage-classchange-form-row">
+                <label for="classChangeReasonInput">사유 (선택)</label>
+                <textarea id="classChangeReasonInput" rows="2" placeholder="예: 갑자기 일이 생겨서요"></textarea>
+            </div>
+            <p class="auth-form-error" id="classChangeError" hidden></p>
+            <button type="button" class="auth-form-submit" id="classChangeSubmitBtn">요청 보내기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 만족도 설문 모달 -->
+<div class="board-modal" id="surveyModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-survey-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="만족도 설문">
+        <div class="board-modal-head">
+            <h3>만족도 설문</h3>
+            <button type="button" class="board-modal-close" data-survey-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <div class="mypage-classchange-form-row">
+                <label for="surveyApplicationSelect">어떤 강의인가요?</label>
+                <select id="surveyApplicationSelect"></select>
+            </div>
+
+            <div id="surveyAlreadySubmitted" class="mypage-survey-submitted" hidden>
+                <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                이미 이 강의의 설문을 제출하셨어요. 소중한 의견 감사해요!
+            </div>
+
+            <div id="surveyForm">
+                <div class="mypage-survey-rating-row">
+                    <label>강의 내용 만족도</label>
+                    <div class="mypage-survey-stars" data-survey-rating="content"></div>
+                </div>
+                <div class="mypage-survey-rating-row">
+                    <label>선생님 만족도</label>
+                    <div class="mypage-survey-stars" data-survey-rating="teacher"></div>
+                </div>
+                <div class="mypage-survey-rating-row">
+                    <label>교재/자료 만족도</label>
+                    <div class="mypage-survey-stars" data-survey-rating="material"></div>
+                </div>
+                <div class="mypage-survey-rating-row">
+                    <label>전반적 만족도</label>
+                    <div class="mypage-survey-stars" data-survey-rating="overall"></div>
+                </div>
+
+                <div class="mypage-classchange-form-row">
+                    <label for="surveyCommentInput">의견 (선택)</label>
+                    <textarea id="surveyCommentInput" rows="3" placeholder="더 해주고 싶은 말씀이 있으면 자유롭게 적어주세요"></textarea>
+                </div>
+
+                <label class="mypage-survey-anonymous-label">
+                    <input type="checkbox" id="surveyAnonymousInput">
+                    <span>익명으로 제출하기 (선생님이 누가 썼는지 못 봐요)</span>
+                </label>
+
+                <p class="auth-form-error" id="surveyError" hidden></p>
+                <button type="button" class="auth-form-submit" id="surveySubmitBtn">설문 제출하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 발음 녹음 제출 모달 -->
+<div class="board-modal" id="voiceRecordModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-voice-record-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="발음 녹음 제출">
+        <div class="board-modal-head">
+            <h3>발음 녹음 제출</h3>
+            <button type="button" class="board-modal-close" data-voice-record-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <div class="mypage-classchange-form-row">
+                <label for="voiceApplicationSelect">어떤 강의인가요?</label>
+                <select id="voiceApplicationSelect"></select>
+            </div>
+            <div class="mypage-classchange-form-row">
+                <label for="voiceTitleInput">제목 (선택)</label>
+                <input type="text" id="voiceTitleInput" placeholder="예: 1과 인사말 연습">
+            </div>
+
+            <div class="voice-record-box">
+                <button type="button" class="voice-record-btn" id="voiceRecordBtn">
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>
+                    <span id="voiceRecordBtnLabel">녹음 시작</span>
+                </button>
+                <p class="voice-record-timer" id="voiceRecordTimer" hidden>00:00</p>
+                <audio class="voice-record-preview" id="voiceRecordPreview" controls hidden></audio>
+            </div>
+
+            <p class="auth-form-error" id="voiceError" hidden></p>
+            <button type="button" class="auth-form-submit" id="voiceSubmitBtn" disabled>녹음 제출하기</button>
         </div>
     </div>
 </div>

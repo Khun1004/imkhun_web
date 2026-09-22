@@ -389,9 +389,21 @@ async function loadMaterials(language, category, scope) {
     }
 }
 
-function openFileInNewTab(dataUri) {
+function openFileInNewTab(fileUrlOrDataUri) {
+    // 이제 fileData 자리엔 대부분 "/uploads/xxx.png" 같은 실제 주소가 들어있어서 그냥 바로 열면 됨.
+    // 예전에 base64로 저장해둔 자료만 예외적으로 디코딩해서 열어줌 (하위 호환)
+    if (!fileUrlOrDataUri) {
+        alert("파일을 여는 데 실패했어요. 다운로드해서 확인해주세요.");
+        return;
+    }
+
+    if (!fileUrlOrDataUri.startsWith("data:")) {
+        window.open(fileUrlOrDataUri, "_blank");
+        return;
+    }
+
     try {
-        const [header, base64] = dataUri.split(",");
+        const [header, base64] = fileUrlOrDataUri.split(",");
         const mimeMatch = header.match(/data:(.*?);base64/);
         const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
 
@@ -696,6 +708,114 @@ async function deleteNotice(id) {
             return;
         }
         loadAdminNotices();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function loadAdminEvents() {
+    const list = document.getElementById("adminEventList");
+    const emptyText = document.getElementById("adminEventsEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/events");
+        if (!res.ok) return;
+        const events = await res.json();
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = events.length > 0;
+
+        events.forEach((e) => {
+            const item = document.createElement("div");
+            item.className = "admin-notice-item";
+            item.innerHTML = `
+        <div class="admin-notice-item-head">
+          <p class="admin-notice-item-title">${escapeHtmlForAdmin(e.title)}</p>
+          <span class="admin-notice-item-date">${e.eventDate}</span>
+        </div>
+        ${e.content ? `<p class="admin-notice-item-content">${escapeHtmlForAdmin(e.content)}</p>` : ""}
+        <div class="admin-notice-item-actions">
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-event-id="${e.id}">삭제</button>
+        </div>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function openEventModal() {
+    const modal = document.getElementById("eventModal");
+    if (!modal) return;
+    document.getElementById("eventTitleInput").value = "";
+    document.getElementById("eventDateInput").value = "";
+    document.getElementById("eventContentInput").value = "";
+    document.getElementById("eventError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeEventModal() {
+    const modal = document.getElementById("eventModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitEvent() {
+    const title = document.getElementById("eventTitleInput").value.trim();
+    const eventDate = document.getElementById("eventDateInput").value;
+    const content = document.getElementById("eventContentInput").value.trim();
+    const errorEl = document.getElementById("eventError");
+    const saveBtn = document.getElementById("eventSaveBtn");
+
+    if (!title || !eventDate) {
+        errorEl.textContent = "제목과 행사 날짜를 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "등록하는 중...";
+
+    try {
+        const res = await fetch("/api/admin/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, content, eventDate }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "등록에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeEventModal();
+        loadAdminEvents();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "등록하기";
+    }
+}
+
+async function deleteEvent(id) {
+    if (!confirm("이 이벤트를 삭제할까요? 되돌릴 수 없어요.")) return;
+
+    try {
+        const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAdminEvents();
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
@@ -1603,17 +1723,20 @@ async function submitSendFile() {
     submitBtn.textContent = "보내는 중...";
 
     try {
-        const fileData = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
+        const uploadForm = new FormData();
+        uploadForm.append("file", file);
+        const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: uploadForm });
+        if (!uploadRes.ok) {
+            errorEl.textContent = (await uploadRes.text()) || "파일 업로드에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        const uploaded = await uploadRes.json();
 
         const res = await fetch(`/api/admin/applications/${applicationId}/files`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ category, fileName: file.name, fileData }),
+            body: JSON.stringify({ category, fileName: file.name, fileData: uploaded.url }),
         });
 
         if (!res.ok) {
@@ -2385,8 +2508,8 @@ async function submitRegisterMaterial() {
         errorEl.hidden = false;
         return;
     }
-    if (selectedFiles.some((f) => f.size > 4 * 1024 * 1024)) {
-        errorEl.textContent = "파일 하나당 용량은 4MB 이하로 올려주세요.";
+    if (selectedFiles.some((f) => f.size > 20 * 1024 * 1024)) {
+        errorEl.textContent = "파일 하나당 용량은 20MB 이하로 올려주세요.";
         errorEl.hidden = false;
         return;
     }
@@ -2408,17 +2531,21 @@ async function submitRegisterMaterial() {
     submitBtn.disabled = true;
     submitBtn.textContent = isEditing ? "수정 중..." : "등록 중...";
 
-    const readFileAsDataUrl = (file) =>
-        new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () =>
-                resolve({ fileName: file.name, fileType: file.type, fileData: reader.result, linkUrl: null, textContent: null });
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
+    // 파일을 base64로 바꿔서 DB에 그대로 넣는 대신, 서버 디스크에 저장하고
+    // 짧은 URL만 돌려받아서 그걸 fileData 자리에 넣음 (화면 쪽 코드는 그대로 써도 됨)
+    const uploadFileToServer = async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+        if (!res.ok) {
+            throw new Error((await res.text()) || `"${file.name}" 업로드에 실패했어요.`);
+        }
+        const uploaded = await res.json();
+        return { fileName: file.name, fileType: file.type, fileData: uploaded.url, linkUrl: null, textContent: null };
+    };
 
     try {
-        const newFiles = await Promise.all(selectedFiles.map(readFileAsDataUrl));
+        const newFiles = await Promise.all(selectedFiles.map(uploadFileToServer));
         const files = [...editingExistingFiles, ...newFiles];
 
         if (linkValue) {
@@ -2462,7 +2589,7 @@ async function submitRegisterMaterial() {
         }
     } catch (err) {
         console.error(err);
-        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.textContent = err.message || "서버에 연결할 수 없어요.";
         errorEl.hidden = false;
     } finally {
         submitBtn.disabled = false;
@@ -4298,6 +4425,7 @@ document.addEventListener("fragments:loaded", () => {
 
             if (key === "timetable") loadAdminTimetable();
             if (key === "faq") loadAdminFaqs();
+            if (key === "events") loadAdminEvents();
         });
     });
 
@@ -4388,6 +4516,7 @@ document.addEventListener("fragments:loaded", () => {
         if (e.target.closest("[data-course-change-close]")) closeCourseChangeModal();
         if (e.target.closest("[data-payment-info-close]")) closePaymentInfoModal();
         if (e.target.closest("[data-notice-modal-close]")) closeNoticeModal();
+        if (e.target.closest("[data-event-modal-close]")) closeEventModal();
 
         const changeCourseBtn = e.target.closest("[data-change-course-id]");
         if (changeCourseBtn) openCourseChangeModal(changeCourseBtn.dataset.changeCourseId);
@@ -4409,6 +4538,9 @@ document.addEventListener("fragments:loaded", () => {
 
         const deleteNoticeBtn = e.target.closest("[data-delete-notice-id]");
         if (deleteNoticeBtn) deleteNotice(deleteNoticeBtn.dataset.deleteNoticeId);
+
+        const deleteEventBtn = e.target.closest("[data-delete-event-id]");
+        if (deleteEventBtn) deleteEvent(deleteEventBtn.dataset.deleteEventId);
 
         if (e.target.closest("[data-timetable-modal-close]")) closeTimetableModal();
         const editTimetableBtn = e.target.closest("[data-edit-timetable-id]");
@@ -4463,6 +4595,8 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("paymentInfoSaveBtn")?.addEventListener("click", submitPaymentInfo);
     document.getElementById("adminNoticeNewBtn")?.addEventListener("click", () => openNoticeModal());
     document.getElementById("noticeSaveBtn")?.addEventListener("click", submitNotice);
+    document.getElementById("adminEventNewBtn")?.addEventListener("click", openEventModal);
+    document.getElementById("eventSaveBtn")?.addEventListener("click", submitEvent);
     document.getElementById("adminTimetableNewBtn")?.addEventListener("click", () => openTimetableModal());
     document.getElementById("timetableSaveBtn")?.addEventListener("click", submitTimetableEntry);
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);

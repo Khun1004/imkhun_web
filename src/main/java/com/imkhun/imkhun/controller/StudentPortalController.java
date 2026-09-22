@@ -8,6 +8,7 @@ import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AssignmentSubmissionService;
 import com.imkhun.imkhun.service.LearningGoalService;
+import com.imkhun.imkhun.service.EventService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.AttendanceStreakService;
 import com.imkhun.imkhun.service.CalendarExportService;
@@ -57,6 +58,7 @@ public class StudentPortalController {
     private final StudentCalendarService studentCalendarService;
     private final AssignmentSubmissionService assignmentSubmissionService;
     private final LearningGoalService learningGoalService;
+    private final EventService eventService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -67,7 +69,8 @@ public class StudentPortalController {
                                    AttendanceStreakService attendanceStreakService, VocabularyService vocabularyService,
                                    GrowthReportService growthReportService, VoiceSubmissionService voiceSubmissionService,
                                    StudentDashboardService studentDashboardService, StudentCalendarService studentCalendarService,
-                                   AssignmentSubmissionService assignmentSubmissionService, LearningGoalService learningGoalService) {
+                                   AssignmentSubmissionService assignmentSubmissionService, LearningGoalService learningGoalService,
+                                   EventService eventService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -85,6 +88,7 @@ public class StudentPortalController {
         this.studentCalendarService = studentCalendarService;
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.learningGoalService = learningGoalService;
+        this.eventService = eventService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -673,5 +677,14 @@ public class StudentPortalController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // ---------- 이벤트 & 행사 ----------
+
+    @GetMapping("/events")
+    public ResponseEntity<?> getEvents(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(eventService.getAllEvents());
     }
 }

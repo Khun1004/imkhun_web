@@ -1,5 +1,6 @@
 package com.imkhun.imkhun.service;
 
+import com.imkhun.imkhun.domain.MaterialFile;
 import com.imkhun.imkhun.domain.StudyMaterial;
 import com.imkhun.imkhun.dto.CreateMaterialRequest;
 import com.imkhun.imkhun.dto.MaterialFileRequest;
@@ -18,6 +19,7 @@ import java.util.Set;
 public class StudyMaterialService {
 
     private final StudyMaterialRepository studyMaterialRepository;
+    private final FileStorageService fileStorageService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final Set<String> VALID_LANGUAGES = Set.of("korean", "japanese", "thai", "english", "other", "computer", "video");
     private static final Set<String> VALID_CATEGORIES = Set.of(
@@ -28,8 +30,9 @@ public class StudyMaterialService {
 
     private static final Set<String> VALID_SCOPES = Set.of("PERSONAL", "KWZM", "VIDEO", "TRIAL");
 
-    public StudyMaterialService(StudyMaterialRepository studyMaterialRepository) {
+    public StudyMaterialService(StudyMaterialRepository studyMaterialRepository, FileStorageService fileStorageService) {
         this.studyMaterialRepository = studyMaterialRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional
@@ -94,21 +97,28 @@ public class StudyMaterialService {
 
         // 새 파일을 골랐을 때만 기존 파일을 지우고 교체 (안 골랐으면 기존 파일 유지)
         if (request.files() != null && !request.files().isEmpty()) {
+            List<String> oldFileUrls = material.getFiles().stream().map(MaterialFile::getFileData).toList();
             material.clearFiles();
             addFiles(material, request.files());
+            StudyMaterial saved = studyMaterialRepository.save(material);
+            oldFileUrls.forEach(fileStorageService::delete); // 저장 성공한 뒤에 예전 파일들을 디스크에서 지움
+            return toResponse(saved);
         }
 
         StudyMaterial saved = studyMaterialRepository.save(material);
         return toResponse(saved);
     }
 
+    @Transactional
     public void deleteMaterial(Long id, String scope) {
         StudyMaterial material = studyMaterialRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("자료를 찾을 수 없어요."));
         if (!material.getScope().equals(scope)) {
             throw new IllegalStateException("자료를 찾을 수 없어요.");
         }
+        List<String> fileUrls = material.getFiles().stream().map(MaterialFile::getFileData).toList();
         studyMaterialRepository.deleteById(id);
+        fileUrls.forEach(fileStorageService::delete); // DB에서 지운 뒤에 디스크 파일도 정리
     }
 
     private void addFiles(StudyMaterial material, List<MaterialFileRequest> files) {

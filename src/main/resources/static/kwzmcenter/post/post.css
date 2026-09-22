@@ -96,14 +96,23 @@
 
 .board-category-pills {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
     border-bottom: 1.5px solid var(--kwzm-line);
     flex: 1;
     min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.board-category-pills::-webkit-scrollbar {
+    display: none;
 }
 
 .board-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
     border: none;
     border-bottom: 2.5px solid transparent;
     border-radius: 0;

@@ -8,6 +8,8 @@ import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AssignmentSubmissionService;
+import com.imkhun.imkhun.service.EventService;
+import com.imkhun.imkhun.service.FileStorageService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.ClassChangeRequestService;
 import com.imkhun.imkhun.service.DashboardService;
@@ -31,7 +33,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -63,6 +68,8 @@ public class AdminController {
     private final VocabularyService vocabularyService;
     private final VoiceSubmissionService voiceSubmissionService;
     private final AssignmentSubmissionService assignmentSubmissionService;
+    private final EventService eventService;
+    private final FileStorageService fileStorageService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -75,7 +82,8 @@ public class AdminController {
                            LessonNoteService lessonNoteService, AssignmentService assignmentService,
                            ClassChangeRequestService classChangeRequestService, StudentLevelService studentLevelService,
                            SurveyService surveyService, VocabularyService vocabularyService,
-                           VoiceSubmissionService voiceSubmissionService, AssignmentSubmissionService assignmentSubmissionService) {
+                           VoiceSubmissionService voiceSubmissionService, AssignmentSubmissionService assignmentSubmissionService,
+                           EventService eventService, FileStorageService fileStorageService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -101,6 +109,8 @@ public class AdminController {
         this.vocabularyService = vocabularyService;
         this.voiceSubmissionService = voiceSubmissionService;
         this.assignmentSubmissionService = assignmentSubmissionService;
+        this.eventService = eventService;
+        this.fileStorageService = fileStorageService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -614,6 +624,46 @@ public class AdminController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // ---------- 파일 업로드 (디스크 저장) ----------
+
+    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadFile(HttpServletRequest request, @RequestParam("file") MultipartFile file) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            String url = fileStorageService.store(file);
+            return ResponseEntity.ok(Map.of("url", url, "fileName", file.getOriginalFilename()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body("파일을 저장하는 중 문제가 생겼어요.");
+        }
+    }
+
+    // ---------- 이벤트 & 행사 관리 (KWZM Center 학생 전용) ----------
+
+    @GetMapping("/events")
+    public ResponseEntity<?> getEvents(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(eventService.getAllEvents());
+    }
+
+    @PostMapping("/events")
+    public ResponseEntity<?> createEvent(HttpServletRequest request, @RequestBody CreateEventRequest eventRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(eventService.createEvent(eventRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/events/{id}")
+    public ResponseEntity<?> deleteEvent(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        eventService.deleteEvent(id);
+        return ResponseEntity.ok().build();
     }
 
     // ---------- 강의 시간표 관리 ----------

@@ -129,6 +129,8 @@ async function loadStudentPortalData() {
         renderVocabLanguagePills();
         loadTodaySummary();
         initStudentCalendar();
+        loadHomeNoticeCard();
+        loadHomeEventCard();
         renderTodaysTip();
         loadRecentMaterials();
         loadStudentNotifUnreadCount();
@@ -566,6 +568,111 @@ async function submitCheckin(applicationId, btn) {
         btn.disabled = false;
         btn.textContent = "출석 체크하기";
     }
+}
+
+// 날짜 문자열("yyyy.MM.dd")을 홈 카드 배지 형태(연도 / 월.일)로 쪼개줌
+function splitDateForHomeCard(dateStr) {
+    if (!dateStr) return { year: "", monthDay: "" };
+    const parts = dateStr.split(".");
+    return { year: parts[0] || "", monthDay: parts.length >= 3 ? `${parts[1]}.${parts[2]}` : dateStr };
+}
+
+async function loadHomeNoticeCard() {
+    const listEl = document.getElementById("studentHomeNoticeList");
+    if (!listEl) return;
+
+    try {
+        const res = await fetch("/api/notices");
+        const notices = res.ok ? await res.json() : [];
+
+        if (notices.length === 0) {
+            listEl.innerHTML = `<li class="admin-empty-text">아직 등록된 공지사항이 없어요.</li>`;
+            return;
+        }
+
+        listEl.innerHTML = notices
+            .slice(0, 3)
+            .map((n) => {
+                const { year, monthDay } = splitDateForHomeCard(n.createdAt);
+                return `<li><span class="student-info-panel-date">${year}<br>${monthDay}</span><span>${escapeHtmlForStudent(n.title)}</span></li>`;
+            })
+            .join("");
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<li class="admin-empty-text">불러오지 못했어요.</li>`;
+    }
+}
+
+async function loadHomeEventCard() {
+    const listEl = document.getElementById("studentHomeEventList");
+    if (!listEl) return;
+
+    try {
+        const res = await fetch("/api/student/events");
+        const events = res.ok ? await res.json() : [];
+
+        if (events.length === 0) {
+            listEl.innerHTML = `<li class="admin-empty-text">아직 등록된 이벤트가 없어요.</li>`;
+            return;
+        }
+
+        listEl.innerHTML = events
+            .slice(0, 3)
+            .map((e) => {
+                const { year, monthDay } = splitDateForHomeCard(e.eventDate);
+                return `<li><span class="student-info-panel-date">${year}<br>${monthDay}</span><span>${escapeHtmlForStudent(e.title)}</span></li>`;
+            })
+            .join("");
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<li class="admin-empty-text">불러오지 못했어요.</li>`;
+    }
+}
+
+async function openHomeMoreModal(type) {
+    const modal = document.getElementById("homeMoreModal");
+    const titleEl = document.getElementById("homeMoreModalTitle");
+    const listEl = document.getElementById("homeMoreList");
+    const emptyEl = document.getElementById("homeMoreEmpty");
+    if (!modal || !listEl) return;
+
+    titleEl.textContent = type === "event" ? "이벤트 & 행사" : "공지사항";
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+    emptyEl.hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    try {
+        const res = await fetch(type === "event" ? "/api/student/events" : "/api/notices");
+        const items = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        emptyEl.hidden = items.length > 0;
+
+        items.forEach((item) => {
+            const row = document.createElement("div");
+            row.className = "mypage-classchange-row";
+            const dateStr = type === "event" ? item.eventDate : item.createdAt;
+            row.innerHTML = `
+        <div class="mypage-classchange-row-head">
+          <span class="mypage-classchange-row-course">${escapeHtmlForStudent(item.title)}</span>
+          <span class="mypage-classchange-row-status mypage-classchange-row-status--approved">${dateStr || ""}</span>
+        </div>
+        ${item.content ? `<p class="mypage-classchange-row-detail">${escapeHtmlForStudent(item.content)}</p>` : ""}
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+function closeHomeMoreModal() {
+    const modal = document.getElementById("homeMoreModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
 }
 
 function renderStudentHome(nickname) {
@@ -1018,9 +1125,9 @@ async function renderStudentCalendarMonth() {
                 .map((e) => {
                     if (e.type === "CLASS") {
                         const statusClass = e.status ? `calendar-dot--${e.status.toLowerCase()}` : "calendar-dot--upcoming";
-                        return `<span class="calendar-chip"><i class="calendar-dot ${statusClass}"></i>${escapeHtmlForStudent(e.title)}</span>`;
+                        return `<span class="calendar-chip"><i class="calendar-dot ${statusClass}"></i><span class="calendar-chip-label">${escapeHtmlForStudent(e.title)}</span></span>`;
                     }
-                    return `<span class="calendar-chip"><i class="calendar-dot calendar-dot--assignment"></i>${escapeHtmlForStudent(e.title)}</span>`;
+                    return `<span class="calendar-chip"><i class="calendar-dot calendar-dot--assignment"></i><span class="calendar-chip-label">${escapeHtmlForStudent(e.title)}</span></span>`;
                 })
                 .join("");
 
@@ -1299,20 +1406,31 @@ async function completeVocabQuiz(timedOut) {
     clearInterval(vocabQuizTimerInterval);
     const score = vocabQuizQuestions.filter((q) => q.correct).length;
     const total = vocabQuizQuestions.length;
+    let saveFailed = false;
 
     try {
-        await fetch(`/api/student/vocabulary/sets/${vocabSelectedSetId}/quiz-result`, {
+        const res = await fetch(`/api/student/vocabulary/sets/${vocabSelectedSetId}/quiz-result`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ score, totalQuestions: total }),
         });
+        if (!res.ok) {
+            saveFailed = true;
+            console.error("퀴즈 결과 저장 실패:", res.status, await res.text());
+        }
     } catch (err) {
+        saveFailed = true;
         console.error(err);
     }
 
     document.getElementById("vocabQuizOverlay").hidden = true;
     document.body.style.overflow = "";
-    alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈 완료! ${total}문제 중 ${score}개 맞혔어요.`);
+
+    if (saveFailed) {
+        alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈는 끝났지만 결과 저장에 실패했어요 (${total}문제 중 ${score}개 맞힘). 인터넷 연결을 확인하고 다시 시도해주세요.`);
+    } else {
+        alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈 완료! ${total}문제 중 ${score}개 맞혔어요.`);
+    }
 }
 
 function renderStudentLanguagePills() {
@@ -1705,9 +1823,20 @@ async function loadComputerMaterials(category) {
     }
 }
 
-function openStudentFileInNewTab(dataUri) {
+function openStudentFileInNewTab(fileUrlOrDataUri) {
+    // "/uploads/xxx.png" 같은 실제 주소면 그냥 바로 열고, 예전 base64 자료만 디코딩해서 열어줌 (하위 호환)
+    if (!fileUrlOrDataUri) {
+        alert("파일을 여는 데 실패했어요.");
+        return;
+    }
+
+    if (!fileUrlOrDataUri.startsWith("data:")) {
+        window.open(fileUrlOrDataUri, "_blank");
+        return;
+    }
+
     try {
-        const [header, base64] = dataUri.split(",");
+        const [header, base64] = fileUrlOrDataUri.split(",");
         const mimeMatch = header.match(/data:(.*?);base64/);
         const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
         const binary = atob(base64);
@@ -2484,6 +2613,23 @@ async function loadGoals() {
     }
 }
 
+function openGoalCreateModal() {
+    const modal = document.getElementById("goalCreateModal");
+    if (!modal) return;
+    document.getElementById("goalTypeSelect").value = "ATTENDANCE_STREAK";
+    document.getElementById("goalTitleInput").value = "";
+    document.getElementById("goalTargetInput").value = "";
+    document.getElementById("goalError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeGoalCreateModal() {
+    const modal = document.getElementById("goalCreateModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
 async function submitGoal() {
     const type = document.getElementById("goalTypeSelect").value;
     const title = document.getElementById("goalTitleInput").value.trim();
@@ -2511,9 +2657,7 @@ async function submitGoal() {
             errorEl.hidden = false;
             return;
         }
-        document.getElementById("goalTitleInput").value = "";
-        document.getElementById("goalTargetInput").value = "";
-        document.getElementById("goalForm").hidden = true;
+        closeGoalCreateModal();
         loadGoals();
     } catch (err) {
         console.error(err);
@@ -2596,6 +2740,95 @@ let voiceRecordedBlob = null;
 let voiceTimerInterval = null;
 let voiceSeconds = 0;
 let voiceIsRecording = false;
+
+async function loadSurveyStatusList() {
+    const listEl = document.getElementById("surveyStatusList");
+    const emptyEl = document.getElementById("surveyStatusEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/enrolled-courses");
+        const courses = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = courses.length > 0;
+
+        for (const c of courses) {
+            let submitted = false;
+            try {
+                const statusRes = await fetch(`/api/student/applications/${c.applicationId}/survey/status`);
+                if (statusRes.ok) submitted = (await statusRes.json()).submitted;
+            } catch (err) {
+                console.error(err);
+            }
+
+            const row = document.createElement("div");
+            row.className = "mypage-classchange-row";
+            row.innerHTML = `
+        <div class="mypage-classchange-row-head">
+          <span class="mypage-classchange-row-course">${escapeHtmlForStudent(c.courseName)}</span>
+          <span class="mypage-classchange-row-status mypage-classchange-row-status--${submitted ? "approved" : "pending"}">${submitted ? "제출 완료" : "미제출"}</span>
+        </div>
+      `;
+            listEl.appendChild(row);
+        }
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+function openClassChangeModal() {
+    const modal = document.getElementById("classChangeModal");
+    if (!modal) return;
+    document.getElementById("classChangeDateInput").value = "";
+    document.getElementById("classChangeNewDateInput").value = "";
+    document.getElementById("classChangeReasonInput").value = "";
+    document.getElementById("classChangeError").hidden = true;
+    populateClassChangeApplicationSelect();
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeClassChangeModal() {
+    const modal = document.getElementById("classChangeModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+function openSurveyModal() {
+    const modal = document.getElementById("surveyModal");
+    if (!modal) return;
+    populateSurveyApplicationSelect();
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeSurveyModal() {
+    const modal = document.getElementById("surveyModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+function openVoiceRecordModal() {
+    const modal = document.getElementById("voiceRecordModal");
+    if (!modal) return;
+    document.getElementById("voiceTitleInput").value = "";
+    document.getElementById("voiceError").hidden = true;
+    document.getElementById("voiceRecordPreview").hidden = true;
+    document.getElementById("voiceRecordTimer").hidden = true;
+    document.getElementById("voiceSubmitBtn").disabled = true;
+    populateVoiceApplicationSelect();
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeVoiceRecordModal() {
+    const modal = document.getElementById("voiceRecordModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
 
 async function populateVoiceApplicationSelect() {
     const select = document.getElementById("voiceApplicationSelect");
@@ -2741,6 +2974,7 @@ async function submitVoiceRecording() {
         document.getElementById("voiceRecordTimer").hidden = true;
         document.getElementById("voiceRecordBtnLabel").textContent = "녹음 시작";
         voiceRecordedBlob = null;
+        closeVoiceRecordModal();
         loadMyVoiceSubmissions();
     } catch (err) {
         console.error(err);
@@ -2877,6 +3111,10 @@ async function submitSurvey() {
         }
 
         checkSurveyStatusAndRenderForm(applicationId);
+        setTimeout(() => {
+            closeSurveyModal();
+            loadSurveyStatusList();
+        }, 900);
     } catch (err) {
         console.error(err);
         errorEl.textContent = "서버에 연결할 수 없어요.";
@@ -2999,6 +3237,7 @@ async function submitClassChangeRequest() {
         document.getElementById("classChangeDateInput").value = "";
         document.getElementById("classChangeNewDateInput").value = "";
         document.getElementById("classChangeReasonInput").value = "";
+        closeClassChangeModal();
         loadMyClassChangeRequests();
     } catch (err) {
         console.error(err);
@@ -3414,11 +3653,10 @@ document.addEventListener("fragments:loaded", () => {
         if (key === "shortcuts") loadMypageFiles();
         if (key === "assignments") loadMyAssignments();
         if (key === "classchange") {
-            populateClassChangeApplicationSelect();
             loadMyClassChangeRequests();
         }
         if (key === "survey") {
-            populateSurveyApplicationSelect();
+            loadSurveyStatusList();
         }
         if (key === "growth") {
             loadGrowthReport();
@@ -3427,7 +3665,6 @@ document.addEventListener("fragments:loaded", () => {
             loadGoals();
         }
         if (key === "voice") {
-            populateVoiceApplicationSelect();
             loadMyVoiceSubmissions();
         }
     });
@@ -3458,6 +3695,12 @@ document.addEventListener("fragments:loaded", () => {
         });
     });
     document.getElementById("classChangeSubmitBtn")?.addEventListener("click", submitClassChangeRequest);
+    document.getElementById("classChangeNewBtn")?.addEventListener("click", openClassChangeModal);
+    document.querySelectorAll("[data-classchange-close]").forEach((btn) => btn.addEventListener("click", closeClassChangeModal));
+    document.getElementById("surveyNewBtn")?.addEventListener("click", openSurveyModal);
+    document.querySelectorAll("[data-survey-close]").forEach((btn) => btn.addEventListener("click", closeSurveyModal));
+    document.getElementById("voiceNewBtn")?.addEventListener("click", openVoiceRecordModal);
+    document.querySelectorAll("[data-voice-record-close]").forEach((btn) => btn.addEventListener("click", closeVoiceRecordModal));
     document.addEventListener("click", (e) => {
         const gotoBtn = e.target.closest("[data-goto-panel]");
         if (gotoBtn) {
@@ -3511,14 +3754,16 @@ document.addEventListener("fragments:loaded", () => {
         renderAssignmentSubmitFileList();
     });
     document.getElementById("assignmentSubmitBtn")?.addEventListener("click", submitAssignmentWork);
-    document.getElementById("goalNewBtn")?.addEventListener("click", () => {
-        document.getElementById("goalForm").hidden = false;
-    });
-    document.getElementById("goalCancelBtn")?.addEventListener("click", () => {
-        document.getElementById("goalForm").hidden = true;
-        document.getElementById("goalError").hidden = true;
+    document.getElementById("goalNewBtn")?.addEventListener("click", openGoalCreateModal);
+    document.querySelectorAll("[data-goal-create-close]").forEach((btn) => {
+        btn.addEventListener("click", closeGoalCreateModal);
     });
     document.getElementById("goalSaveBtn")?.addEventListener("click", submitGoal);
+    document.addEventListener("click", (e) => {
+        const moreBtn = e.target.closest("[data-open-more]");
+        if (moreBtn) openHomeMoreModal(moreBtn.dataset.openMore);
+    });
+    document.querySelectorAll("[data-home-more-close]").forEach((btn) => btn.addEventListener("click", closeHomeMoreModal));
     document.getElementById("goalsList")?.addEventListener("click", (e) => {
         const deleteBtn = e.target.closest("[data-delete-goal]");
         if (deleteBtn) deleteGoal(deleteBtn.dataset.deleteGoal);
