@@ -9,6 +9,9 @@ import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AssignmentSubmissionService;
 import com.imkhun.imkhun.service.LearningGoalService;
 import com.imkhun.imkhun.service.EventService;
+import com.imkhun.imkhun.service.StudentQuestionService;
+import com.imkhun.imkhun.service.LeaderboardService;
+import com.imkhun.imkhun.service.ParentReportService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.AttendanceStreakService;
 import com.imkhun.imkhun.service.CalendarExportService;
@@ -59,6 +62,9 @@ public class StudentPortalController {
     private final AssignmentSubmissionService assignmentSubmissionService;
     private final LearningGoalService learningGoalService;
     private final EventService eventService;
+    private final StudentQuestionService studentQuestionService;
+    private final LeaderboardService leaderboardService;
+    private final ParentReportService parentReportService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -70,7 +76,8 @@ public class StudentPortalController {
                                    GrowthReportService growthReportService, VoiceSubmissionService voiceSubmissionService,
                                    StudentDashboardService studentDashboardService, StudentCalendarService studentCalendarService,
                                    AssignmentSubmissionService assignmentSubmissionService, LearningGoalService learningGoalService,
-                                   EventService eventService) {
+                                   EventService eventService, StudentQuestionService studentQuestionService,
+                                   LeaderboardService leaderboardService, ParentReportService parentReportService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -89,6 +96,9 @@ public class StudentPortalController {
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.learningGoalService = learningGoalService;
         this.eventService = eventService;
+        this.studentQuestionService = studentQuestionService;
+        this.leaderboardService = leaderboardService;
+        this.parentReportService = parentReportService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -686,5 +696,57 @@ public class StudentPortalController {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         return ResponseEntity.ok(eventService.getAllEvents());
+    }
+
+    // ---------- 선생님에게 조용히 질문하기 (익명) ----------
+
+    @PostMapping("/questions")
+    public ResponseEntity<?> createQuestion(HttpServletRequest request, @RequestBody CreateStudentQuestionRequest questionRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(studentQuestionService.createQuestion(userOpt.get().getUsername(), questionRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/questions")
+    public ResponseEntity<?> getMyQuestions(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(studentQuestionService.getMyQuestions(userOpt.get().getUsername()));
+    }
+
+    // ---------- 랭킹보드 (익명) ----------
+
+    @GetMapping("/leaderboard/attendance")
+    public ResponseEntity<?> getAttendanceLeaderboard(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(leaderboardService.getAttendanceStreakLeaderboard(userOpt.get().getUsername()));
+    }
+
+    @GetMapping("/leaderboard/vocab")
+    public ResponseEntity<?> getVocabLeaderboard(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(leaderboardService.getVocabLeaderboard(userOpt.get().getUsername()));
+    }
+
+    // ---------- 부모님용 리포트 공유 링크 ----------
+
+    @GetMapping("/parent-report/link")
+    public ResponseEntity<?> getParentReportLink(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(parentReportService.getOrCreateLink(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/parent-report/regenerate")
+    public ResponseEntity<?> regenerateParentReportLink(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(parentReportService.regenerateLink(userOpt.get().getUsername()));
     }
 }

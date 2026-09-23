@@ -113,6 +113,7 @@
             <button type="button" class="admin-maintab" data-main-tab="video" role="tab" aria-selected="false">온라인 영상</button>
             <button type="button" class="admin-maintab" data-main-tab="trial" role="tab" aria-selected="false">무료체험</button>
             <button type="button" class="admin-maintab" data-main-tab="vocab" role="tab" aria-selected="false">단어장</button>
+            <button type="button" class="admin-maintab" data-main-tab="questions" role="tab" aria-selected="false">학생 질문함</button>
         </nav>
 
         <nav class="admin-subtabs" id="adminSubtabsImkhun" role="tablist" aria-label="IMKhun 관리 메뉴" hidden>
@@ -120,6 +121,7 @@
             <button type="button" class="admin-maintab" data-imkhun-tab="timetable" role="tab" aria-selected="false">강의 시간표</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="faq" role="tab" aria-selected="false">FAQ</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="events" role="tab" aria-selected="false">이벤트 &amp; 행사</button>
+            <button type="button" class="admin-maintab" data-imkhun-tab="companyinfo" role="tab" aria-selected="false">회사/사업/미래</button>
         </nav>
 
         <nav class="admin-subtabs" id="adminSubtabsStudents" role="tablist" aria-label="학생 관리 메뉴" hidden>
@@ -432,6 +434,13 @@
             </div>
         </section>
 
+        <section class="admin-main-panel" data-main-panel="questions" hidden>
+            <p class="admin-materials-heading">학생 질문함 (익명)</p>
+            <p class="admin-note-hint">누가 보냈는지는 저장되지 않아요. 편하게 답변해주세요.</p>
+            <p class="admin-empty-text" id="adminQuestionsEmpty" hidden>아직 들어온 질문이 없어요.</p>
+            <div class="admin-review-list" id="adminQuestionsList"></div>
+        </section>
+
         <!-- 단어장 등록하기 모달: Part 정보 + 단어 여러 개를 한 화면에서 등록 -->
         <div class="admin-vocab-register-modal" id="vocabRegisterModal" aria-hidden="true">
             <div class="admin-vocab-register-backdrop" data-vocab-register-close></div>
@@ -541,6 +550,67 @@
                 <p class="admin-note-hint">KWZM Center 홈 화면의 "이벤트 & 행사" 카드에 나와요. 학생만 볼 수 있어요.</p>
                 <p class="admin-empty-text" id="adminEventsEmpty" hidden>아직 등록된 이벤트가 없어요.</p>
                 <div class="admin-notice-list" id="adminEventList"></div>
+            </div>
+
+            <div class="admin-inline-panel" data-notice-panel="companyinfo" hidden>
+                <p class="admin-note-hint">여기서 고치면 imkhun 공개 사이트, KWZM Center 둘 다 똑같이 바뀌어요.</p>
+
+                <p class="admin-materials-heading" style="margin-top: 20px;">회사소개</p>
+                <div class="auth-form-field">
+                    <label for="companyEyebrowInput">라벨 (작은 영어 글자)</label>
+                    <input type="text" id="companyEyebrowInput" placeholder="예: What is this space">
+                </div>
+                <div class="auth-form-field">
+                    <label for="companyTitleInput">제목</label>
+                    <input type="text" id="companyTitleInput" placeholder="예: 회사소개">
+                </div>
+                <div class="auth-form-field">
+                    <label for="companyContentInput">내용 (문단 사이는 빈 줄로 구분해주세요)</label>
+                    <textarea class="admin-note-textarea" id="companyContentInput" style="min-height: 160px;"></textarea>
+                </div>
+                <p class="auth-form-error" id="companyInfoError" hidden></p>
+                <button type="button" class="admin-note-save-btn" id="companyInfoSaveBtn">회사소개 저장</button>
+
+                <p class="admin-materials-heading" style="margin-top: 36px;">사업소개</p>
+                <div class="auth-form-field">
+                    <label for="businessEyebrowInput">라벨 (작은 영어 글자)</label>
+                    <input type="text" id="businessEyebrowInput" placeholder="예: How it works">
+                </div>
+                <div class="auth-form-field">
+                    <label for="businessTitleInput">제목</label>
+                    <input type="text" id="businessTitleInput" placeholder="예: 사업소개">
+                </div>
+                <div class="auth-form-field">
+                    <label for="businessContentInput">내용 (문단 사이는 빈 줄로 구분해주세요)</label>
+                    <textarea class="admin-note-textarea" id="businessContentInput" style="min-height: 160px;"></textarea>
+                </div>
+                <p class="auth-form-error" id="businessInfoError" hidden></p>
+                <button type="button" class="admin-note-save-btn" id="businessInfoSaveBtn">사업소개 저장</button>
+
+                <p class="admin-materials-heading" style="margin-top: 36px;">미래 계획 — 인트로 &amp; 마무리 문구</p>
+                <div class="auth-form-field">
+                    <label for="futureplanIntroInput">인트로 문단 (문단 사이는 빈 줄로 구분해주세요)</label>
+                    <textarea class="admin-note-textarea" id="futureplanIntroInput" style="min-height: 100px;"></textarea>
+                </div>
+                <div class="auth-form-field">
+                    <label for="futureplanCtaTitleInput">마무리 문구 제목</label>
+                    <input type="text" id="futureplanCtaTitleInput" placeholder="예: 세 가지 모두, 아직은 계획 단계예요">
+                </div>
+                <div class="auth-form-field">
+                    <label for="futureplanCtaTextInput">마무리 문구 내용</label>
+                    <textarea class="admin-note-textarea" id="futureplanCtaTextInput"></textarea>
+                </div>
+                <p class="auth-form-error" id="futureplanSectionError" hidden></p>
+                <button type="button" class="admin-note-save-btn" id="futureplanSectionSaveBtn">인트로/마무리 문구 저장</button>
+
+                <div class="admin-materials-head-row" style="margin-top: 36px;">
+                    <p class="admin-materials-heading" style="margin: 0;">미래 계획 — 계획 카드</p>
+                    <button type="button" class="admin-register-btn" id="futureplanItemNewBtn">
+                        <span aria-hidden="true">+</span> 새 계획 카드 등록
+                    </button>
+                </div>
+                <p class="admin-empty-text" id="futureplanItemsEmpty" hidden>아직 등록된 계획 카드가 없어요.</p>
+                <div class="admin-notice-list" id="futureplanItemList"></div>
             </div>
         </section>
 
@@ -911,6 +981,47 @@
             <div class="admin-note-footer">
                 <span></span>
                 <button type="button" class="admin-note-save-btn" id="eventSaveBtn">등록하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== 미래 계획 카드 등록/수정 (관리자 전용) ===================== -->
+<div class="admin-invite-modal" id="futureplanItemModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-futureplan-item-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3 id="futureplanItemModalTitle">새 계획 카드 등록</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-futureplan-item-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <div class="auth-form-field">
+                <label for="futureplanItemOrderInput">순서 (숫자, 작을수록 먼저 나와요)</label>
+                <input type="number" id="futureplanItemOrderInput" min="1" value="1">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="futureplanItemTitleInput">제목</label>
+                <input type="text" id="futureplanItemTitleInput" placeholder="예: 함께할 선생님을 찾습니다">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="futureplanItemContentInput">내용 (문단 사이는 빈 줄로 구분해주세요)</label>
+                <textarea class="admin-note-textarea" id="futureplanItemContentInput" style="min-height: 160px;"></textarea>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="futureplanItemTagsInput">태그 (쉼표로 구분)</label>
+                <input type="text" id="futureplanItemTagsInput" placeholder="예: 언어 선생님, 컴퓨터·디자인 선생님">
+            </div>
+
+            <p class="auth-form-error" id="futureplanItemError" hidden></p>
+
+            <div class="admin-note-footer">
+                <span></span>
+                <button type="button" class="admin-note-save-btn" id="futureplanItemSaveBtn">등록하기</button>
             </div>
         </div>
     </div>

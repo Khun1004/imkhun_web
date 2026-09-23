@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KWZM Computer Training &amp; Language Center</title>
+
+    <!-- 홈 화면에 앱처럼 추가하기 (PWA) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#16386b">
+    <link rel="icon" href="logoimages/icon-192.png">
+    <link rel="apple-touch-icon" href="logoimages/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KWZM Center">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
@@ -257,6 +268,28 @@
             </div>
             <p class="auth-form-error" id="goalError" hidden></p>
             <button type="button" class="auth-form-submit" id="goalSaveBtn">목표 만들기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 선생님에게 조용히 질문하기 (익명) 모달 -->
+<div class="board-modal" id="questionCreateModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-question-create-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="질문하기">
+        <div class="board-modal-head">
+            <h3>선생님에게 질문하기</h3>
+            <button type="button" class="board-modal-close" data-question-create-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <p class="admin-note-hint" style="margin-top: 0;">이 질문은 <strong>누가 보냈는지 선생님이 알 수 없어요.</strong> 편하게 물어보세요.</p>
+            <div class="auth-form-field">
+                <label for="questionTextInput">질문 내용</label>
+                <textarea id="questionTextInput" rows="5" placeholder="예: 수업 시간에 물어보기 부끄러운 질문이 있어요..."></textarea>
+            </div>
+            <p class="auth-form-error" id="questionError" hidden></p>
+            <button type="button" class="auth-form-submit" id="questionSaveBtn">질문 보내기</button>
         </div>
     </div>
 </div>

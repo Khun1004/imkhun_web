@@ -64,7 +64,12 @@
 
         <div class="vocab-quiz-body">
             <p class="vocab-quiz-label">이 단어의 뜻은?</p>
-            <p class="vocab-quiz-word" id="vocabQuizWord"></p>
+            <div class="vocab-quiz-word-row">
+                <p class="vocab-quiz-word" id="vocabQuizWord"></p>
+                <button type="button" class="student-vocab-speak-btn" id="vocabQuizSpeakBtn" aria-label="발음 듣기">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                </button>
+            </div>
             <div class="vocab-quiz-options" id="vocabQuizOptions"></div>
         </div>
 

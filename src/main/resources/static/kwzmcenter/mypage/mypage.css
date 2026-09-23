@@ -1242,3 +1242,200 @@
     margin: 0;
     text-align: right;
 }
+
+/* 선생님에게 질문하기 */
+
+.question-card {
+    padding: 18px;
+    margin-bottom: 12px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
+}
+
+.question-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.question-card-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--kwzm-ink-faint);
+}
+
+.question-bubble,
+.answer-bubble {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+}
+
+.question-bubble {
+    background: var(--kwzm-bg-2);
+    margin-bottom: 10px;
+}
+
+.answer-bubble {
+    background: var(--kwzm-accent-soft, rgba(47, 154, 154, 0.1));
+    margin-bottom: 10px;
+}
+
+.question-bubble p,
+.answer-bubble p {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--kwzm-ink);
+    white-space: pre-wrap;
+}
+
+.question-bubble-tag,
+.answer-bubble-tag {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 800;
+    margin-top: 1px;
+}
+
+.question-bubble-tag {
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-faint);
+    border: 1px solid var(--kwzm-line);
+}
+
+.answer-bubble-tag {
+    background: var(--kwzm-accent, #2f9aa0);
+    color: #fff;
+}
+
+.question-card-date {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+    margin: 0;
+    text-align: right;
+}
+
+/* 랭킹보드 */
+
+.leaderboard-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 5px;
+    margin-bottom: 16px;
+    background: var(--kwzm-bg-2);
+    border-radius: 14px;
+}
+
+.leaderboard-toggle-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    font-family: "Noto Serif KR", serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink-faint);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.leaderboard-toggle-btn.active {
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink);
+    box-shadow: 0 4px 10px -4px rgba(15, 37, 71, 0.25);
+}
+
+.leaderboard-my-rank {
+    margin: 0 0 14px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(47, 154, 160, 0.1), rgba(224, 167, 44, 0.1));
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    text-align: center;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.leaderboard-row.is-me {
+    background: linear-gradient(135deg, rgba(47, 154, 160, 0.12), rgba(224, 167, 44, 0.08));
+    border-color: var(--kwzm-accent, #2f9aa0);
+}
+
+.leaderboard-row-rank {
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--kwzm-ink-faint);
+}
+
+.leaderboard-row.is-me .leaderboard-row-rank {
+    color: var(--kwzm-accent-2, #1c6b70);
+}
+
+.leaderboard-row-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kwzm-ink-soft);
+}
+
+.leaderboard-row.is-me .leaderboard-row-name {
+    color: var(--kwzm-accent-2, #1c6b70);
+}
+
+.leaderboard-row-value {
+    flex-shrink: 0;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+}
+
+/* 부모님용 리포트 링크 */
+
+.parent-report-link-box {
+    display: flex;
+    gap: 8px;
+}
+
+.parent-report-link-box input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+    border: 1.5px solid var(--kwzm-line);
+    border-radius: 10px;
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink-soft);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+}

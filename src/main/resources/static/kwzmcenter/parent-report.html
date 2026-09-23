@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생 리포트 - KWZM Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --plum-deep: #3d2148;
+            --plum: #5b3470;
+            --plum-light: #8c5fa8;
+            --gold: #d4a355;
+            --gold-soft: #f0dcb0;
+            --cream: #faf6ee;
+            --cream-2: #f2ead9;
+            --ink: #2c1f38;
+            --ink-soft: #6b5b7a;
+            --ink-faint: #a394ae;
+            --line: #e6d9ee;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--cream);
+            font-family: "Noto Sans KR", sans-serif;
+            color: var(--ink);
+            background-image:
+                    radial-gradient(circle at 12% 8%, rgba(212, 163, 85, 0.12), transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(91, 52, 112, 0.08), transparent 45%);
+        }
+
+        /* ---------- 상단 헤더: 자수정/자주빛 그라데이션 + 별 장식 ---------- */
+
+        .header {
+            position: relative;
+            background: linear-gradient(150deg, var(--plum-deep) 0%, var(--plum) 55%, var(--plum-light) 100%);
+            color: #fff;
+            padding: 46px 20px 64px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .header::before,
+        .header::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 163, 85, 0.35), transparent 70%);
+        }
+
+        .header::before {
+            width: 220px;
+            height: 220px;
+            top: -90px;
+            left: -60px;
+        }
+
+        .header::after {
+            width: 260px;
+            height: 260px;
+            bottom: -140px;
+            right: -80px;
+        }
+
+        .header-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .crest {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1.5px solid rgba(240, 220, 176, 0.55);
+            margin-bottom: 16px;
+        }
+
+        .crest svg {
+            width: 26px;
+            height: 26px;
+        }
+
+        .eyebrow {
+            font-size: 11.5px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--gold-soft);
+            margin: 0 0 10px;
+            font-weight: 600;
+        }
+
+        .header h1 {
+            font-family: "Playfair Display", "Noto Serif KR", serif;
+            font-style: italic;
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.01em;
+        }
+
+        .header p.sub {
+            margin: 10px 0 0;
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        /* ---------- 본문 ---------- */
+
+        .wrap {
+            max-width: 480px;
+            margin: -34px auto 40px;
+            padding: 0 18px;
+        }
+
+        .card {
+            position: relative;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            padding: 24px 22px;
+            margin-bottom: 16px;
+            box-shadow: 0 20px 42px -26px rgba(61, 33, 72, 0.35);
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--plum), var(--plum-light));
+            color: var(--gold-soft);
+        }
+
+        .card-icon svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .card-title {
+            font-family: "Noto Serif KR", serif;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--ink);
+            margin: 0;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            padding: 16px 10px;
+            background: var(--cream-2);
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .stat-box .value {
+            font-family: "Playfair Display", serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--plum);
+        }
+
+        .stat-box .label {
+            font-size: 11px;
+            color: var(--ink-soft);
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .level-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 0;
+            border-bottom: 1px dashed var(--line);
+        }
+
+        .level-row:last-child { border-bottom: none; }
+
+        .level-row .dot {
+            flex-shrink: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+
+        .level-row .level-name {
+            flex: 1;
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--ink);
+        }
+
+        .level-row .level-date {
+            color: var(--ink-faint);
+            font-size: 11px;
+        }
+
+        .empty-text, .error-text {
+            text-align: center;
+            color: var(--ink-faint);
+            font-size: 13px;
+            padding: 26px 0;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--ink-faint);
+            margin-top: 26px;
+            line-height: 1.7;
+        }
+
+        .footer-note strong {
+            color: var(--plum);
+            font-family: "Playfair Display", serif;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="header-inner">
+            <span class="crest">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 3 8l9 5 9-5-9-5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </span>
+        <p class="eyebrow">Student Progress Report</p>
+        <h1 id="studentTitle">학생 리포트</h1>
+        <p class="sub">KWZM Computer Training &amp; Language Center</p>
+    </div>
+</div>
+
+<div class="wrap">
+    <div id="reportContent">
+        <p class="empty-text">불러오는 중...</p>
+    </div>
+    <p class="footer-note">이 링크는 <strong>I'm Khun</strong>의 학생이 직접 만들어서 보내드린 리포트예요.<br>출석·숙제 현황만 담겨있고, 개인 메시지나 결제 정보는 들어있지 않아요.</p>
+</div>
+
+<script>
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text == null ? "" : String(text);
+        return div.innerHTML;
+    }
+
+    const ICON_ATTENDANCE = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 10h16M7 3v4M17 3v4M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const ICON_ASSIGNMENT = '<svg viewBox="0 0 24 24" fill="none"><path d="M9 12.5l2 2 4-4.5M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const ICON_LEVEL = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.4l-5.4 3 1-6.1-4.4-4.3 6.1-.9L12 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+
+    async function loadParentReport() {
+        const contentEl = document.getElementById("reportContent");
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+
+        if (!token) {
+            contentEl.innerHTML = `<p class="error-text">잘못된 링크예요. 학생에게 링크를 다시 받아보세요.</p>`;
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/parent-report/${token}`);
+            if (!res.ok) {
+                contentEl.innerHTML = `<p class="error-text">${escapeHtml(await res.text()) || "링크가 만료됐거나 잘못됐어요."}</p>`;
+                return;
+            }
+            const data = await res.json();
+
+            document.getElementById("studentTitle").textContent = `${data.studentNickname} 님의 리포트`;
+
+            const levelRows = (data.levelHistory || [])
+                .slice(0, 5)
+                .map((l) => `
+            <div class="level-row">
+              <span class="dot"></span>
+              <span class="level-name">${escapeHtml(l.level)}</span>
+              <span class="level-date">${escapeHtml(l.recordedDate || l.createdAt)}</span>
+            </div>
+          `)
+                .join("");
+
+            contentEl.innerHTML = `
+          <div class="card">
+            <div class="card-head">
+              <span class="card-icon">${ICON_ATTENDANCE}</span>
+              <p class="card-title">출석 현황</p>
+            </div>
+            <div class="stat-grid">
+              <div class="stat-box">
+                <div class="value">${data.attendanceStreak}일</div>
+                <div class="label">연속 출석</div>
+              </div>
+              <div class="stat-box">
+                <div class="value">${data.attendanceRate}%</div>
+                <div class="label">출석률 (전체 ${data.totalAttendanceRecords}회)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <span class="card-icon">${ICON_ASSIGNMENT}</span>
+              <p class="card-title">숙제 제출 현황</p>
+            </div>
+            <div class="stat-grid">
+              <div class="stat-box">
+                <div class="value">${data.completedAssignments}/${data.totalAssignments}</div>
+                <div class="label">완료한 숙제</div>
+              </div>
+              <div class="stat-box">
+                <div class="value">${data.assignmentCompletionRate}%</div>
+                <div class="label">숙제 완료율</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <span class="card-icon">${ICON_LEVEL}</span>
+              <p class="card-title">레벨 변화</p>
+            </div>
+            ${levelRows || `<p class="empty-text">아직 기록된 레벨이 없어요.</p>`}
+          </div>
+        `;
+        } catch (err) {
+            console.error(err);
+            contentEl.innerHTML = `<p class="error-text">불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>`;
+        }
+    }
+
+    loadParentReport();
+</script>
+</body>
+</html>

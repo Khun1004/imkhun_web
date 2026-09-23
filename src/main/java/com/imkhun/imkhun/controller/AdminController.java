@@ -10,6 +10,9 @@ import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AssignmentSubmissionService;
 import com.imkhun.imkhun.service.EventService;
 import com.imkhun.imkhun.service.FileStorageService;
+import com.imkhun.imkhun.service.CompanyInfoService;
+import com.imkhun.imkhun.service.FuturePlanService;
+import com.imkhun.imkhun.service.StudentQuestionService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.ClassChangeRequestService;
 import com.imkhun.imkhun.service.DashboardService;
@@ -70,6 +73,9 @@ public class AdminController {
     private final AssignmentSubmissionService assignmentSubmissionService;
     private final EventService eventService;
     private final FileStorageService fileStorageService;
+    private final CompanyInfoService companyInfoService;
+    private final FuturePlanService futurePlanService;
+    private final StudentQuestionService studentQuestionService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -83,7 +89,9 @@ public class AdminController {
                            ClassChangeRequestService classChangeRequestService, StudentLevelService studentLevelService,
                            SurveyService surveyService, VocabularyService vocabularyService,
                            VoiceSubmissionService voiceSubmissionService, AssignmentSubmissionService assignmentSubmissionService,
-                           EventService eventService, FileStorageService fileStorageService) {
+                           EventService eventService, FileStorageService fileStorageService,
+                           CompanyInfoService companyInfoService, FuturePlanService futurePlanService,
+                           StudentQuestionService studentQuestionService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -111,6 +119,9 @@ public class AdminController {
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.eventService = eventService;
         this.fileStorageService = fileStorageService;
+        this.companyInfoService = companyInfoService;
+        this.futurePlanService = futurePlanService;
+        this.studentQuestionService = studentQuestionService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -638,6 +649,77 @@ public class AdminController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("파일을 저장하는 중 문제가 생겼어요.");
+        }
+    }
+
+    // ---------- 회사소개 / 사업소개 / 미래 계획 관리 ----------
+
+    @PutMapping("/company-info/{type}")
+    public ResponseEntity<?> updateCompanyInfo(HttpServletRequest request, @PathVariable String type,
+                                               @RequestBody UpdateCompanyInfoRequest infoRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(companyInfoService.update(type.toUpperCase(), infoRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/future-plan/section")
+    public ResponseEntity<?> updateFuturePlanSection(HttpServletRequest request, @RequestBody UpdateFuturePlanSectionRequest sectionRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            futurePlanService.updateSection(sectionRequest);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/future-plan/items")
+    public ResponseEntity<?> createFuturePlanItem(HttpServletRequest request, @RequestBody CreateFuturePlanItemRequest itemRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(futurePlanService.createItem(itemRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/future-plan/items/{id}")
+    public ResponseEntity<?> updateFuturePlanItem(HttpServletRequest request, @PathVariable Long id,
+                                                  @RequestBody CreateFuturePlanItemRequest itemRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(futurePlanService.updateItem(id, itemRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/future-plan/items/{id}")
+    public ResponseEntity<?> deleteFuturePlanItem(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        futurePlanService.deleteItem(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ---------- 학생 질문함 (익명) ----------
+
+    @GetMapping("/questions")
+    public ResponseEntity<?> getQuestions(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(studentQuestionService.getAllQuestionsForAdmin());
+    }
+
+    @PostMapping("/questions/{id}/answer")
+    public ResponseEntity<?> answerQuestion(HttpServletRequest request, @PathVariable Long id,
+                                            @RequestBody AnswerStudentQuestionRequest answerRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(studentQuestionService.answerQuestion(id, answerRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

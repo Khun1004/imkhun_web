@@ -1,6 +1,15 @@
 // KWZM Computer Training & Language Center — 독립 페이지 전용 로직
 // 이 페이지는 imkhun 메인 사이트와 별개의 새 창(새 탭)으로 열림
 
+// "홈 화면에 추가(설치)" 가능하게 해주는 서비스 워커 등록 — 지원 안 하는 브라우저는 그냥 조용히 넘어감
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/kwzmcenter/service-worker.js").catch((err) => {
+            console.error("서비스 워커 등록 실패:", err);
+        });
+    });
+}
+
 // ---- 조각(fragment) 불러오기: 메인 사이트의 script.js와 같은 방식, 이 페이지 안에서 자체적으로 처리 ----
 async function loadFragments() {
     const targets = document.querySelectorAll("[data-src]:not([data-loaded])");
@@ -131,6 +140,9 @@ async function loadStudentPortalData() {
         initStudentCalendar();
         loadHomeNoticeCard();
         loadHomeEventCard();
+        loadAboutCompanyOrBusiness("COMPANY", "aboutCompanyEyebrow", "aboutCompanyTitle", "aboutCompanyBody");
+        loadAboutCompanyOrBusiness("BUSINESS", "aboutBusinessEyebrow", "aboutBusinessTitle", "aboutBusinessBody");
+        loadKwzmFuturePlan();
         renderTodaysTip();
         loadRecentMaterials();
         loadStudentNotifUnreadCount();
@@ -673,6 +685,103 @@ function closeHomeMoreModal() {
     const modal = document.getElementById("homeMoreModal");
     modal?.classList.remove("open");
     modal?.setAttribute("aria-hidden", "true");
+}
+
+// "회사소개" / "사업소개" / "미래 계획" — 서버에서 불러와서 채워줌 (관리자가 수정하면 imkhun 공개 사이트랑 똑같이 반영됨)
+async function loadAboutCompanyOrBusiness(type, eyebrowId, titleId, bodyId) {
+    const bodyEl = document.getElementById(bodyId);
+    if (!bodyEl) return;
+
+    try {
+        const res = await fetch(`/api/company-info/${type}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const eyebrowEl = document.getElementById(eyebrowId);
+        const titleEl = document.getElementById(titleId);
+        if (eyebrowEl && data.eyebrow) eyebrowEl.textContent = data.eyebrow;
+        if (titleEl && data.title) titleEl.textContent = data.title;
+
+        bodyEl.innerHTML = (data.content || "")
+            .split(/\n\s*\n/)
+            .filter((p) => p.trim())
+            .map((p) => `<p>${escapeHtmlForStudent(p.trim())}</p>`)
+            .join("");
+    } catch (err) {
+        console.error(err);
+        bodyEl.innerHTML = `<p>내용을 불러오지 못했어요.</p>`;
+    }
+}
+
+const KWZM_FUTUREPLAN_ICONS = [
+    '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M22 8v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none"><path d="M9 8 4 12l5 4M15 8l5 4-5 4M13 5l-2 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none"><circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="6" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 19c.8-3.6 2.6-5.5 4.5-5.5s3.7 1.9 4.5 5.5M12.5 19c.8-3.6 2.6-5.5 4.5-5.5s3.7 1.9 4.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+];
+const KWZM_FUTUREPLAN_TAG_COLORS = ["rose", "teal", "gold", "code", "sky"];
+
+async function loadKwzmFuturePlan() {
+    const introEl = document.getElementById("kwzmFutureplanIntro");
+    const timelineEl = document.getElementById("kwzmFutureplanTimeline");
+    const ctaEl = document.getElementById("kwzmFutureplanCta");
+    if (!introEl || !timelineEl) return;
+
+    try {
+        const res = await fetch("/api/future-plan");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        introEl.innerHTML = (data.introText || "")
+            .split(/\n\s*\n/)
+            .filter((p) => p.trim())
+            .map((p) => `<p>${escapeHtmlForStudent(p.trim())}</p>`)
+            .join("");
+
+        let tagCounter = 0;
+        timelineEl.innerHTML = (data.items || [])
+            .map((item, index) => {
+                const icon = KWZM_FUTUREPLAN_ICONS[index % KWZM_FUTUREPLAN_ICONS.length];
+                const paragraphs = (item.content || "")
+                    .split(/\n\s*\n/)
+                    .filter((p) => p.trim())
+                    .map((p) => `<p>${escapeHtmlForStudent(p.trim())}</p>`)
+                    .join("");
+                const tags = (item.tags || "")
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .map((t) => {
+                        const color = KWZM_FUTUREPLAN_TAG_COLORS[tagCounter++ % KWZM_FUTUREPLAN_TAG_COLORS.length];
+                        return `<span class="futureplan-tag futureplan-tag--${color}">${escapeHtmlForStudent(t)}</span>`;
+                    })
+                    .join("");
+
+                return `
+          <div class="futureplan-card">
+            <div class="futureplan-card-head">
+              <span class="futureplan-icon" aria-hidden="true">${icon}</span>
+              <div>
+                <p class="futureplan-card-eyebrow">Plan ${String(index + 1).padStart(2, "0")}</p>
+                <h3>${escapeHtmlForStudent(item.title)}</h3>
+              </div>
+            </div>
+            ${paragraphs}
+            <div class="futureplan-tags">${tags}</div>
+          </div>
+        `;
+            })
+            .join("");
+
+        if (ctaEl) {
+            ctaEl.innerHTML = `
+        <p class="futureplan-cta-title">${escapeHtmlForStudent(data.ctaTitle || "")}</p>
+        <p>${escapeHtmlForStudent(data.ctaText || "")}</p>
+      `;
+        }
+    } catch (err) {
+        console.error(err);
+        introEl.innerHTML = `<p>내용을 불러오지 못했어요.</p>`;
+    }
 }
 
 function renderStudentHome(nickname) {
@@ -1218,6 +1327,21 @@ async function loadVocabSets(language) {
     }
 }
 
+const VOCAB_TTS_LOCALE = { korean: "ko-KR", japanese: "ja-JP", thai: "th-TH", english: "en-US" };
+
+// 단어 발음을 브라우저 내장 음성으로 읽어줌 (따로 오디오 파일 필요 없음)
+function speakVocabWord(text, language) {
+    if (!("speechSynthesis" in window)) {
+        alert("이 브라우저는 음성 듣기를 지원하지 않아요.");
+        return;
+    }
+    window.speechSynthesis.cancel(); // 이전에 읽던 게 있으면 멈추고 새로 읽음
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = VOCAB_TTS_LOCALE[language] || "ko-KR";
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+}
+
 async function openVocabSet(set) {
     vocabSelectedSetId = set.id;
     vocabRevealedWordIds = new Set();
@@ -1243,11 +1367,20 @@ async function openVocabSet(set) {
             const card = document.createElement("div");
             card.className = "student-vocab-word-card";
             card.innerHTML = `
-        <p class="student-vocab-word-card-word">${escapeHtmlForStudent(w.word)}</p>
+        <div class="student-vocab-word-card-top">
+          <p class="student-vocab-word-card-word">${escapeHtmlForStudent(w.word)}</p>
+          <button type="button" class="student-vocab-speak-btn" aria-label="발음 듣기">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </button>
+        </div>
         <p class="student-vocab-word-card-meaning" hidden>${escapeHtmlForStudent(w.meaning)}</p>
         ${w.example ? `<p class="student-vocab-word-card-example" hidden>${escapeHtmlForStudent(w.example)}</p>` : ""}
         <p class="student-vocab-word-card-hint">눌러서 뜻 보기</p>
       `;
+            card.querySelector(".student-vocab-speak-btn")?.addEventListener("click", (e) => {
+                e.stopPropagation();
+                speakVocabWord(w.word, vocabSelectedLanguage);
+            });
             card.addEventListener("click", () => {
                 const isRevealed = card.classList.toggle("is-revealed");
                 const meaningEl = card.querySelector(".student-vocab-word-card-meaning");
@@ -1346,6 +1479,11 @@ function renderVocabQuizQuestion() {
 
     document.getElementById("vocabQuizProgress").textContent = `${vocabQuizCurrentIndex + 1} / ${vocabQuizQuestions.length}`;
     document.getElementById("vocabQuizWord").textContent = q.word;
+
+    const speakBtn = document.getElementById("vocabQuizSpeakBtn");
+    if (speakBtn) {
+        speakBtn.onclick = () => speakVocabWord(q.word, vocabSelectedLanguage);
+    }
 
     const optionsEl = document.getElementById("vocabQuizOptions");
     optionsEl.innerHTML = "";
@@ -2684,6 +2822,206 @@ async function deleteGoal(id) {
     }
 }
 
+// ---------- 선생님에게 조용히 질문하기 (익명) ----------
+
+async function loadMyQuestions() {
+    const listEl = document.getElementById("questionsList");
+    const emptyEl = document.getElementById("questionsEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/questions");
+        const questions = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = questions.length > 0;
+
+        questions.forEach((q) => {
+            const row = document.createElement("div");
+            row.className = "question-card";
+            row.innerHTML = `
+        <div class="question-card-head">
+          <span class="question-card-label">내가 보낸 질문</span>
+          <span class="mypage-classchange-row-status mypage-classchange-row-status--${q.answerText ? "approved" : "pending"}">${q.answerText ? "답변 완료" : "답변 대기중"}</span>
+        </div>
+        <div class="question-bubble">
+          <span class="question-bubble-tag">Q</span>
+          <p>${escapeHtmlForStudent(q.questionText)}</p>
+        </div>
+        ${q.answerText
+                ? `<div class="answer-bubble">
+                 <span class="answer-bubble-tag">A</span>
+                 <p>${escapeHtmlForStudent(q.answerText)}</p>
+               </div>`
+                : ""}
+        <p class="question-card-date">${q.createdAt}</p>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+function openQuestionCreateModal() {
+    const modal = document.getElementById("questionCreateModal");
+    if (!modal) return;
+    document.getElementById("questionTextInput").value = "";
+    document.getElementById("questionError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeQuestionCreateModal() {
+    const modal = document.getElementById("questionCreateModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+async function submitQuestion() {
+    const questionText = document.getElementById("questionTextInput").value.trim();
+    const errorEl = document.getElementById("questionError");
+    const saveBtn = document.getElementById("questionSaveBtn");
+
+    if (!questionText) {
+        errorEl.textContent = "질문 내용을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "보내는 중...";
+
+    try {
+        const res = await fetch("/api/student/questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ questionText }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "보내기에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        closeQuestionCreateModal();
+        loadMyQuestions();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "질문 보내기";
+    }
+}
+
+// ---------- 랭킹보드 (익명) ----------
+
+let leaderboardCurrentType = "attendance";
+
+async function loadLeaderboard(type) {
+    leaderboardCurrentType = type;
+    const listEl = document.getElementById("leaderboardList");
+    const myRankEl = document.getElementById("leaderboardMyRank");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    const unit = type === "vocab" ? "개" : "일";
+    const url = type === "vocab" ? "/api/student/leaderboard/vocab" : "/api/student/leaderboard/attendance";
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const data = await res.json();
+
+        if (myRankEl) {
+            myRankEl.textContent = `내 등수: ${data.myRank}등 / 전체 ${data.totalStudents}명 (${data.myValue}${unit})`;
+        }
+
+        listEl.innerHTML = "";
+        if (data.top.length === 0) {
+            listEl.innerHTML = `<p class="admin-empty-text">아직 랭킹 데이터가 없어요.</p>`;
+            return;
+        }
+
+        data.top.forEach((entry) => {
+            const row = document.createElement("div");
+            row.className = `leaderboard-row ${entry.isMe ? "is-me" : ""}`;
+            const medal = entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : entry.rank;
+            row.innerHTML = `
+        <span class="leaderboard-row-rank">${medal}</span>
+        <span class="leaderboard-row-name">${entry.isMe ? "나" : "학생"}</span>
+        <span class="leaderboard-row-value">${entry.value}${unit}</span>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+// ---------- 부모님용 리포트 공유 링크 ----------
+
+async function loadParentReportLink() {
+    const inputEl = document.getElementById("parentReportLinkInput");
+    if (!inputEl) return;
+    inputEl.value = "불러오는 중...";
+
+    try {
+        const res = await fetch("/api/student/parent-report/link");
+        if (!res.ok) {
+            inputEl.value = "불러오지 못했어요.";
+            return;
+        }
+        const data = await res.json();
+        inputEl.value = window.location.origin + data.url;
+    } catch (err) {
+        console.error(err);
+        inputEl.value = "불러오지 못했어요.";
+    }
+}
+
+async function regenerateParentReportLink() {
+    if (!confirm("새 링크를 만들면 예전에 보내드린 링크는 더 이상 안 열려요. 계속할까요?")) return;
+    const btn = document.getElementById("parentReportRegenBtn");
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "만드는 중...";
+    }
+    try {
+        const res = await fetch("/api/student/parent-report/regenerate", { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "실패했어요.");
+            return;
+        }
+        loadParentReportLink();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = "새 링크로 바꾸기 (예전 링크는 못 쓰게 돼요)";
+        }
+    }
+}
+
+function copyParentReportLink() {
+    const inputEl = document.getElementById("parentReportLinkInput");
+    if (!inputEl || !inputEl.value) return;
+    inputEl.select();
+    navigator.clipboard
+        ?.writeText(inputEl.value)
+        .then(() => alert("링크를 복사했어요!"))
+        .catch(() => document.execCommand("copy"));
+}
+
 async function loadGrowthReport() {
     const statsEl = document.getElementById("growthReportStats");
     const timelineEl = document.getElementById("growthReportTimeline");
@@ -3664,6 +4002,15 @@ document.addEventListener("fragments:loaded", () => {
         if (key === "goals") {
             loadGoals();
         }
+        if (key === "questions") {
+            loadMyQuestions();
+        }
+        if (key === "leaderboard") {
+            loadLeaderboard(leaderboardCurrentType);
+        }
+        if (key === "parentreport") {
+            loadParentReportLink();
+        }
         if (key === "voice") {
             loadMyVoiceSubmissions();
         }
@@ -3759,6 +4106,18 @@ document.addEventListener("fragments:loaded", () => {
         btn.addEventListener("click", closeGoalCreateModal);
     });
     document.getElementById("goalSaveBtn")?.addEventListener("click", submitGoal);
+    document.getElementById("questionNewBtn")?.addEventListener("click", openQuestionCreateModal);
+    document.querySelectorAll("[data-question-create-close]").forEach((btn) => btn.addEventListener("click", closeQuestionCreateModal));
+    document.getElementById("questionSaveBtn")?.addEventListener("click", submitQuestion);
+    document.querySelectorAll("[data-leaderboard-type]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-leaderboard-type]").forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            loadLeaderboard(btn.dataset.leaderboardType);
+        });
+    });
+    document.getElementById("parentReportCopyBtn")?.addEventListener("click", copyParentReportLink);
+    document.getElementById("parentReportRegenBtn")?.addEventListener("click", regenerateParentReportLink);
     document.addEventListener("click", (e) => {
         const moreBtn = e.target.closest("[data-open-more]");
         if (moreBtn) openHomeMoreModal(moreBtn.dataset.openMore);

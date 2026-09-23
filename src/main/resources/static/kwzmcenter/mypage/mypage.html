@@ -24,6 +24,9 @@
                 <button type="button" class="mypage-tab active" data-mypage-tab="courses" role="tab" aria-selected="true">내 수강 정보</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="growth" role="tab" aria-selected="false">나의 성장</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="goals" role="tab" aria-selected="false">목표</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="questions" role="tab" aria-selected="false">질문하기</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="leaderboard" role="tab" aria-selected="false">랭킹</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="parentreport" role="tab" aria-selected="false">부모님 리포트</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="assignments" role="tab" aria-selected="false">숙제</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="classchange" role="tab" aria-selected="false">수업 변경 요청</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="survey" role="tab" aria-selected="false">만족도 설문</button>
@@ -52,6 +55,39 @@
 
                 <p class="admin-empty-text" id="goalsEmpty" hidden>아직 만든 목표가 없어요. "목표 만들기"로 시작해보세요.</p>
                 <div class="goal-list" id="goalsList"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="questions" hidden>
+                <div class="goal-toolbar">
+                    <p class="admin-note-hint">누가 물어봤는지 선생님한테 안 보이게, 익명으로 질문을 보낼 수 있어요.</p>
+                    <button type="button" class="mypage-classchange-submit-btn" id="questionNewBtn">+ 질문하기</button>
+                </div>
+
+                <p class="admin-empty-text" id="questionsEmpty" hidden>아직 보낸 질문이 없어요.</p>
+                <div class="mypage-classchange-list" id="questionsList"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="leaderboard" hidden>
+                <p class="admin-note-hint">이름은 안 보이고 등수만 보여요. 내 줄만 파란색으로 표시돼요.</p>
+
+                <div class="leaderboard-toggle">
+                    <button type="button" class="leaderboard-toggle-btn active" data-leaderboard-type="attendance">출석 연속</button>
+                    <button type="button" class="leaderboard-toggle-btn" data-leaderboard-type="vocab">단어 맞추기</button>
+                </div>
+
+                <p class="leaderboard-my-rank" id="leaderboardMyRank"></p>
+                <div class="leaderboard-list" id="leaderboardList"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="parentreport" hidden>
+                <p class="admin-note-hint">부모님께 이 링크를 보내드리면, 로그인 없이 출석·숙제 현황만 간단히 확인하실 수 있어요. (개인 메시지나 결제 정보는 안 보여요)</p>
+
+                <div class="parent-report-link-box">
+                    <input type="text" id="parentReportLinkInput" readonly>
+                    <button type="button" class="mypage-classchange-submit-btn" id="parentReportCopyBtn">복사</button>
+                </div>
+
+                <button type="button" class="goal-form-cancel-btn" id="parentReportRegenBtn" style="margin-top: 10px;">새 링크로 바꾸기 (예전 링크는 못 쓰게 돼요)</button>
             </div>
 
             <div class="mypage-tab-panel" data-mypage-panel="assignments" hidden>

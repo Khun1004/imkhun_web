@@ -159,3 +159,113 @@ if (chatFab && chatMenu) {
         if (e.key === "Escape" && dock.classList.contains("is-open")) closeDock();
     });
 })();
+
+// "회사소개" / "사업소개" 내용을 서버에서 불러와서 채워줌 (관리자가 수정하면 여기도 같이 바뀜)
+function escapeHtmlForSite(text) {
+    const div = document.createElement("div");
+    div.textContent = text == null ? "" : String(text);
+    return div.innerHTML;
+}
+
+async function loadCompanyInfoSection(type, eyebrowId, titleId, bodyId) {
+    const eyebrowEl = document.getElementById(eyebrowId);
+    const titleEl = document.getElementById(titleId);
+    const bodyEl = document.getElementById(bodyId);
+    if (!bodyEl) return;
+
+    try {
+        const res = await fetch(`/api/company-info/${type}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (eyebrowEl && data.eyebrow) eyebrowEl.textContent = data.eyebrow;
+        if (titleEl && data.title) titleEl.textContent = data.title;
+
+        const paragraphs = (data.content || "").split(/\n\s*\n/).filter((p) => p.trim());
+        bodyEl.innerHTML = paragraphs.map((p) => `<p>${escapeHtmlForSite(p.trim())}</p>`).join("");
+    } catch (err) {
+        console.error(err);
+        bodyEl.innerHTML = `<p>내용을 불러오지 못했어요.</p>`;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadCompanyInfoSection("COMPANY", "infoDockCompanyEyebrow", "infoDockCompanyTitle", "infoDockCompanyBody");
+    loadCompanyInfoSection("BUSINESS", "infoDockBusinessEyebrow", "infoDockBusinessTitle", "infoDockBusinessBody");
+});
+
+// "미래 계획" 페이지 — 서버에서 인트로/카드/CTA를 불러와서 그려줌 (관리자가 카드를 등록/수정/삭제하면 그대로 반영됨)
+const FUTUREPLAN_ICONS = [
+    '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M22 8v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none"><path d="M9 8 4 12l5 4M15 8l5 4-5 4M13 5l-2 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none"><circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="6" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 19c.8-3.6 2.6-5.5 4.5-5.5s3.7 1.9 4.5 5.5M12.5 19c.8-3.6 2.6-5.5 4.5-5.5s3.7 1.9 4.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+];
+const FUTUREPLAN_TAG_COLORS = ["rose", "teal", "gold", "code", "sky"];
+
+async function loadFuturePlan() {
+    const introEl = document.getElementById("futureplanIntro");
+    const timelineEl = document.getElementById("futureplanTimeline");
+    const ctaEl = document.getElementById("futureplanCta");
+    if (!introEl || !timelineEl) return;
+
+    try {
+        const res = await fetch("/api/future-plan");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        introEl.innerHTML = (data.introText || "")
+            .split(/\n\s*\n/)
+            .filter((p) => p.trim())
+            .map((p) => `<p>${escapeHtmlForSite(p.trim())}</p>`)
+            .join("");
+
+        let tagCounter = 0;
+        timelineEl.innerHTML = (data.items || [])
+            .map((item, index) => {
+                const icon = FUTUREPLAN_ICONS[index % FUTUREPLAN_ICONS.length];
+                const paragraphs = (item.content || "")
+                    .split(/\n\s*\n/)
+                    .filter((p) => p.trim())
+                    .map((p) => `<p>${escapeHtmlForSite(p.trim())}</p>`)
+                    .join("");
+                const tags = (item.tags || "")
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .map((t) => {
+                        const color = FUTUREPLAN_TAG_COLORS[tagCounter++ % FUTUREPLAN_TAG_COLORS.length];
+                        return `<span class="futureplan-tag futureplan-tag--${color}">${escapeHtmlForSite(t)}</span>`;
+                    })
+                    .join("");
+
+                return `
+          <div class="futureplan-card">
+            <div class="futureplan-card-head">
+              <span class="futureplan-icon" aria-hidden="true">${icon}</span>
+              <div>
+                <p class="futureplan-card-eyebrow">Plan ${String(index + 1).padStart(2, "0")}</p>
+                <h3>${escapeHtmlForSite(item.title)}</h3>
+              </div>
+            </div>
+            ${paragraphs}
+            <div class="futureplan-tags">${tags}</div>
+          </div>
+        `;
+            })
+            .join("");
+
+        if (ctaEl) {
+            ctaEl.innerHTML = `
+        <p class="futureplan-cta-title">${escapeHtmlForSite(data.ctaTitle || "")}</p>
+        <p>${escapeHtmlForSite(data.ctaText || "")}</p>
+      `;
+        }
+    } catch (err) {
+        console.error(err);
+        introEl.innerHTML = `<p>내용을 불러오지 못했어요.</p>`;
+    }
+}
+
+document.addEventListener("fragments:loaded", () => {
+    loadFuturePlan();
+});

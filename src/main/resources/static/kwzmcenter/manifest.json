@@ -1,0 +1,32 @@
+{
+  "name": "KWZM Center",
+  "short_name": "KWZM Center",
+  "description": "I'm Khun / KWZM Computer Training & Language Center 학생 전용 공간",
+  "start_url": "/kwzmcenter/index.html",
+  "scope": "/kwzmcenter/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#16386b",
+  "theme_color": "#16386b",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "logoimages/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logoimages/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logoimages/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

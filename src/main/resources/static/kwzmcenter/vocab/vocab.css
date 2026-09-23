@@ -451,3 +451,54 @@
         font-size: 24px;
     }
 }
+
+/* 발음 듣기 버튼 */
+
+.student-vocab-word-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.student-vocab-speak-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid var(--kwzm-line);
+    border-radius: 50%;
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-accent, #2f9aa0);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.student-vocab-speak-btn:hover {
+    background: var(--kwzm-accent, #2f9aa0);
+    color: #fff;
+    transform: scale(1.06);
+}
+
+.student-vocab-speak-btn:active {
+    transform: scale(0.94);
+}
+
+.student-vocab-speak-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.vocab-quiz-word-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.vocab-quiz-word-row .vocab-quiz-word {
+    margin: 0;
+}

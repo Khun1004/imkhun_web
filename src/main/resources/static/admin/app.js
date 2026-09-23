@@ -71,6 +71,11 @@ const HERO_CONTENT = {
         title: "무료체험 자료",
         desc: "누구나 볼 수 있는 체험용 자료를 관리해요.",
     },
+    questions: {
+        eyebrow: "KWZM 학생 공간",
+        title: "학생 질문함",
+        desc: "학생들이 익명으로 보낸 질문에 답변해요.",
+    },
     notices: {
         eyebrow: "IMKhun 공개 사이트",
         title: "공지사항",
@@ -816,6 +821,235 @@ async function deleteEvent(id) {
             return;
         }
         loadAdminEvents();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---- 회사소개 / 사업소개 / 미래 계획 관리 ----
+
+async function loadCompanyInfoAdmin() {
+    try {
+        const [companyRes, businessRes] = await Promise.all([
+            fetch("/api/company-info/COMPANY"),
+            fetch("/api/company-info/BUSINESS"),
+        ]);
+        if (companyRes.ok) {
+            const data = await companyRes.json();
+            document.getElementById("companyEyebrowInput").value = data.eyebrow || "";
+            document.getElementById("companyTitleInput").value = data.title || "";
+            document.getElementById("companyContentInput").value = data.content || "";
+        }
+        if (businessRes.ok) {
+            const data = await businessRes.json();
+            document.getElementById("businessEyebrowInput").value = data.eyebrow || "";
+            document.getElementById("businessTitleInput").value = data.title || "";
+            document.getElementById("businessContentInput").value = data.content || "";
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function submitCompanyInfo(type) {
+    const prefix = type === "COMPANY" ? "company" : "business";
+    const eyebrow = document.getElementById(`${prefix}EyebrowInput`).value.trim();
+    const title = document.getElementById(`${prefix}TitleInput`).value.trim();
+    const content = document.getElementById(`${prefix}ContentInput`).value.trim();
+    const errorEl = document.getElementById(`${prefix}InfoError`);
+    const saveBtn = document.getElementById(`${prefix}InfoSaveBtn`);
+
+    if (!title || !content) {
+        errorEl.textContent = "제목과 내용을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장하는 중...";
+
+    try {
+        const res = await fetch(`/api/admin/company-info/${type}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eyebrow, title, content }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        alert("저장했어요.");
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = type === "COMPANY" ? "회사소개 저장" : "사업소개 저장";
+    }
+}
+
+let futurePlanItemsCache = [];
+
+async function loadFuturePlanAdmin() {
+    try {
+        const res = await fetch("/api/future-plan");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById("futureplanIntroInput").value = data.introText || "";
+        document.getElementById("futureplanCtaTitleInput").value = data.ctaTitle || "";
+        document.getElementById("futureplanCtaTextInput").value = data.ctaText || "";
+
+        futurePlanItemsCache = data.items || [];
+        renderFuturePlanItemsAdmin();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderFuturePlanItemsAdmin() {
+    const listEl = document.getElementById("futureplanItemList");
+    const emptyEl = document.getElementById("futureplanItemsEmpty");
+    if (!listEl) return;
+
+    listEl.innerHTML = "";
+    if (emptyEl) emptyEl.hidden = futurePlanItemsCache.length > 0;
+
+    futurePlanItemsCache.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "admin-notice-item";
+        row.innerHTML = `
+      <div class="admin-notice-item-head">
+        <p class="admin-notice-item-title">${item.sortOrder}. ${escapeHtmlForAdmin(item.title)}</p>
+        <span class="admin-notice-item-date">${escapeHtmlForAdmin(item.tags || "")}</span>
+      </div>
+      <p class="admin-notice-item-content">${escapeHtmlForAdmin(item.content.slice(0, 80))}${item.content.length > 80 ? "..." : ""}</p>
+      <div class="admin-notice-item-actions">
+        <button type="button" class="admin-material-action-btn" data-edit-futureplan-item="${item.id}">수정</button>
+        <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-futureplan-item="${item.id}">삭제</button>
+      </div>
+    `;
+        listEl.appendChild(row);
+    });
+}
+
+async function submitFuturePlanSection() {
+    const introText = document.getElementById("futureplanIntroInput").value.trim();
+    const ctaTitle = document.getElementById("futureplanCtaTitleInput").value.trim();
+    const ctaText = document.getElementById("futureplanCtaTextInput").value.trim();
+    const errorEl = document.getElementById("futureplanSectionError");
+    const saveBtn = document.getElementById("futureplanSectionSaveBtn");
+
+    if (!introText) {
+        errorEl.textContent = "인트로 문단을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장하는 중...";
+
+    try {
+        const res = await fetch("/api/admin/future-plan/section", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ introText, ctaTitle, ctaText }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        alert("저장했어요.");
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "인트로/마무리 문구 저장";
+    }
+}
+
+function openFuturePlanItemModal(itemId) {
+    const modal = document.getElementById("futureplanItemModal");
+    if (!modal) return;
+    const item = itemId ? futurePlanItemsCache.find((i) => i.id === Number(itemId)) : null;
+
+    modal.dataset.editingId = item ? item.id : "";
+    document.getElementById("futureplanItemModalTitle").textContent = item ? "계획 카드 수정" : "새 계획 카드 등록";
+    document.getElementById("futureplanItemOrderInput").value = item ? item.sortOrder : futurePlanItemsCache.length + 1;
+    document.getElementById("futureplanItemTitleInput").value = item ? item.title : "";
+    document.getElementById("futureplanItemContentInput").value = item ? item.content : "";
+    document.getElementById("futureplanItemTagsInput").value = item ? item.tags : "";
+    document.getElementById("futureplanItemError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeFuturePlanItemModal() {
+    const modal = document.getElementById("futureplanItemModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+async function submitFuturePlanItem() {
+    const modal = document.getElementById("futureplanItemModal");
+    const editingId = modal?.dataset.editingId;
+    const sortOrder = Number(document.getElementById("futureplanItemOrderInput").value) || 1;
+    const title = document.getElementById("futureplanItemTitleInput").value.trim();
+    const content = document.getElementById("futureplanItemContentInput").value.trim();
+    const tags = document.getElementById("futureplanItemTagsInput").value.trim();
+    const errorEl = document.getElementById("futureplanItemError");
+    const saveBtn = document.getElementById("futureplanItemSaveBtn");
+
+    if (!title || !content) {
+        errorEl.textContent = "제목과 내용을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장하는 중...";
+
+    try {
+        const url = editingId ? `/api/admin/future-plan/items/${editingId}` : "/api/admin/future-plan/items";
+        const method = editingId ? "PUT" : "POST";
+        const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sortOrder, title, content, tags }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        closeFuturePlanItemModal();
+        loadFuturePlanAdmin();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "등록하기";
+    }
+}
+
+async function deleteFuturePlanItem(id) {
+    if (!confirm("이 계획 카드를 삭제할까요? 되돌릴 수 없어요.")) return;
+    try {
+        const res = await fetch(`/api/admin/future-plan/items/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadFuturePlanAdmin();
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
@@ -3141,6 +3375,51 @@ async function loadSurveyData() {
     }
 }
 
+async function loadAdminQuestions() {
+    const list = document.getElementById("adminQuestionsList");
+    const emptyText = document.getElementById("adminQuestionsEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/questions");
+        if (!res.ok) return;
+        const questions = await res.json();
+
+        list.innerHTML = "";
+        emptyText.hidden = questions.length > 0;
+
+        questions.forEach((q) => {
+            const answerBoxHtml = q.answerText
+                ? `<div class="admin-review-reply-box">
+             <p class="admin-review-reply-label">내 답변 · ${q.answeredAt || ""}</p>
+             <p class="admin-review-reply-text">${escapeHtmlForAdmin(q.answerText)}</p>
+           </div>`
+                : "";
+
+            const item = document.createElement("div");
+            item.className = "admin-review-item";
+            item.innerHTML = `
+        <div class="admin-review-head">
+          <span class="admin-review-avatar">?</span>
+          <div>
+            <p class="admin-review-name">익명 질문</p>
+          </div>
+        </div>
+        <p class="admin-review-text">${escapeHtmlForAdmin(q.questionText)}</p>
+        <p class="admin-review-date">${q.createdAt}</p>
+        ${answerBoxHtml}
+        <div class="admin-review-reply-form">
+          <textarea class="admin-review-reply-input" data-answer-input rows="1" placeholder="${q.answerText ? "답변 수정하기" : "답변 남기기"}">${q.answerText ? escapeHtmlForAdmin(q.answerText) : ""}</textarea>
+          <button type="button" class="admin-review-reply-submit" data-answer-submit="${q.id}">${q.answerText ? "수정" : "등록"}</button>
+        </div>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 async function loadAdminReviews() {
     const list = document.getElementById("adminReviewList");
     const emptyText = document.getElementById("adminReviewsEmpty");
@@ -4363,6 +4642,7 @@ document.addEventListener("fragments:loaded", () => {
         if (key === "vocab" && !document.querySelector("#vocabAdminLanguagePills .admin-pill.active")) {
             document.querySelector("#vocabAdminLanguagePills .admin-pill")?.click();
         }
+        if (key === "questions") loadAdminQuestions();
     }
 
     document.querySelectorAll(".admin-maintab[data-main-tab]").forEach((tab) => {
@@ -4426,6 +4706,10 @@ document.addEventListener("fragments:loaded", () => {
             if (key === "timetable") loadAdminTimetable();
             if (key === "faq") loadAdminFaqs();
             if (key === "events") loadAdminEvents();
+            if (key === "companyinfo") {
+                loadCompanyInfoAdmin();
+                loadFuturePlanAdmin();
+            }
         });
     });
 
@@ -4517,6 +4801,7 @@ document.addEventListener("fragments:loaded", () => {
         if (e.target.closest("[data-payment-info-close]")) closePaymentInfoModal();
         if (e.target.closest("[data-notice-modal-close]")) closeNoticeModal();
         if (e.target.closest("[data-event-modal-close]")) closeEventModal();
+        if (e.target.closest("[data-futureplan-item-close]")) closeFuturePlanItemModal();
 
         const changeCourseBtn = e.target.closest("[data-change-course-id]");
         if (changeCourseBtn) openCourseChangeModal(changeCourseBtn.dataset.changeCourseId);
@@ -4541,6 +4826,12 @@ document.addEventListener("fragments:loaded", () => {
 
         const deleteEventBtn = e.target.closest("[data-delete-event-id]");
         if (deleteEventBtn) deleteEvent(deleteEventBtn.dataset.deleteEventId);
+
+        const editFuturePlanItemBtn = e.target.closest("[data-edit-futureplan-item]");
+        if (editFuturePlanItemBtn) openFuturePlanItemModal(editFuturePlanItemBtn.dataset.editFutureplanItem);
+
+        const deleteFuturePlanItemBtn = e.target.closest("[data-delete-futureplan-item]");
+        if (deleteFuturePlanItemBtn) deleteFuturePlanItem(deleteFuturePlanItemBtn.dataset.deleteFutureplanItem);
 
         if (e.target.closest("[data-timetable-modal-close]")) closeTimetableModal();
         const editTimetableBtn = e.target.closest("[data-edit-timetable-id]");
@@ -4597,6 +4888,11 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("noticeSaveBtn")?.addEventListener("click", submitNotice);
     document.getElementById("adminEventNewBtn")?.addEventListener("click", openEventModal);
     document.getElementById("eventSaveBtn")?.addEventListener("click", submitEvent);
+    document.getElementById("companyInfoSaveBtn")?.addEventListener("click", () => submitCompanyInfo("COMPANY"));
+    document.getElementById("businessInfoSaveBtn")?.addEventListener("click", () => submitCompanyInfo("BUSINESS"));
+    document.getElementById("futureplanSectionSaveBtn")?.addEventListener("click", submitFuturePlanSection);
+    document.getElementById("futureplanItemNewBtn")?.addEventListener("click", () => openFuturePlanItemModal(null));
+    document.getElementById("futureplanItemSaveBtn")?.addEventListener("click", submitFuturePlanItem);
     document.getElementById("adminTimetableNewBtn")?.addEventListener("click", () => openTimetableModal());
     document.getElementById("timetableSaveBtn")?.addEventListener("click", submitTimetableEntry);
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
@@ -4918,6 +5214,43 @@ document.addEventListener("fragments:loaded", () => {
             console.error(err);
             alert("서버에 연결할 수 없어요.");
             submitBtn.disabled = false;
+        }
+    });
+
+    document.addEventListener("click", async (e) => {
+        const answerBtn = e.target.closest("[data-answer-submit]");
+        if (!answerBtn) return;
+
+        const questionId = answerBtn.dataset.answerSubmit;
+        const item = answerBtn.closest(".admin-review-item");
+        const textarea = item?.querySelector("[data-answer-input]");
+        const answerText = textarea ? textarea.value.trim() : "";
+
+        if (!answerText) {
+            alert("답변 내용을 입력해주세요.");
+            return;
+        }
+
+        answerBtn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/admin/questions/${questionId}/answer`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ answerText }),
+            });
+
+            if (!res.ok) {
+                alert((await res.text()) || "답변 등록에 실패했어요.");
+                answerBtn.disabled = false;
+                return;
+            }
+
+            loadAdminQuestions();
+        } catch (err) {
+            console.error(err);
+            alert("서버에 연결할 수 없어요.");
+            answerBtn.disabled = false;
         }
     });
 
