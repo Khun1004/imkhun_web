@@ -7,11 +7,15 @@ import com.imkhun.imkhun.service.AdminFileService;
 import com.imkhun.imkhun.service.ApplicationService;
 import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AssignmentSubmissionService;
+import com.imkhun.imkhun.service.BadgeService;
+import com.imkhun.imkhun.service.ClassNoteService;
+import com.imkhun.imkhun.service.FriendService;
 import com.imkhun.imkhun.service.LearningGoalService;
 import com.imkhun.imkhun.service.EventService;
 import com.imkhun.imkhun.service.StudentQuestionService;
 import com.imkhun.imkhun.service.LeaderboardService;
 import com.imkhun.imkhun.service.ParentReportService;
+import com.imkhun.imkhun.service.SharedGoalService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.AttendanceStreakService;
 import com.imkhun.imkhun.service.CalendarExportService;
@@ -65,6 +69,10 @@ public class StudentPortalController {
     private final StudentQuestionService studentQuestionService;
     private final LeaderboardService leaderboardService;
     private final ParentReportService parentReportService;
+    private final ClassNoteService classNoteService;
+    private final BadgeService badgeService;
+    private final FriendService friendService;
+    private final SharedGoalService sharedGoalService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -77,7 +85,9 @@ public class StudentPortalController {
                                    StudentDashboardService studentDashboardService, StudentCalendarService studentCalendarService,
                                    AssignmentSubmissionService assignmentSubmissionService, LearningGoalService learningGoalService,
                                    EventService eventService, StudentQuestionService studentQuestionService,
-                                   LeaderboardService leaderboardService, ParentReportService parentReportService) {
+                                   LeaderboardService leaderboardService, ParentReportService parentReportService,
+                                   ClassNoteService classNoteService, BadgeService badgeService, FriendService friendService,
+                                   SharedGoalService sharedGoalService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -99,6 +109,10 @@ public class StudentPortalController {
         this.studentQuestionService = studentQuestionService;
         this.leaderboardService = leaderboardService;
         this.parentReportService = parentReportService;
+        this.classNoteService = classNoteService;
+        this.badgeService = badgeService;
+        this.friendService = friendService;
+        this.sharedGoalService = sharedGoalService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -683,6 +697,191 @@ public class StudentPortalController {
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         try {
             learningGoalService.deleteGoal(id, userOpt.get().getUsername());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 수업 후 미니 노트 ----------
+
+    @GetMapping("/class-notes")
+    public ResponseEntity<?> getMyClassNotes(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(classNoteService.getNotesForStudent(userOpt.get().getUsername()));
+    }
+
+    @GetMapping("/class-notes/recent-classes")
+    public ResponseEntity<?> getRecentClassesForNote(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(classNoteService.getRecentClassesForNote(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/class-notes")
+    public ResponseEntity<?> saveClassNote(HttpServletRequest request, @RequestBody CreateClassNoteRequest noteRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(classNoteService.saveNote(userOpt.get().getUsername(), noteRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/class-notes/{id}")
+    public ResponseEntity<?> deleteClassNote(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            classNoteService.deleteNote(id, userOpt.get().getUsername());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 배지 / 업적 ----------
+
+    @GetMapping("/badges")
+    public ResponseEntity<?> getMyBadges(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(badgeService.getBadgesForStudent(userOpt.get().getUsername()));
+    }
+
+    // ---------- 친구 ----------
+
+    @GetMapping("/friends/my-code")
+    public ResponseEntity<?> getMyFriendCode(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(friendService.getOrCreateMyCode(userOpt.get().getUsername()));
+    }
+
+    @GetMapping("/friends")
+    public ResponseEntity<?> getMyFriends(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(friendService.getMyFriends(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/friends")
+    public ResponseEntity<?> addFriend(HttpServletRequest request, @RequestBody AddFriendRequest addFriendRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(friendService.addFriendByCode(userOpt.get().getUsername(), addFriendRequest.code()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/friends/{friendUsername}/schedule")
+    public ResponseEntity<?> getFriendSchedule(HttpServletRequest request, @PathVariable String friendUsername) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(friendService.getFriendSchedule(userOpt.get().getUsername(), friendUsername));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/friends/{friendUsername}")
+    public ResponseEntity<?> removeFriend(HttpServletRequest request, @PathVariable String friendUsername) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            friendService.removeFriend(userOpt.get().getUsername(), friendUsername);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/friends/{friendUsername}/badges")
+    public ResponseEntity<?> getFriendBadges(HttpServletRequest request, @PathVariable String friendUsername) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(friendService.getFriendBadges(userOpt.get().getUsername(), friendUsername));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/friends/{friendUsername}/notes")
+    public ResponseEntity<?> sendFriendNote(HttpServletRequest request, @PathVariable String friendUsername,
+                                            @RequestBody SendFriendNoteRequest noteRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            friendService.sendNote(userOpt.get().getUsername(), friendUsername, noteRequest.message());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/friends/notes")
+    public ResponseEntity<?> getMyFriendNotes(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(friendService.getReceivedNotes(userOpt.get().getUsername()));
+    }
+
+    // ---------- 같이 하는 목표 ----------
+
+    @GetMapping("/shared-goals")
+    public ResponseEntity<?> getSharedGoals(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(sharedGoalService.getSharedGoalsForStudent(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/shared-goals")
+    public ResponseEntity<?> createSharedGoal(HttpServletRequest request, @RequestBody CreateSharedGoalRequest goalRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(sharedGoalService.createSharedGoal(userOpt.get().getUsername(), goalRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/shared-goals/{id}/accept")
+    public ResponseEntity<?> acceptSharedGoal(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            sharedGoalService.acceptSharedGoal(id, userOpt.get().getUsername());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/shared-goals/{id}/decline")
+    public ResponseEntity<?> declineSharedGoal(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            sharedGoalService.declineSharedGoal(id, userOpt.get().getUsername());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/shared-goals/{id}")
+    public ResponseEntity<?> deleteSharedGoal(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            sharedGoalService.deleteSharedGoal(id, userOpt.get().getUsername());
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -39,6 +39,33 @@
     --kwzm-line: #dbe3ea;
 }
 
+/* 어두운 모드 — 마이페이지 > 화면 설정에서 켜고 끌 수 있어요 (localStorage에 기억됨) */
+
+:root[data-theme="dark"] {
+    --kwzm-bg: #0e131e;
+    --kwzm-bg-2: #161d2c;
+    --kwzm-bg-3: #1c2434;
+    --kwzm-ink: #e9edf5;
+    --kwzm-ink-soft: #b7c0d3;
+    --kwzm-ink-faint: #7c869c;
+    --kwzm-line: #2b3448;
+}
+
+:root[data-theme="dark"] .admin-material-thumb,
+:root[data-theme="dark"] .student-material-thumb {
+    background: var(--kwzm-bg-2);
+}
+
+/* 글자 크기 조절 — zoom으로 화면 전체를 살짝 키우거나 줄여요 */
+
+html[data-kwzm-font-size="small"] .kwzm-standalone-body {
+    zoom: 0.92;
+}
+
+html[data-kwzm-font-size="large"] .kwzm-standalone-body {
+    zoom: 1.16;
+}
+
 /* 전용 로그인 모달 (관리자 로그인 모달과 같은 구조) */
 
 .student-header-blob {

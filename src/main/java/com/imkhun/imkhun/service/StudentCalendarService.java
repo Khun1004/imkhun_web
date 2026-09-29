@@ -56,6 +56,8 @@ public class StudentCalendarService {
             for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
                 String dayCode = DAY_CODE.get(date.getDayOfWeek());
                 if (!dayCodes.contains(dayCode)) continue;
+                if (app.getEnrollmentEndDate() != null && date.isAfter(app.getEnrollmentEndDate())) continue;
+                if (app.getEnrollmentStartDate() != null && date.isBefore(app.getEnrollmentStartDate())) continue;
 
                 events.add(new CalendarEventResponse(date.toString(), "CLASS", app.getCourseName(), statusByDate.get(date)));
             }

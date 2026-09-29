@@ -91,7 +91,8 @@ public class ApplicationService {
                             app.getAmountReason(), app.getMaterialGuide(), app.getClassGuide(),
                             app.getPaymentConfirmedByStudentAt() != null, app.getPaymentConfirmedByAdminAt() != null,
                             app.getPaymentConfirmedByStudentAt() != null ? app.getPaymentConfirmedByStudentAt().format(DATE_FORMAT) : null,
-                            app.getReceiptImage(), app.getClassDays(), app.getClassTime(),
+                            app.getReceiptImage(), app.getClassDays(), app.getClassTime(), app.getClassEndTime(),
+                            app.getEnrollmentStartDate() != null ? app.getEnrollmentStartDate().toString() : null,
                             app.getEnrollmentEndDate() != null ? app.getEnrollmentEndDate().toString() : null
                     );
                 })
@@ -218,28 +219,34 @@ public class ApplicationService {
                 application.getCourseName() + " 입금이 확인됐어요. 감사합니다!", null);
     }
 
-    // 출석 체크용 — 이 강의가 몇 요일, 몇 시에 진행되는지 등록
+    // 출석 체크용 — 이 강의가 몇 요일, 몇 시부터 몇 시까지 진행되는지 등록
     public void updateSchedule(Long applicationId, UpdateScheduleRequest request) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
-        application.updateSchedule(request.classDays(), request.classTime());
+        application.updateSchedule(request.classDays(), request.classTime(), request.classEndTime());
         applicationRepository.save(application);
     }
 
-    // 관리자 - "이 학생은 언제까지 수강이에요"를 지정 (재등록 리마인더 기준일)
+    // 관리자 - "이 학생은 언제부터 언제까지 수강이에요"를 지정 (재등록 리마인더는 종료일 기준)
     public void updateEnrollmentEndDate(Long applicationId, UpdateEnrollmentEndDateRequest request) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
-        java.time.LocalDate endDate = null;
-        if (request.enrollmentEndDate() != null && !request.enrollmentEndDate().isBlank()) {
-            try {
-                endDate = java.time.LocalDate.parse(request.enrollmentEndDate());
-            } catch (Exception e) {
-                throw new IllegalStateException("날짜 형식이 올바르지 않아요.");
-            }
+        java.time.LocalDate startDate = parseOptionalDate(request.enrollmentStartDate());
+        java.time.LocalDate endDate = parseOptionalDate(request.enrollmentEndDate());
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalStateException("시작일이 종료일보다 늦을 수 없어요.");
         }
-        application.updateEnrollmentEndDate(endDate);
+        application.updateEnrollmentPeriod(startDate, endDate);
         applicationRepository.save(application);
+    }
+
+    private java.time.LocalDate parseOptionalDate(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return java.time.LocalDate.parse(value);
+        } catch (Exception e) {
+            throw new IllegalStateException("날짜 형식이 올바르지 않아요.");
+        }
     }
 
     // 체험 전용 가입 — 승인 절차 없이 바로 KWZM 로그인이 가능하도록 자동 승인 처리된 신청을 만들어줌.

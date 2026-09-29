@@ -89,8 +89,16 @@ public class Application {
     @Column(name = "class_time")
     private String classTime;
 
-    // ---- 재등록 리마인더 ----
-    // 관리자가 "이 학생은 언제까지 수강이에요"라고 정해두는 날짜 (안 정해두면 리마인더 대상 아님)
+    // 수업 종료 시간 (선택) — "10:00~11:00"처럼 몇 시부터 몇 시까지인지 보여주는 용도.
+    // 출석 체크 로직(체크 가능 시간대 계산)은 여전히 classTime(시작 시간) 기준으로만 동작함
+    @Column(name = "class_end_time")
+    private String classEndTime;
+
+    // ---- 수강 기간 / 재등록 리마인더 ----
+    // 관리자가 "이 학생은 언제부터 언제까지 수강이에요"라고 정해두는 기간 (안 정해두면 리마인더 대상 아님)
+    @Column(name = "enrollment_start_date")
+    private java.time.LocalDate enrollmentStartDate;
+
     @Column(name = "enrollment_end_date")
     private java.time.LocalDate enrollmentEndDate;
 
@@ -159,14 +167,23 @@ public class Application {
         this.paymentConfirmedByAdminAt = LocalDateTime.now();
     }
 
+    // 학생이 신청서를 낼 때처럼 종료 시간 없이 요일·시작 시간만 정할 때 씀.
+    // 이미 등록돼 있던 종료 시간은 건드리지 않고 그대로 둠
     public void updateSchedule(String classDays, String classTime) {
         this.classDays = classDays;
         this.classTime = classTime;
     }
 
-    public void updateEnrollmentEndDate(java.time.LocalDate enrollmentEndDate) {
+    public void updateSchedule(String classDays, String classTime, String classEndTime) {
+        this.classDays = classDays;
+        this.classTime = classTime;
+        this.classEndTime = classEndTime;
+    }
+
+    public void updateEnrollmentPeriod(java.time.LocalDate enrollmentStartDate, java.time.LocalDate enrollmentEndDate) {
+        this.enrollmentStartDate = enrollmentStartDate;
         this.enrollmentEndDate = enrollmentEndDate;
-        // 종료일이 새로 바뀌면, 예전 기준으로 이미 보냈던 리마인더 기록은 초기화 (다시 대상이 될 수 있게)
+        // 기간이 새로 바뀌면, 예전 기준으로 이미 보냈던 리마인더 기록은 초기화 (다시 대상이 될 수 있게)
         this.renewalReminderSentAt = null;
     }
 
@@ -256,6 +273,14 @@ public class Application {
 
     public String getClassTime() {
         return classTime;
+    }
+
+    public String getClassEndTime() {
+        return classEndTime;
+    }
+
+    public java.time.LocalDate getEnrollmentStartDate() {
+        return enrollmentStartDate;
     }
 
     public java.time.LocalDate getEnrollmentEndDate() {

@@ -1139,7 +1139,9 @@ function openTimetableModal(entryId) {
     document.getElementById("timetableModalTitle").textContent = entry ? "시간표 항목 수정" : "시간표 항목 추가";
     document.getElementById("timetableSaveBtn").textContent = entry ? "수정하기" : "추가하기";
     document.getElementById("timetableEditingId").value = entry ? entry.id : "";
-    document.getElementById("timetableDaySelect").value = entry ? entry.day : "MON";
+    document.querySelectorAll('input[name="timetableDay"]').forEach((cb) => {
+        cb.checked = entry ? cb.value === entry.day : false;
+    });
     document.getElementById("timetableStartInput").value = entry ? entry.startTime : "";
     document.getElementById("timetableEndInput").value = entry ? entry.endTime : "";
     document.getElementById("timetableCourseInput").value = entry ? entry.courseName : "";
@@ -1160,7 +1162,7 @@ function closeTimetableModal() {
 
 async function submitTimetableEntry() {
     const editingId = document.getElementById("timetableEditingId").value;
-    const day = document.getElementById("timetableDaySelect").value;
+    const days = Array.from(document.querySelectorAll('input[name="timetableDay"]:checked')).map((cb) => cb.value);
     const startTime = document.getElementById("timetableStartInput").value.trim();
     const endTime = document.getElementById("timetableEndInput").value.trim();
     const courseName = document.getElementById("timetableCourseInput").value.trim();
@@ -1169,6 +1171,16 @@ async function submitTimetableEntry() {
     const saveBtn = document.getElementById("timetableSaveBtn");
     const isEditing = !!editingId;
 
+    if (days.length === 0) {
+        errorEl.textContent = "요일을 하나 이상 선택해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    if (isEditing && days.length > 1) {
+        errorEl.textContent = "수정할 때는 요일을 하나만 선택해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
     if (!startTime || !endTime || !courseName) {
         errorEl.textContent = "시간과 과목명을 모두 입력해주세요.";
         errorEl.hidden = false;
@@ -1179,18 +1191,32 @@ async function submitTimetableEntry() {
     saveBtn.textContent = isEditing ? "수정하는 중..." : "추가하는 중...";
 
     try {
-        const url = isEditing ? `/api/admin/timetable/${editingId}` : "/api/admin/timetable";
-        const method = isEditing ? "PUT" : "POST";
-        const res = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ day, startTime, endTime, courseName, colorType }),
-        });
-
-        if (!res.ok) {
-            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
-            errorEl.hidden = false;
-            return;
+        if (isEditing) {
+            const res = await fetch(`/api/admin/timetable/${editingId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ day: days[0], startTime, endTime, courseName, colorType }),
+            });
+            if (!res.ok) {
+                errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+                errorEl.hidden = false;
+                return;
+            }
+        } else {
+            // 여러 요일을 한 번에 선택했으면, 요일 수만큼 같은 시간·과목명으로 각각 추가해요
+            for (const day of days) {
+                const res = await fetch("/api/admin/timetable", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ day, startTime, endTime, courseName, colorType }),
+                });
+                if (!res.ok) {
+                    errorEl.textContent = `${TIMETABLE_DAY_LABEL[day] || day}요일 저장 중 오류: ${(await res.text()) || "저장에 실패했어요."}`;
+                    errorEl.hidden = false;
+                    loadAdminTimetable();
+                    return;
+                }
+            }
         }
 
         closeTimetableModal();
@@ -2237,7 +2263,7 @@ async function changeAttendanceHistoryStatus(selectEl) {
 
 
 
-function openScheduleModal(applicationId, courseName, classDays, classTime, enrollmentEndDate) {
+function openScheduleModal(applicationId, courseName, classDays, classTime, enrollmentEndDate, classEndTime, enrollmentStartDate) {
     const modal = document.getElementById("scheduleModal");
     if (!modal) return;
 
@@ -2247,6 +2273,8 @@ function openScheduleModal(applicationId, courseName, classDays, classTime, enro
         cb.checked = classDays ? classDays.split(",").includes(cb.value) : false;
     });
     document.getElementById("scheduleTimeInput").value = classTime || "";
+    document.getElementById("scheduleEndTimeInput").value = classEndTime || "";
+    document.getElementById("enrollmentStartDateInput").value = enrollmentStartDate || "";
     document.getElementById("enrollmentEndDateInput").value = enrollmentEndDate || "";
     document.getElementById("scheduleError").hidden = true;
 
@@ -2265,6 +2293,8 @@ async function submitSchedule() {
     const applicationId = document.getElementById("scheduleApplicationId").value;
     const days = [...document.querySelectorAll('input[name="scheduleDay"]:checked')].map((cb) => cb.value);
     const time = document.getElementById("scheduleTimeInput").value;
+    const endTime = document.getElementById("scheduleEndTimeInput").value;
+    const enrollmentStartDate = document.getElementById("enrollmentStartDateInput").value;
     const enrollmentEndDate = document.getElementById("enrollmentEndDateInput").value;
     const errorEl = document.getElementById("scheduleError");
     const saveBtn = document.getElementById("scheduleSaveBtn");
@@ -2282,7 +2312,7 @@ async function submitSchedule() {
         const res = await fetch(`/api/admin/applications/${applicationId}/schedule`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ classDays: days.join(","), classTime: time }),
+            body: JSON.stringify({ classDays: days.join(","), classTime: time, classEndTime: endTime || null }),
         });
 
         if (!res.ok) {
@@ -2294,7 +2324,7 @@ async function submitSchedule() {
         const endDateRes = await fetch(`/api/admin/applications/${applicationId}/enrollment-end-date`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ enrollmentEndDate: enrollmentEndDate || null }),
+            body: JSON.stringify({ enrollmentStartDate: enrollmentStartDate || null, enrollmentEndDate: enrollmentEndDate || null }),
         });
 
         if (!endDateRes.ok) {
@@ -3050,7 +3080,7 @@ async function loadStudentList() {
         <div class="admin-student-actions-row">
           <button type="button" class="admin-material-action-btn" data-change-course-id="${app.id}">강의 변경</button>
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-payment-info-id="${app.id}">${app.hasPaymentInfo ? "결제 안내 수정" : "결제 안내 등록"}</button>` : ""}
-          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}" data-schedule-enrollment-end="${app.enrollmentEndDate || ""}">${app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정"}</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}" data-schedule-enrollment-end="${app.enrollmentEndDate || ""}" data-schedule-end-time="${app.classEndTime || ""}" data-schedule-enrollment-start="${app.enrollmentStartDate || ""}">${app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정"}</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-attendance-id="${app.id}" data-attendance-course="${escapeHtmlForAdmin(app.courseName)}">출석부</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-send-file-id="${app.id}" data-send-file-course="${escapeHtmlForAdmin(app.courseName)}">파일 보내기</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-set-status-id="${app.id}" data-set-status-value="SUSPENDED">휴면 처리</button>` : ""}
@@ -4865,7 +4895,8 @@ document.addEventListener("fragments:loaded", () => {
         const scheduleBtn = e.target.closest("[data-schedule-id]");
         if (scheduleBtn) {
             openScheduleModal(scheduleBtn.dataset.scheduleId, scheduleBtn.dataset.scheduleCourse,
-                scheduleBtn.dataset.scheduleDays, scheduleBtn.dataset.scheduleTime, scheduleBtn.dataset.scheduleEnrollmentEnd);
+                scheduleBtn.dataset.scheduleDays, scheduleBtn.dataset.scheduleTime, scheduleBtn.dataset.scheduleEnrollmentEnd,
+                scheduleBtn.dataset.scheduleEndTime, scheduleBtn.dataset.scheduleEnrollmentStart);
         }
 
         const markAttendanceBtn = e.target.closest("[data-mark-attendance]");

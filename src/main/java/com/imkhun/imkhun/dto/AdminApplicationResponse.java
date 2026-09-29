@@ -6,5 +6,6 @@ public record AdminApplicationResponse(Long id, String nickname, String email, S
                                        String amount, String amountReason, String materialGuide, String classGuide,
                                        boolean paymentConfirmedByStudent, boolean paymentConfirmedByAdmin,
                                        String paymentConfirmedByStudentAt, String receiptImage,
-                                       String classDays, String classTime, String enrollmentEndDate) {
+                                       String classDays, String classTime, String classEndTime,
+                                       String enrollmentStartDate, String enrollmentEndDate) {
 }

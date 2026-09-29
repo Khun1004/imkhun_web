@@ -1041,14 +1041,16 @@
             <input type="hidden" id="timetableEditingId">
 
             <div class="auth-form-field">
-                <label for="timetableDaySelect">요일</label>
-                <select class="apply-select" id="timetableDaySelect">
-                    <option value="MON">월요일</option>
-                    <option value="TUE">화요일</option>
-                    <option value="WED">수요일</option>
-                    <option value="THU">목요일</option>
-                    <option value="FRI">금요일</option>
-                </select>
+                <label>요일 (여러 개 선택 가능 — 한 번에 여러 날짜에 같은 수업을 추가해요)</label>
+                <div class="admin-category-grid">
+                    <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="MON"><span>월</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="TUE"><span>화</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="WED"><span>수</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="THU"><span>목</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="FRI"><span>금</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="SAT"><span>토</span></label>
+                    <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="SUN"><span>일</span></label>
+                </div>
             </div>
 
             <div class="admin-timetable-time-row">
@@ -1320,14 +1322,23 @@
             </div>
 
             <div class="auth-form-field">
-                <label for="scheduleTimeInput">수업 시작 시간</label>
-                <input type="time" id="scheduleTimeInput">
+                <label>수업 시간 (몇 시부터 몇 시까지)</label>
+                <div class="admin-range-row">
+                    <input type="time" id="scheduleTimeInput">
+                    <span class="admin-range-sep">~</span>
+                    <input type="time" id="scheduleEndTimeInput">
+                </div>
+                <p class="admin-note-hint" style="margin-top: 6px;">종료 시간은 화면에 보여주는 용도예요 (선택). 출석 체크 가능 시간대는 시작 시간 기준으로 계산돼요.</p>
             </div>
 
             <div class="auth-form-field">
-                <label for="enrollmentEndDateInput">수강 종료일 (선택)</label>
-                <input type="date" id="enrollmentEndDateInput">
-                <p class="admin-note-hint" style="margin-top: 6px;">정해두면, 종료 7일 전에 학생한테 자동으로 재등록 안내 알림이 가요. 비워두면 리마인더 대상이 아니에요.</p>
+                <label>수강 기간 (몇 월부터 몇 월까지, 선택)</label>
+                <div class="admin-range-row">
+                    <input type="date" id="enrollmentStartDateInput">
+                    <span class="admin-range-sep">~</span>
+                    <input type="date" id="enrollmentEndDateInput">
+                </div>
+                <p class="admin-note-hint" style="margin-top: 6px;">종료일을 정해두면, 종료 7일 전에 학생한테 자동으로 재등록 안내 알림이 가요. 둘 다 비워두면 리마인더 대상이 아니에요.</p>
             </div>
 
             <p class="auth-form-error" id="scheduleError" hidden></p>

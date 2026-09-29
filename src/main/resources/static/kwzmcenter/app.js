@@ -107,6 +107,10 @@ const NOTIF_TYPE_ICON = {
     RENEWAL_REMINDER: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 17v-5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     VOICE_COMMENT_ADDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.6"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     CLASS_CHANGE_RESPONDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 15l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    FRIEND_NOTE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    SHARED_GOAL_INVITE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5M10.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    SHARED_GOAL_ACCEPTED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5M10.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    SHARED_GOAL_ACHIEVED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
 };
 const NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
@@ -409,6 +413,14 @@ const SCHEDULE_DAY_LABEL = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI
 const SCHEDULE_DAY_ORDER = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 
+// "나의 시간표" / "친구의 시간표" 공용 — 수업 시작~종료 시간을 보여주는 라벨
+function scheduleTimeRangeLabel(entry) {
+    if (!entry.classTime) return "";
+    return entry.classEndTime
+        ? `${entry.classTime.slice(0, 5)}–${entry.classEndTime.slice(0, 5)}`
+        : entry.classTime.slice(0, 5);
+}
+
 let studentCalendarViewYear = null;
 let studentCalendarViewMonth = null; // 0-11
 
@@ -514,7 +526,7 @@ async function buildWeeklyScheduleHtml() {
             const items = byDay[day] || [];
             const isToday = day === todayCode;
             const itemsHtml = items.length > 0
-                ? items.map((i) => `<span class="student-checkin-dock-schedule-chip">${escapeHtmlForStudent(i.courseName)} · ${i.classTime ? i.classTime.slice(0, 5) : ""}</span>`).join("")
+                ? items.map((i) => `<span class="student-checkin-dock-schedule-chip">${escapeHtmlForStudent(i.courseName)} · ${scheduleTimeRangeLabel(i)}</span>`).join("")
                 : `<span class="student-checkin-dock-schedule-empty">${isToday ? "오늘은 쉬는 날" : "-"}</span>`;
             return `
         <div class="student-checkin-dock-schedule-row${items.length > 0 ? " has-class" : ""}${isToday ? " is-today" : ""}">
@@ -2751,6 +2763,335 @@ async function loadGoals() {
     }
 }
 
+// 배지 카드 그리드 HTML — "배지" 탭(내 배지)과 "친구의 배지" 모달에서 공용으로 씀
+function renderBadgeGridHtml(badges) {
+    return badges.map((b) => {
+        const percent = Math.min(100, Math.round((b.currentValue / b.targetValue) * 100));
+        return `
+      <div class="badge-card ${b.earned ? "is-earned" : "is-locked"}">
+        <span class="badge-card-icon" aria-hidden="true">${b.icon}</span>
+        <p class="badge-card-name">${escapeHtmlForStudent(b.name)}</p>
+        <p class="badge-card-desc">${escapeHtmlForStudent(b.description)}</p>
+        ${b.earned
+            ? `<p class="badge-card-earned-date">${escapeHtmlForStudent(b.earnedAt)} 획득</p>`
+            : `<div class="badge-card-progress"><div class="badge-card-progress-fill" style="width: ${percent}%"></div></div>
+             <p class="badge-card-desc">${b.currentValue} / ${b.targetValue}</p>`}
+      </div>`;
+    }).join("");
+}
+
+async function loadBadges() {
+    const gridEl = document.getElementById("badgesGrid");
+    if (!gridEl) return;
+    gridEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/badges");
+        const badges = res.ok ? await res.json() : [];
+        gridEl.innerHTML = renderBadgeGridHtml(badges);
+    } catch (err) {
+        console.error(err);
+        gridEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+// ---- 친구 (마이페이지 > 친구) ----
+
+async function loadFriendsTab() {
+    await Promise.all([loadMyFriendCode(), loadFriendsList(), loadFriendNotesList()]);
+}
+
+async function loadMyFriendCode() {
+    const codeEl = document.getElementById("myFriendCode");
+    if (!codeEl) return;
+    try {
+        const res = await fetch("/api/student/friends/my-code");
+        if (!res.ok) return;
+        const data = await res.json();
+        codeEl.textContent = data.code;
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadFriendsList() {
+    const listEl = document.getElementById("friendsList");
+    const emptyEl = document.getElementById("friendsEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/friends");
+        const friends = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = friends.length > 0;
+
+        friends.forEach((f) => {
+            const card = document.createElement("div");
+            card.className = "friend-card-body friend-card";
+            card.dataset.friendUsername = f.username;
+            card.innerHTML = `
+        <div class="friend-card-top">
+          <div>
+            <p class="friend-card-name">${escapeHtmlForStudent(f.nickname)}</p>
+            <p class="friend-card-since">${escapeHtmlForStudent(f.friendsSince)}부터 친구</p>
+          </div>
+          <div class="friend-card-actions">
+            <button type="button" class="classnote-btn" data-view-schedule="${f.username}">시간표 보기</button>
+            <button type="button" class="classnote-btn" data-view-badges="${f.username}">배지 보기</button>
+            <button type="button" class="classnote-btn" data-send-note="${f.username}" data-send-note-nickname="${escapeHtmlForStudent(f.nickname)}">쪽지 보내기</button>
+            <button type="button" class="classnote-btn classnote-btn--danger" data-remove-friend="${f.username}">삭제</button>
+          </div>
+        </div>
+      `;
+            listEl.appendChild(card);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+// 홈 화면 "나의 시간표"와 똑같은 디자인(요일별 뱃지 + 알약 칩)을 재사용해서
+// 친구의 시간표도 똑같이 예쁘게 보여줘요
+function renderFriendScheduleListHtml(entries) {
+    const byDay = {};
+    entries.forEach((entry) => {
+        (entry.classDays || "").split(",").forEach((day) => {
+            if (!byDay[day]) byDay[day] = [];
+            byDay[day].push(entry);
+        });
+    });
+
+    const todayIndex = new Date().getDay(); // 0=일 1=월 ... 6=토
+    const todayCode = SCHEDULE_DAY_ORDER[todayIndex === 0 ? 6 : todayIndex - 1];
+
+    const rows = SCHEDULE_DAY_ORDER.map((day) => {
+        const items = byDay[day] || [];
+        const isToday = day === todayCode;
+        const itemsHtml = items.length > 0
+            ? items.map((i) => `<span class="student-checkin-dock-schedule-chip">${escapeHtmlForStudent(i.courseName)} · ${scheduleTimeRangeLabel(i)}</span>`).join("")
+            : `<span class="student-checkin-dock-schedule-empty">${isToday ? "오늘은 쉬는 날" : "-"}</span>`;
+        return `
+      <div class="student-checkin-dock-schedule-row${items.length > 0 ? " has-class" : ""}${isToday ? " is-today" : ""}">
+        <span class="student-checkin-dock-schedule-day">${SCHEDULE_DAY_LABEL[day]}</span>
+        <span class="student-checkin-dock-schedule-items">${itemsHtml}</span>
+        ${isToday ? `<span class="student-checkin-dock-schedule-today-tag">오늘</span>` : ""}
+      </div>`;
+    }).join("");
+
+    return `<div class="student-checkin-dock-schedule-list">${rows}</div>`;
+}
+
+async function openFriendScheduleModal(friendUsername) {
+    const modal = document.getElementById("friendScheduleModal");
+    const titleEl = document.getElementById("friendScheduleModalTitle");
+    const bodyEl = document.getElementById("friendScheduleModalBody");
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.textContent = "친구의 시간표";
+    bodyEl.innerHTML = `<p class="course-materials-hint">불러오는 중...</p>`;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    try {
+        const res = await fetch(`/api/student/friends/${encodeURIComponent(friendUsername)}/schedule`);
+        if (!res.ok) {
+            const msg = await res.text();
+            bodyEl.innerHTML = `<p class="course-materials-hint">${escapeHtmlForStudent(msg || "불러오지 못했어요.")}</p>`;
+            return;
+        }
+        const data = await res.json();
+        if (titleEl) titleEl.textContent = `${data.nickname}님의 시간표`;
+
+        const entries = data.schedule || [];
+        bodyEl.innerHTML = entries.length > 0
+            ? renderFriendScheduleListHtml(entries)
+            : `<p class="course-materials-hint">아직 등록된 수업 시간표가 없어요.</p>`;
+    } catch (err) {
+        console.error(err);
+        bodyEl.innerHTML = `<p class="course-materials-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+function closeFriendScheduleModal() {
+    const modal = document.getElementById("friendScheduleModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+}
+
+// ---- 친구의 배지 구경하기 ----
+
+async function openFriendBadgesModal(friendUsername) {
+    const modal = document.getElementById("friendBadgesModal");
+    const titleEl = document.getElementById("friendBadgesModalTitle");
+    const bodyEl = document.getElementById("friendBadgesModalBody");
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.textContent = "친구의 배지";
+    bodyEl.innerHTML = `<p class="course-materials-hint">불러오는 중...</p>`;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    try {
+        const res = await fetch(`/api/student/friends/${encodeURIComponent(friendUsername)}/badges`);
+        if (!res.ok) {
+            const msg = await res.text();
+            bodyEl.innerHTML = `<p class="course-materials-hint">${escapeHtmlForStudent(msg || "불러오지 못했어요.")}</p>`;
+            return;
+        }
+        const data = await res.json();
+        if (titleEl) titleEl.textContent = `${data.nickname}님의 배지`;
+
+        const badges = data.badges || [];
+        bodyEl.innerHTML = badges.length > 0
+            ? `<div class="badge-grid">${renderBadgeGridHtml(badges)}</div>`
+            : `<p class="course-materials-hint">아직 배지가 없어요.</p>`;
+    } catch (err) {
+        console.error(err);
+        bodyEl.innerHTML = `<p class="course-materials-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+function closeFriendBadgesModal() {
+    const modal = document.getElementById("friendBadgesModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+}
+
+// ---- 친구에게 쪽지 보내기 ----
+
+function openFriendNoteModal(friendUsername, friendNickname) {
+    const modal = document.getElementById("friendNoteModal");
+    if (!modal) return;
+    document.getElementById("friendNoteModalTitle").textContent = `${friendNickname || "친구"}님에게 쪽지 보내기`;
+    document.getElementById("friendNoteTargetUsername").value = friendUsername;
+    document.getElementById("friendNoteMessageInput").value = "";
+    document.getElementById("friendNoteError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeFriendNoteModal() {
+    const modal = document.getElementById("friendNoteModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+async function sendFriendNote() {
+    const friendUsername = document.getElementById("friendNoteTargetUsername").value;
+    const message = document.getElementById("friendNoteMessageInput").value.trim();
+    const errorEl = document.getElementById("friendNoteError");
+    const sendBtn = document.getElementById("friendNoteSendBtn");
+
+    if (!message) {
+        errorEl.textContent = "쪽지 내용을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    sendBtn.disabled = true;
+    sendBtn.textContent = "보내는 중...";
+
+    try {
+        const res = await fetch(`/api/student/friends/${encodeURIComponent(friendUsername)}/notes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "쪽지를 보내지 못했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        closeFriendNoteModal();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "보내기";
+    }
+}
+
+async function loadFriendNotesList() {
+    const listEl = document.getElementById("friendNotesList");
+    const emptyEl = document.getElementById("friendNotesEmpty");
+    if (!listEl) return;
+
+    try {
+        const res = await fetch("/api/student/friends/notes");
+        const notes = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = notes.length > 0;
+
+        notes.forEach((n) => {
+            const row = document.createElement("div");
+            row.className = "mypage-classchange-row";
+            row.innerHTML = `
+        <div class="mypage-classchange-row-head">
+          <span class="mypage-classchange-row-course">${escapeHtmlForStudent(n.senderNickname)}</span>
+          <span class="mypage-classchange-row-status mypage-classchange-row-status--approved">${escapeHtmlForStudent(n.createdAt)}</span>
+        </div>
+        <p class="mypage-classchange-row-detail">${escapeHtmlForStudent(n.message)}</p>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+async function addFriendByCode() {
+    const input = document.getElementById("friendCodeInput");
+    const errorEl = document.getElementById("friendAddError");
+    if (!input) return;
+    const code = input.value.trim();
+    if (errorEl) errorEl.hidden = true;
+
+    if (!code) {
+        if (errorEl) {
+            errorEl.textContent = "친구 코드를 입력해주세요.";
+            errorEl.hidden = false;
+        }
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/student/friends", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code }),
+        });
+        if (!res.ok) {
+            const msg = await res.text();
+            if (errorEl) {
+                errorEl.textContent = msg || "친구를 추가하지 못했어요.";
+                errorEl.hidden = false;
+            }
+            return;
+        }
+        input.value = "";
+        loadFriendsList();
+    } catch (err) {
+        console.error(err);
+        if (errorEl) {
+            errorEl.textContent = "서버에 연결할 수 없어요.";
+            errorEl.hidden = false;
+        }
+    }
+}
+
 function openGoalCreateModal() {
     const modal = document.getElementById("goalCreateModal");
     if (!modal) return;
@@ -2816,6 +3157,178 @@ async function deleteGoal(id) {
             return;
         }
         loadGoals();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---------- 친구와 같이 하는 목표 ----------
+
+const SHARED_GOAL_STATUS_LABEL = { PENDING: "응답 대기중", ACTIVE: "진행중", DECLINED: "거절됨" };
+
+function renderSharedGoalCardHtml(g) {
+    const bothAchieved = g.myAchieved && g.friendAchieved;
+    let bodyHtml;
+
+    if (g.status === "PENDING" && !g.isCreator) {
+        bodyHtml = `
+      <p class="goal-progress-label">${escapeHtmlForStudent(g.friendNickname)}님이 같이 하자고 제안했어요.</p>
+      <div class="friend-card-actions" style="margin-top:8px;">
+        <button type="button" class="classnote-btn classnote-btn--primary" data-accept-shared-goal="${g.id}">수락</button>
+        <button type="button" class="classnote-btn classnote-btn--danger" data-decline-shared-goal="${g.id}">거절</button>
+      </div>`;
+    } else if (g.status === "PENDING" && g.isCreator) {
+        bodyHtml = `<p class="goal-progress-label">${escapeHtmlForStudent(g.friendNickname)}님에게 제안했어요. 응답을 기다리는 중...</p>`;
+    } else if (g.status === "DECLINED") {
+        bodyHtml = `<p class="goal-progress-label">${escapeHtmlForStudent(g.friendNickname)}님이 거절했어요.</p>`;
+    } else {
+        const myPercent = Math.min(100, Math.round((g.myProgress / g.targetValue) * 100));
+        const friendPercent = Math.min(100, Math.round((g.friendProgress / g.targetValue) * 100));
+        bodyHtml = `
+      <p class="goal-progress-label">나${g.myAchieved ? " · 달성! 🎉" : ""}</p>
+      <div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ${myPercent}%"></div></div>
+      <p class="goal-progress-label">${g.myProgress} / ${g.targetValue}</p>
+      <p class="goal-progress-label" style="margin-top:8px;">${escapeHtmlForStudent(g.friendNickname)}${g.friendAchieved ? " · 달성! 🎉" : ""}</p>
+      <div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ${friendPercent}%"></div></div>
+      <p class="goal-progress-label">${g.friendProgress} / ${g.targetValue}</p>
+      ${bothAchieved ? `<p class="goal-progress-label" style="margin-top:8px; font-weight:800;">둘 다 달성했어요! 🎉🎉</p>` : ""}`;
+    }
+
+    return `
+    <div class="goal-card ${bothAchieved ? "is-achieved" : ""}">
+      <div class="goal-card-head">
+        <div>
+          <p class="goal-card-type">${GOAL_TYPE_LABEL[g.type] || g.type} · ${SHARED_GOAL_STATUS_LABEL[g.status] || g.status}</p>
+          <p class="goal-card-title">${escapeHtmlForStudent(g.title)}</p>
+        </div>
+        <button type="button" class="admin-attendance-row-delete" data-delete-shared-goal="${g.id}" aria-label="삭제">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      ${bodyHtml}
+    </div>`;
+}
+
+async function loadSharedGoals() {
+    const listEl = document.getElementById("sharedGoalsList");
+    const emptyEl = document.getElementById("sharedGoalsEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/shared-goals");
+        const goals = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = goals.map(renderSharedGoalCardHtml).join("");
+        if (emptyEl) emptyEl.hidden = goals.length > 0;
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+async function openSharedGoalCreateModal() {
+    const modal = document.getElementById("sharedGoalCreateModal");
+    if (!modal) return;
+    const friendSelect = document.getElementById("sharedGoalFriendSelect");
+    friendSelect.innerHTML = `<option value="" disabled selected>불러오는 중...</option>`;
+    document.getElementById("sharedGoalTypeSelect").value = "ATTENDANCE_STREAK";
+    document.getElementById("sharedGoalTitleInput").value = "";
+    document.getElementById("sharedGoalTargetInput").value = "";
+    document.getElementById("sharedGoalError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    try {
+        const res = await fetch("/api/student/friends");
+        const friends = res.ok ? await res.json() : [];
+        if (friends.length === 0) {
+            friendSelect.innerHTML = `<option value="" disabled selected>먼저 친구를 추가해주세요</option>`;
+            return;
+        }
+        friendSelect.innerHTML = `<option value="" disabled selected>친구를 선택해주세요</option>` +
+            friends.map((f) => `<option value="${f.username}">${escapeHtmlForStudent(f.nickname)}</option>`).join("");
+    } catch (err) {
+        console.error(err);
+        friendSelect.innerHTML = `<option value="" disabled selected>친구 목록을 불러오지 못했어요</option>`;
+    }
+}
+
+function closeSharedGoalCreateModal() {
+    const modal = document.getElementById("sharedGoalCreateModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+async function submitSharedGoal() {
+    const friendUsername = document.getElementById("sharedGoalFriendSelect").value;
+    const type = document.getElementById("sharedGoalTypeSelect").value;
+    const title = document.getElementById("sharedGoalTitleInput").value.trim();
+    const targetValue = Number(document.getElementById("sharedGoalTargetInput").value);
+    const errorEl = document.getElementById("sharedGoalError");
+    const saveBtn = document.getElementById("sharedGoalSaveBtn");
+
+    if (!friendUsername) {
+        errorEl.textContent = "같이 도전할 친구를 선택해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    if (!title || !targetValue || targetValue <= 0) {
+        errorEl.textContent = "목표 이름과 목표 값을 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "보내는 중...";
+
+    try {
+        const res = await fetch("/api/student/shared-goals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ friendUsername, type, title, targetValue }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "제안에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        closeSharedGoalCreateModal();
+        loadSharedGoals();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "제안 보내기";
+    }
+}
+
+async function respondSharedGoal(id, action) {
+    try {
+        const res = await fetch(`/api/student/shared-goals/${id}/${action}`, { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "처리하지 못했어요.");
+            return;
+        }
+        loadSharedGoals();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function deleteSharedGoal(id) {
+    if (!confirm("이 목표를 삭제할까요?")) return;
+    try {
+        const res = await fetch(`/api/student/shared-goals/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadSharedGoals();
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
@@ -3746,6 +4259,327 @@ function setupHeroCarousel() {
     startHeroAutoplay();
 }
 
+// ---- 화면 설정: 어두운 모드 / 글자 크기 (마이페이지 > 화면 설정) ----
+// index.html <head>의 인라인 스크립트가 페이지 로드 즉시 localStorage 값을 읽어
+// 미리 적용해두기 때문에, 여기서는 "버튼 눌렀을 때 바꾸기"와 "설정 탭 열었을 때
+// 현재 상태를 버튼에 반영하기"만 담당해요.
+
+function setKwzmTheme(theme) {
+    try {
+        localStorage.setItem("kwzmTheme", theme);
+    } catch (err) {
+        console.error(err);
+    }
+    if (theme === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+        document.documentElement.removeAttribute("data-theme");
+    }
+    syncDisplaySettingsButtons();
+}
+
+function setKwzmFontSize(size) {
+    try {
+        localStorage.setItem("kwzmFontSize", size);
+    } catch (err) {
+        console.error(err);
+    }
+    if (size === "medium") {
+        document.documentElement.removeAttribute("data-kwzm-font-size");
+    } else {
+        document.documentElement.setAttribute("data-kwzm-font-size", size);
+    }
+    syncDisplaySettingsButtons();
+}
+
+function getKwzmTheme() {
+    try {
+        return localStorage.getItem("kwzmTheme") === "dark" ? "dark" : "light";
+    } catch (err) {
+        return "light";
+    }
+}
+
+function getKwzmFontSize() {
+    try {
+        const size = localStorage.getItem("kwzmFontSize");
+        return size === "small" || size === "large" ? size : "medium";
+    } catch (err) {
+        return "medium";
+    }
+}
+
+function syncDisplaySettingsButtons() {
+    const currentTheme = getKwzmTheme();
+    document.getElementById("themeLightBtn")?.classList.toggle("active", currentTheme === "light");
+    document.getElementById("themeDarkBtn")?.classList.toggle("active", currentTheme === "dark");
+
+    const currentFontSize = getKwzmFontSize();
+    document.getElementById("fontSizeSmallBtn")?.classList.toggle("active", currentFontSize === "small");
+    document.getElementById("fontSizeMediumBtn")?.classList.toggle("active", currentFontSize === "medium");
+    document.getElementById("fontSizeLargeBtn")?.classList.toggle("active", currentFontSize === "large");
+}
+
+// ---- 화면 설정: 수업/숙제 마감일 알림 (마이페이지 > 화면 설정) ----
+// 브라우저 알림 권한을 받아서, 숙제 마감일이 오늘/내일이거나 오늘 수업 시작이
+// 30분 이내로 임박했을 때 한 번씩만 알려줘요. 이 화면을 열어둔 상태에서만 동작해요.
+
+let kwzmNotifCheckTimer = null;
+
+function getKwzmNotifEnabled() {
+    try {
+        return localStorage.getItem("kwzmNotifEnabled") === "true";
+    } catch (err) {
+        return false;
+    }
+}
+
+function syncNotifSettingsButtons() {
+    const supported = typeof Notification !== "undefined";
+    const enabled = getKwzmNotifEnabled() && supported && Notification.permission === "granted";
+    document.getElementById("notifOffBtn")?.classList.toggle("active", !enabled);
+    document.getElementById("notifOnBtn")?.classList.toggle("active", enabled);
+}
+
+function setKwzmNotifEnabled(wantsOn) {
+    if (!wantsOn) {
+        try {
+            localStorage.setItem("kwzmNotifEnabled", "false");
+        } catch (err) {
+            console.error(err);
+        }
+        stopKwzmNotifChecks();
+        syncNotifSettingsButtons();
+        return;
+    }
+
+    if (typeof Notification === "undefined") {
+        alert("이 브라우저에서는 알림 기능을 지원하지 않아요.");
+        syncNotifSettingsButtons();
+        return;
+    }
+
+    if (Notification.permission === "denied") {
+        alert("알림이 차단되어 있어요. 브라우저 설정에서 이 사이트의 알림 권한을 허용한 뒤 다시 시도해주세요.");
+        syncNotifSettingsButtons();
+        return;
+    }
+
+    Notification.requestPermission().then((permission) => {
+        try {
+            localStorage.setItem("kwzmNotifEnabled", permission === "granted" ? "true" : "false");
+        } catch (err) {
+            console.error(err);
+        }
+        if (permission === "granted") {
+            startKwzmNotifChecks();
+        } else {
+            stopKwzmNotifChecks();
+        }
+        syncNotifSettingsButtons();
+    });
+}
+
+function startKwzmNotifChecks() {
+    if (!getKwzmNotifEnabled() || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    checkKwzmDeadlineNotifications();
+    if (!kwzmNotifCheckTimer) {
+        kwzmNotifCheckTimer = setInterval(checkKwzmDeadlineNotifications, 5 * 60 * 1000);
+    }
+}
+
+function stopKwzmNotifChecks() {
+    if (kwzmNotifCheckTimer) {
+        clearInterval(kwzmNotifCheckTimer);
+        kwzmNotifCheckTimer = null;
+    }
+}
+
+function getKwzmNotifiedKeys() {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    try {
+        const storedDate = localStorage.getItem("kwzmNotifiedDate");
+        if (storedDate !== todayStr) {
+            localStorage.setItem("kwzmNotifiedDate", todayStr);
+            localStorage.setItem("kwzmNotifiedKeys", "{}");
+            return {};
+        }
+        return JSON.parse(localStorage.getItem("kwzmNotifiedKeys") || "{}");
+    } catch (err) {
+        return {};
+    }
+}
+
+function markKwzmNotified(key) {
+    try {
+        const keys = getKwzmNotifiedKeys();
+        keys[key] = true;
+        localStorage.setItem("kwzmNotifiedKeys", JSON.stringify(keys));
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function checkKwzmDeadlineNotifications() {
+    if (!getKwzmNotifEnabled() || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+
+    try {
+        const res = await fetch("/api/student/today-summary");
+        if (!res.ok) return;
+        const data = await res.json();
+        const notifiedKeys = getKwzmNotifiedKeys();
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+
+        const upcoming = data.upcomingAssignments || [];
+        upcoming.forEach((a) => {
+            if (!a.dueDate || a.id === undefined || a.id === null) return;
+            const due = new Date(`${a.dueDate}T00:00:00`);
+            const diffDays = Math.round((due - new Date(`${todayStr}T00:00:00`)) / 86400000);
+            let key = null;
+            let title = null;
+            if (diffDays === 0) {
+                key = `hw-${a.id}-today`;
+                title = "오늘 숙제 마감이에요";
+            } else if (diffDays === 1) {
+                key = `hw-${a.id}-tomorrow`;
+                title = "내일 숙제 마감이에요";
+            }
+            if (key && !notifiedKeys[key]) {
+                new Notification(title, {
+                    body: `${a.courseName ? a.courseName + " · " : ""}${a.title}`,
+                    tag: key,
+                });
+                markKwzmNotified(key);
+            }
+        });
+
+        const scheduledToday = data.checkinStatus?.scheduledToday || [];
+        scheduledToday.forEach((cls) => {
+            if (!cls.classTime) return;
+            const [h, m] = cls.classTime.slice(0, 5).split(":").map(Number);
+            const classStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+            const minutesUntil = Math.round((classStart - now) / 60000);
+            if (minutesUntil >= 0 && minutesUntil <= 30) {
+                const key = `cls-${todayStr}-${cls.courseName}-${cls.classTime}`;
+                if (!notifiedKeys[key]) {
+                    new Notification("곧 수업이 시작해요", {
+                        body: `${cls.courseName} · ${cls.classTime.slice(0, 5)}`,
+                        tag: key,
+                    });
+                    markKwzmNotified(key);
+                }
+            }
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// ---- 미니 노트: 수업 후 짧은 노트 (마이페이지 > 미니 노트) ----
+
+async function loadClassNotes() {
+    const listEl = document.getElementById("classNotesList");
+    const emptyEl = document.getElementById("classNotesEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/class-notes/recent-classes");
+        if (!res.ok) {
+            listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+            return;
+        }
+        const classes = await res.json();
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = classes.length > 0;
+
+        classes.forEach((c) => {
+            const card = document.createElement("div");
+            card.className = "classnote-card";
+            card.dataset.attendanceRecordId = c.attendanceRecordId;
+            card.dataset.hasNote = c.hasNote ? "true" : "false";
+
+            const headHtml = `
+        <div class="classnote-card-head">
+          <span class="classnote-card-title">${escapeHtmlForStudent(c.courseName)}</span>
+          <span class="classnote-card-date">${escapeHtmlForStudent(c.classDate)}</span>
+        </div>
+      `;
+
+            if (c.hasNote) {
+                card.innerHTML = `
+          ${headHtml}
+          <p class="classnote-card-content" data-classnote-view>${escapeHtmlForStudent(c.existingNoteContent)}</p>
+          <div class="classnote-card-actions" data-classnote-view>
+            <button type="button" class="classnote-btn" data-classnote-edit>수정</button>
+            <button type="button" class="classnote-btn classnote-btn--danger" data-classnote-delete="${c.existingNoteId}">삭제</button>
+          </div>
+        `;
+            } else {
+                card.innerHTML = `
+          ${headHtml}
+          <div data-classnote-view>
+            <button type="button" class="classnote-btn" data-classnote-write>노트 남기기</button>
+          </div>
+        `;
+            }
+            listEl.appendChild(card);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+function openClassNoteEditor(card, existingContent) {
+    const attendanceRecordId = card.dataset.attendanceRecordId;
+    const viewParts = card.querySelectorAll("[data-classnote-view]");
+    viewParts.forEach((el) => (el.hidden = true));
+
+    const editor = document.createElement("div");
+    editor.dataset.classnoteEditor = "true";
+    editor.innerHTML = `
+    <textarea class="classnote-textarea" maxlength="1000" placeholder="오늘 배운 내용이나 느낀 점을 적어보세요.">${existingContent ? escapeHtmlForStudent(existingContent) : ""}</textarea>
+    <div class="classnote-card-actions">
+      <button type="button" class="classnote-btn classnote-btn--primary" data-classnote-save>저장</button>
+      <button type="button" class="classnote-btn" data-classnote-cancel>취소</button>
+    </div>
+  `;
+    card.appendChild(editor);
+
+    editor.querySelector("[data-classnote-cancel]").addEventListener("click", () => {
+        editor.remove();
+        viewParts.forEach((el) => (el.hidden = false));
+    });
+
+    editor.querySelector("[data-classnote-save]").addEventListener("click", async () => {
+        const textarea = editor.querySelector("textarea");
+        const content = textarea.value.trim();
+        if (!content) {
+            alert("노트 내용을 입력해주세요.");
+            return;
+        }
+        try {
+            const res = await fetch("/api/student/class-notes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ attendanceRecordId: Number(attendanceRecordId), content }),
+            });
+            if (!res.ok) {
+                const msg = await res.text();
+                alert(msg || "저장하지 못했어요.");
+                return;
+            }
+            loadClassNotes();
+        } catch (err) {
+            console.error(err);
+            alert("서버에 연결할 수 없어요.");
+        }
+    });
+}
+
 document.addEventListener("fragments:loaded", () => {
 
     setupHeroCarousel();
@@ -3761,6 +4595,9 @@ document.addEventListener("fragments:loaded", () => {
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-board-modal-close]")) closeBoardWriteModal();
         if (e.target.closest("[data-course-materials-close]")) closeCourseMaterialsModal();
+        if (e.target.closest("[data-friend-schedule-close]")) closeFriendScheduleModal();
+        if (e.target.closest("[data-friend-badges-close]")) closeFriendBadgesModal();
+        if (e.target.closest("[data-friend-note-close]")) closeFriendNoteModal();
 
         const checkinBtn = e.target.closest("[data-checkin-id]");
         if (checkinBtn) submitCheckin(checkinBtn.dataset.checkinId, checkinBtn);
@@ -4001,6 +4838,13 @@ document.addEventListener("fragments:loaded", () => {
         }
         if (key === "goals") {
             loadGoals();
+            loadSharedGoals();
+        }
+        if (key === "badges") {
+            loadBadges();
+        }
+        if (key === "friends") {
+            loadFriendsTab();
         }
         if (key === "questions") {
             loadMyQuestions();
@@ -4013,6 +4857,13 @@ document.addEventListener("fragments:loaded", () => {
         }
         if (key === "voice") {
             loadMyVoiceSubmissions();
+        }
+        if (key === "classnotes") {
+            loadClassNotes();
+        }
+        if (key === "settings") {
+            syncDisplaySettingsButtons();
+            syncNotifSettingsButtons();
         }
     });
 
@@ -4106,6 +4957,28 @@ document.addEventListener("fragments:loaded", () => {
         btn.addEventListener("click", closeGoalCreateModal);
     });
     document.getElementById("goalSaveBtn")?.addEventListener("click", submitGoal);
+    document.getElementById("sharedGoalNewBtn")?.addEventListener("click", openSharedGoalCreateModal);
+    document.querySelectorAll("[data-shared-goal-create-close]").forEach((btn) => {
+        btn.addEventListener("click", closeSharedGoalCreateModal);
+    });
+    document.getElementById("sharedGoalSaveBtn")?.addEventListener("click", submitSharedGoal);
+    document.getElementById("sharedGoalsList")?.addEventListener("click", (e) => {
+        const acceptBtn = e.target.closest("[data-accept-shared-goal]");
+        const declineBtn = e.target.closest("[data-decline-shared-goal]");
+        const deleteBtn = e.target.closest("[data-delete-shared-goal]");
+
+        if (acceptBtn) {
+            respondSharedGoal(acceptBtn.dataset.acceptSharedGoal, "accept");
+            return;
+        }
+        if (declineBtn) {
+            respondSharedGoal(declineBtn.dataset.declineSharedGoal, "decline");
+            return;
+        }
+        if (deleteBtn) {
+            deleteSharedGoal(deleteBtn.dataset.deleteSharedGoal);
+        }
+    });
     document.getElementById("questionNewBtn")?.addEventListener("click", openQuestionCreateModal);
     document.querySelectorAll("[data-question-create-close]").forEach((btn) => btn.addEventListener("click", closeQuestionCreateModal));
     document.getElementById("questionSaveBtn")?.addEventListener("click", submitQuestion);
@@ -4127,6 +5000,108 @@ document.addEventListener("fragments:loaded", () => {
         const deleteBtn = e.target.closest("[data-delete-goal]");
         if (deleteBtn) deleteGoal(deleteBtn.dataset.deleteGoal);
     });
+
+    document.getElementById("copyFriendCodeBtn")?.addEventListener("click", async () => {
+        const code = document.getElementById("myFriendCode")?.textContent || "";
+        if (!code || code === "------") return;
+        try {
+            await navigator.clipboard.writeText(code);
+            const btn = document.getElementById("copyFriendCodeBtn");
+            const original = btn.textContent;
+            btn.textContent = "복사됨!";
+            setTimeout(() => (btn.textContent = original), 1500);
+        } catch (err) {
+            console.error(err);
+            alert(`코드: ${code}`);
+        }
+    });
+
+    document.getElementById("addFriendBtn")?.addEventListener("click", addFriendByCode);
+    document.getElementById("friendCodeInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") addFriendByCode();
+    });
+    document.getElementById("friendNoteSendBtn")?.addEventListener("click", sendFriendNote);
+
+    document.getElementById("friendsList")?.addEventListener("click", (e) => {
+        const removeBtn = e.target.closest("[data-remove-friend]");
+        const scheduleBtn = e.target.closest("[data-view-schedule]");
+        const badgesBtn = e.target.closest("[data-view-badges]");
+        const noteBtn = e.target.closest("[data-send-note]");
+
+        if (scheduleBtn) {
+            openFriendScheduleModal(scheduleBtn.dataset.viewSchedule);
+            return;
+        }
+
+        if (badgesBtn) {
+            openFriendBadgesModal(badgesBtn.dataset.viewBadges);
+            return;
+        }
+
+        if (noteBtn) {
+            openFriendNoteModal(noteBtn.dataset.sendNote, noteBtn.dataset.sendNoteNickname);
+            return;
+        }
+
+        if (!removeBtn) return;
+        if (!confirm("이 친구를 삭제할까요?")) return;
+        const friendUsername = removeBtn.dataset.removeFriend;
+        fetch(`/api/student/friends/${encodeURIComponent(friendUsername)}`, { method: "DELETE" })
+            .then((res) => {
+                if (!res.ok) {
+                    alert("삭제하지 못했어요.");
+                    return;
+                }
+                loadFriendsList();
+            })
+            .catch((err) => {
+                console.error(err);
+                alert("서버에 연결할 수 없어요.");
+            });
+    });
+
+    document.getElementById("classNotesList")?.addEventListener("click", (e) => {
+        const writeBtn = e.target.closest("[data-classnote-write]");
+        const editBtn = e.target.closest("[data-classnote-edit]");
+        const deleteBtn = e.target.closest("[data-classnote-delete]");
+
+        if (writeBtn) {
+            openClassNoteEditor(writeBtn.closest(".classnote-card"), "");
+        }
+        if (editBtn) {
+            const card = editBtn.closest(".classnote-card");
+            const existingContent = card.querySelector(".classnote-card-content")?.textContent || "";
+            openClassNoteEditor(card, existingContent);
+        }
+        if (deleteBtn) {
+            if (!confirm("이 노트를 삭제할까요?")) return;
+            const noteId = deleteBtn.dataset.classnoteDelete;
+            fetch(`/api/student/class-notes/${noteId}`, { method: "DELETE" })
+                .then((res) => {
+                    if (!res.ok) {
+                        alert("삭제하지 못했어요.");
+                        return;
+                    }
+                    loadClassNotes();
+                })
+                .catch((err) => {
+                    console.error(err);
+                    alert("서버에 연결할 수 없어요.");
+                });
+        }
+    });
+
+    document.getElementById("themeLightBtn")?.addEventListener("click", () => setKwzmTheme("light"));
+    document.getElementById("themeDarkBtn")?.addEventListener("click", () => setKwzmTheme("dark"));
+    document.getElementById("fontSizeSmallBtn")?.addEventListener("click", () => setKwzmFontSize("small"));
+    document.getElementById("fontSizeMediumBtn")?.addEventListener("click", () => setKwzmFontSize("medium"));
+    document.getElementById("fontSizeLargeBtn")?.addEventListener("click", () => setKwzmFontSize("large"));
+    syncDisplaySettingsButtons();
+
+    document.getElementById("notifOffBtn")?.addEventListener("click", () => setKwzmNotifEnabled(false));
+    document.getElementById("notifOnBtn")?.addEventListener("click", () => setKwzmNotifEnabled(true));
+    syncNotifSettingsButtons();
+    startKwzmNotifChecks();
 
     checkStudentSessionOnLoad();
 });

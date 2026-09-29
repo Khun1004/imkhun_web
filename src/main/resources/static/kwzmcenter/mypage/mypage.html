@@ -24,6 +24,8 @@
                 <button type="button" class="mypage-tab active" data-mypage-tab="courses" role="tab" aria-selected="true">내 수강 정보</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="growth" role="tab" aria-selected="false">나의 성장</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="goals" role="tab" aria-selected="false">목표</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="badges" role="tab" aria-selected="false">배지</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="friends" role="tab" aria-selected="false">친구</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="questions" role="tab" aria-selected="false">질문하기</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="leaderboard" role="tab" aria-selected="false">랭킹</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="parentreport" role="tab" aria-selected="false">부모님 리포트</button>
@@ -32,7 +34,9 @@
                 <button type="button" class="mypage-tab" data-mypage-tab="survey" role="tab" aria-selected="false">만족도 설문</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="voice" role="tab" aria-selected="false">발음 녹음</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="myposts" role="tab" aria-selected="false">내가 쓴 글</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="classnotes" role="tab" aria-selected="false">미니 노트</button>
                 <button type="button" class="mypage-tab" data-mypage-tab="shortcuts" role="tab" aria-selected="false">바로가기</button>
+                <button type="button" class="mypage-tab" data-mypage-tab="settings" role="tab" aria-selected="false">화면 설정</button>
             </nav>
 
             <div class="mypage-tab-panel active" data-mypage-panel="courses">
@@ -55,6 +59,52 @@
 
                 <p class="admin-empty-text" id="goalsEmpty" hidden>아직 만든 목표가 없어요. "목표 만들기"로 시작해보세요.</p>
                 <div class="goal-list" id="goalsList"></div>
+
+                <div class="goal-toolbar" style="margin-top: 28px;">
+                    <p class="settings-block-title" style="margin:0;">같이 하는 목표</p>
+                    <button type="button" class="mypage-classchange-submit-btn" id="sharedGoalNewBtn">+ 같이 목표 만들기</button>
+                </div>
+                <p class="admin-note-hint" style="margin:0 0 10px;">친구와 같은 목표를 같이 도전해요. 둘 다 목표에 도달하면 같이 축하 알림이 가요.</p>
+                <p class="admin-empty-text" id="sharedGoalsEmpty" hidden>아직 같이 하는 목표가 없어요.</p>
+                <div class="goal-list" id="sharedGoalsList"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="badges" hidden>
+                <p class="admin-note-hint">출석·단어장·숙제·커뮤니티 활동을 하면서 배지를 모아보세요. 한 번 모은 배지는 계속 남아요.</p>
+                <div class="badge-grid" id="badgesGrid"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="friends" hidden>
+                <div class="settings-block">
+                    <p class="settings-block-title">내 초대 코드</p>
+                    <p class="admin-note-hint" style="margin:0 0 10px;">이 코드를 친구에게 알려주면, 친구가 아래에서 코드를 입력해서 서로 친구가 돼요.</p>
+                    <div class="friend-code-box">
+                        <span class="friend-code-text" id="myFriendCode">------</span>
+                        <button type="button" class="classnote-btn" id="copyFriendCodeBtn">복사하기</button>
+                    </div>
+                </div>
+
+                <div class="settings-block">
+                    <p class="settings-block-title">친구 코드로 추가하기</p>
+                    <div class="friend-add-row">
+                        <input type="text" id="friendCodeInput" class="friend-code-input" placeholder="친구의 코드 입력" maxlength="8" autocomplete="off">
+                        <button type="button" class="classnote-btn classnote-btn--primary" id="addFriendBtn">추가하기</button>
+                    </div>
+                    <p class="admin-note-hint" id="friendAddError" style="color:#b8566a;margin-top:8px;" hidden></p>
+                </div>
+
+                <div class="settings-block">
+                    <p class="settings-block-title">내 친구</p>
+                    <p class="admin-empty-text" id="friendsEmpty" hidden>아직 친구가 없어요. 위에서 코드를 주고받아 친구를 추가해보세요.</p>
+                    <div class="friend-list" id="friendsList"></div>
+                </div>
+
+                <div class="settings-block">
+                    <p class="settings-block-title">받은 쪽지함</p>
+                    <p class="admin-note-hint" style="margin:0 0 10px;">친구가 보낸 노트가 여기 모여요.</p>
+                    <p class="admin-empty-text" id="friendNotesEmpty" hidden>아직 받은 쪽지가 없어요.</p>
+                    <div class="friend-note-list" id="friendNotesList"></div>
+                </div>
             </div>
 
             <div class="mypage-tab-panel" data-mypage-panel="questions" hidden>
@@ -131,10 +181,52 @@
                 <div class="mypost-list" id="mypagePostsList"></div>
             </div>
 
+            <div class="mypage-tab-panel" data-mypage-panel="classnotes" hidden>
+                <p class="admin-note-hint">수업이 끝난 후 배운 내용이나 느낀 점을 짧게 남겨보세요. 최근 들은 수업에만 남길 수 있어요.</p>
+                <p class="admin-empty-text" id="classNotesEmpty" hidden>아직 노트를 남길 수 있는 수업이 없어요. 수업에 출석하면 여기에 나타나요.</p>
+                <div class="classnote-list" id="classNotesList"></div>
+            </div>
+
             <div class="mypage-tab-panel" data-mypage-panel="shortcuts" hidden>
                 <p class="admin-note-hint">선생님이 보내주신 자격증·시험 자료를 여기서 다운로드할 수 있어요.</p>
                 <p class="admin-empty-text" id="mypageFilesEmpty" hidden>아직 받은 파일이 없어요.</p>
                 <div class="mypage-files-list" id="mypageFilesList"></div>
+            </div>
+
+            <div class="mypage-tab-panel" data-mypage-panel="settings" hidden>
+                <p class="admin-note-hint">밤에 공부할 때 눈이 편하도록, 또는 글자가 잘 안 보일 때 크게 볼 수 있도록 화면을 조절해보세요. 설정은 자동으로 기억돼요.</p>
+
+                <div class="settings-block">
+                    <p class="settings-block-title">어두운 모드</p>
+                    <div class="settings-theme-toggle">
+                        <button type="button" class="leaderboard-toggle-btn active" data-theme-choice="light" id="themeLightBtn">
+                            <svg viewBox="0 0 24 24" fill="none" width="15" height="15" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2M12 19.5v2M21.5 12h-2M4.5 12h-2M18.4 5.6l-1.4 1.4M7 16l-1.4 1.4M18.4 18.4 17 17M7 8 5.6 5.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                            밝게
+                        </button>
+                        <button type="button" class="leaderboard-toggle-btn" data-theme-choice="dark" id="themeDarkBtn">
+                            <svg viewBox="0 0 24 24" fill="none" width="15" height="15" style="vertical-align:-2px;margin-right:4px;"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                            어둡게
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-block">
+                    <p class="settings-block-title">글자 크기</p>
+                    <div class="settings-theme-toggle">
+                        <button type="button" class="leaderboard-toggle-btn" data-fontsize-choice="small" id="fontSizeSmallBtn">작게</button>
+                        <button type="button" class="leaderboard-toggle-btn active" data-fontsize-choice="medium" id="fontSizeMediumBtn">보통</button>
+                        <button type="button" class="leaderboard-toggle-btn" data-fontsize-choice="large" id="fontSizeLargeBtn">크게</button>
+                    </div>
+                </div>
+
+                <div class="settings-block">
+                    <p class="settings-block-title">마감일 알림</p>
+                    <p class="admin-note-hint" style="margin:0 0 10px;">숙제 마감일과 수업 시작 시간을 브라우저 알림으로 미리 알려드려요. 이 화면을 열어둔 상태에서만 작동해요.</p>
+                    <div class="settings-theme-toggle">
+                        <button type="button" class="leaderboard-toggle-btn active" data-notif-choice="off" id="notifOffBtn">받지 않기</button>
+                        <button type="button" class="leaderboard-toggle-btn" data-notif-choice="on" id="notifOnBtn">받기</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -154,5 +246,61 @@
             </button>
         </div>
         <div class="course-materials-body" id="courseMaterialsModalBody"></div>
+    </div>
+</div>
+
+<!-- 친구 카드에서 "시간표 보기"를 누르면 뜨는 오버레이 -->
+<div class="course-materials-modal" id="friendScheduleModal" aria-hidden="true">
+    <div class="course-materials-backdrop" data-friend-schedule-close></div>
+    <div class="course-materials-panel" role="dialog" aria-modal="true">
+        <div class="course-materials-head">
+            <div>
+                <p class="course-materials-eyebrow">Friend's Schedule</p>
+                <h3 id="friendScheduleModalTitle">친구의 시간표</h3>
+            </div>
+            <button type="button" class="auth-modal-close" data-friend-schedule-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="course-materials-body" id="friendScheduleModalBody"></div>
+    </div>
+</div>
+
+<!-- 친구 카드에서 "배지 보기"를 누르면 뜨는 오버레이 -->
+<div class="course-materials-modal" id="friendBadgesModal" aria-hidden="true">
+    <div class="course-materials-backdrop" data-friend-badges-close></div>
+    <div class="course-materials-panel" role="dialog" aria-modal="true">
+        <div class="course-materials-head">
+            <div>
+                <p class="course-materials-eyebrow">Friend's Badges</p>
+                <h3 id="friendBadgesModalTitle">친구의 배지</h3>
+            </div>
+            <button type="button" class="auth-modal-close" data-friend-badges-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="course-materials-body" id="friendBadgesModalBody"></div>
+    </div>
+</div>
+
+<!-- 친구 카드에서 "쪽지 보내기"를 누르면 뜨는 오버레이 -->
+<div class="board-modal" id="friendNoteModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-friend-note-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="쪽지 보내기">
+        <div class="board-modal-head">
+            <h3 id="friendNoteModalTitle">쪽지 보내기</h3>
+            <button type="button" class="board-modal-close" data-friend-note-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <input type="hidden" id="friendNoteTargetUsername">
+            <div class="auth-form-field">
+                <label for="friendNoteMessageInput">노트 내용</label>
+                <textarea id="friendNoteMessageInput" rows="4" maxlength="300" placeholder="친구에게 짧은 응원 메시지를 보내보세요 (최대 300자)"></textarea>
+            </div>
+            <p class="auth-form-error" id="friendNoteError" hidden></p>
+            <button type="button" class="auth-form-submit" id="friendNoteSendBtn">보내기</button>
+        </div>
     </div>
 </div>

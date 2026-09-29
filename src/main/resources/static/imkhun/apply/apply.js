@@ -32,7 +32,10 @@ async function loadTimetableForApply() {
             if (!timetableByCourse[e.courseName][timeKey]) {
                 timetableByCourse[e.courseName][timeKey] = { startTime: e.startTime, endTime: e.endTime, days: [] };
             }
-            timetableByCourse[e.courseName][timeKey].days.push(e.day);
+            // 같은 요일이 시간표에 중복 등록돼 있어도 "화, 화"처럼 겹쳐 보이지 않게 막아줌
+            if (!timetableByCourse[e.courseName][timeKey].days.includes(e.day)) {
+                timetableByCourse[e.courseName][timeKey].days.push(e.day);
+            }
         });
 
         // 시간표에 없는 과목은 신청 화면에서 고를 수 없게 숨김

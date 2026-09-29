@@ -14,7 +14,7 @@ import java.util.Set;
 public class TimetableService {
 
     private final TimetableEntryRepository timetableEntryRepository;
-    private static final Set<String> VALID_DAYS = Set.of("MON", "TUE", "WED", "THU", "FRI");
+    private static final Set<String> VALID_DAYS = Set.of("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN");
     private static final Set<String> VALID_COLOR_TYPES = Set.of("korean", "computer", "other");
 
     public TimetableService(TimetableEntryRepository timetableEntryRepository) {

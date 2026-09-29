@@ -15,6 +15,18 @@
     <meta name="apple-mobile-web-app-title" content="KWZM Center">
     <meta name="mobile-web-app-capable" content="yes">
 
+    <!-- 어두운 모드 / 글자 크기 설정을 화면이 그려지기 전에 미리 적용해서 깜빡임을 막아요 -->
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem("kwzmTheme");
+                if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+                var fontSize = localStorage.getItem("kwzmFontSize");
+                if (fontSize && fontSize !== "medium") document.documentElement.setAttribute("data-kwzm-font-size", fontSize);
+            } catch (err) {}
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital@1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
@@ -268,6 +280,46 @@
             </div>
             <p class="auth-form-error" id="goalError" hidden></p>
             <button type="button" class="auth-form-submit" id="goalSaveBtn">목표 만들기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 친구와 같이 하는 목표 만들기 모달 -->
+<div class="board-modal" id="sharedGoalCreateModal" aria-hidden="true">
+    <div class="board-modal-backdrop" data-shared-goal-create-close></div>
+    <div class="board-modal-panel" role="dialog" aria-modal="true" aria-label="같이 목표 만들기">
+        <div class="board-modal-head">
+            <h3>같이 목표 만들기</h3>
+            <button type="button" class="board-modal-close" data-shared-goal-create-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="board-modal-body">
+            <div class="auth-form-field">
+                <label for="sharedGoalFriendSelect">같이 도전할 친구</label>
+                <select id="sharedGoalFriendSelect">
+                    <option value="" disabled selected>친구를 선택해주세요</option>
+                </select>
+            </div>
+            <div class="auth-form-field">
+                <label for="sharedGoalTypeSelect">목표 종류</label>
+                <select id="sharedGoalTypeSelect">
+                    <option value="ATTENDANCE_STREAK">연속 출석 (예: 연속 10일 출석)</option>
+                    <option value="ATTENDANCE_COUNT">누적 출석 횟수 (예: 이번 달 15번 출석)</option>
+                    <option value="VOCAB_WORDS">단어 맞추기 개수 (예: 단어 50개 맞추기)</option>
+                    <option value="ASSIGNMENT_COUNT">숙제 완료 개수 (예: 숙제 10개 완료하기)</option>
+                </select>
+            </div>
+            <div class="auth-form-field">
+                <label for="sharedGoalTitleInput">목표 이름</label>
+                <input type="text" id="sharedGoalTitleInput" placeholder="예: 이번 주 같이 5일 출석하기">
+            </div>
+            <div class="auth-form-field">
+                <label for="sharedGoalTargetInput">목표 값 (숫자, 각자 채워요)</label>
+                <input type="number" id="sharedGoalTargetInput" min="1" placeholder="예: 5">
+            </div>
+            <p class="auth-form-error" id="sharedGoalError" hidden></p>
+            <button type="button" class="auth-form-submit" id="sharedGoalSaveBtn">제안 보내기</button>
         </div>
     </div>
 </div>

@@ -118,6 +118,8 @@ public class AttendanceService {
         String dayCode = DAY_CODE.get(date.getDayOfWeek());
         List<Application> scheduled = applicationRepository.findByStatusAndClassDaysIsNotNull("APPROVED").stream()
                 .filter(a -> a.getClassDays() != null && List.of(a.getClassDays().split(",")).contains(dayCode))
+                .filter(a -> a.getEnrollmentEndDate() == null || !date.isAfter(a.getEnrollmentEndDate()))
+                .filter(a -> a.getEnrollmentStartDate() == null || !date.isBefore(a.getEnrollmentStartDate()))
                 .toList();
 
         List<Long> applicationIds = scheduled.stream().map(Application::getId).toList();
@@ -274,6 +276,12 @@ public class AttendanceService {
         if (!List.of(application.getClassDays().split(",")).contains(todayCode)) {
             throw new IllegalStateException("오늘은 이 강의의 수업 요일이 아니에요.");
         }
+        if (application.getEnrollmentEndDate() != null && now.toLocalDate().isAfter(application.getEnrollmentEndDate())) {
+            throw new IllegalStateException("수강 종료일이 지난 강의예요. 선생님께 문의해주세요.");
+        }
+        if (application.getEnrollmentStartDate() != null && now.toLocalDate().isBefore(application.getEnrollmentStartDate())) {
+            throw new IllegalStateException("아직 수강 시작일 전인 강의예요. 선생님께 문의해주세요.");
+        }
 
         LocalTime classTime;
         try {
@@ -310,11 +318,14 @@ public class AttendanceService {
     // 학생의 전체 시간표 (요일 상관없이 등록된 모든 강의) — 출석 체크 패널에 같이 보여줌
     @Transactional(readOnly = true)
     public List<StudentScheduleEntryResponse> getWeeklyScheduleForStudent(String username) {
+        LocalDate today = LocalDate.now();
         return applicationRepository.findByUsernameOrderByCreatedAtDesc(username).stream()
                 .filter(a -> "APPROVED".equals(a.getStatus()))
                 .filter(a -> a.getClassDays() != null && !a.getClassDays().isBlank()
                         && a.getClassTime() != null && !a.getClassTime().isBlank())
-                .map(a -> new StudentScheduleEntryResponse(a.getCourseName(), a.getClassDays(), a.getClassTime()))
+                .filter(a -> a.getEnrollmentEndDate() == null || !today.isAfter(a.getEnrollmentEndDate()))
+                .filter(a -> a.getEnrollmentStartDate() == null || !today.isBefore(a.getEnrollmentStartDate()))
+                .map(a -> new StudentScheduleEntryResponse(a.getCourseName(), a.getClassDays(), a.getClassTime(), a.getClassEndTime()))
                 .toList();
     }
 
@@ -329,6 +340,8 @@ public class AttendanceService {
                 .filter(a -> "APPROVED".equals(a.getStatus()))
                 .filter(a -> a.getClassDays() != null && a.getClassTime() != null)
                 .filter(a -> List.of(a.getClassDays().split(",")).contains(todayCode))
+                .filter(a -> a.getEnrollmentEndDate() == null || !today.isAfter(a.getEnrollmentEndDate()))
+                .filter(a -> a.getEnrollmentStartDate() == null || !today.isBefore(a.getEnrollmentStartDate()))
                 .toList();
 
         boolean hasClassToday = !scheduledToday.isEmpty();

@@ -17,6 +17,19 @@
     background-size: cover;
 }
 
+/* 배경 사진 레이어를 화면(뷰포트) 기준으로 완전히 고정시켜서, 카드 내용을 아무리
+   스크롤해도 사진은 제자리에 그대로 있게 함. (background-attachment: fixed는
+   아이폰 사파리 등 일부 브라우저에서 잘 안 먹혀서, 대신 사진 레이어 자체를
+   position: fixed로 뷰포트에 붙여버리는 더 확실한 방법을 씀) */
+.student-photo-banner--fullpage .student-photo-banner-slides {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+}
+
 .student-photo-banner--fullpage .student-photo-banner-dots {
     top: 20px;
     bottom: auto;
@@ -82,16 +95,11 @@
 
 .mypage-tabs {
     display: flex;
+    flex-wrap: wrap;
+    row-gap: 4px;
     gap: 4px;
     margin-bottom: 20px;
     border-bottom: 1.5px solid var(--kwzm-line);
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-}
-
-.mypage-tabs::-webkit-scrollbar {
-    display: none;
 }
 
 .mypage-tab {
@@ -1438,4 +1446,292 @@
     color: var(--kwzm-ink-soft);
     font-family: "JetBrains Mono", monospace;
     font-size: 12px;
+}
+
+/* 화면 설정 (어두운 모드 / 글자 크기) */
+
+.settings-block {
+    margin-bottom: 26px;
+}
+
+.settings-block:last-child {
+    margin-bottom: 0;
+}
+
+.settings-block-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0 0 10px;
+}
+
+.settings-theme-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 5px;
+    background: var(--kwzm-bg-2);
+    border-radius: 14px;
+}
+
+.settings-theme-toggle .leaderboard-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 미니 노트 (수업 후 짧은 노트) */
+
+.classnote-card {
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.classnote-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.classnote-card-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--kwzm-accent-2);
+}
+
+.classnote-card-date {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+    white-space: nowrap;
+}
+
+.classnote-card-content {
+    font-size: 13.5px;
+    color: var(--kwzm-ink);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    margin: 0 0 10px;
+}
+
+.classnote-textarea {
+    width: 100%;
+    min-height: 76px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: 1px solid var(--kwzm-line);
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink);
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 8px;
+}
+
+.classnote-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.classnote-btn {
+    border: 1px solid var(--kwzm-line);
+    border-radius: 999px;
+    padding: 7px 14px;
+    background: none;
+    color: var(--kwzm-ink-soft);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.classnote-btn:hover {
+    border-color: var(--kwzm-accent);
+    color: var(--kwzm-ink);
+}
+
+.classnote-btn--primary {
+    background: var(--kwzm-gradient);
+    border: none;
+    color: #fff;
+    font-weight: 700;
+}
+
+.classnote-btn--danger:hover {
+    border-color: #b8566a;
+    color: #b8566a;
+    background: rgba(184, 86, 106, 0.08);
+}
+
+/* 배지 / 업적 */
+
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.badge-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: 18px 12px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 14px;
+}
+
+.badge-card.is-earned {
+    background: linear-gradient(135deg, rgba(224, 167, 44, 0.1), rgba(63, 174, 122, 0.08));
+    border-color: #e0a72c;
+}
+
+.badge-card.is-locked .badge-card-icon {
+    filter: grayscale(1);
+    opacity: 0.35;
+}
+
+.badge-card.is-locked .badge-card-name {
+    color: var(--kwzm-ink-faint);
+}
+
+.badge-card-icon {
+    font-size: 30px;
+    line-height: 1;
+}
+
+.badge-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0;
+}
+
+.badge-card-desc {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.badge-card-progress {
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--kwzm-bg-2);
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+.badge-card-progress-fill {
+    height: 100%;
+    background: var(--kwzm-gradient);
+    border-radius: 999px;
+}
+
+.badge-card-earned-date {
+    font-size: 10px;
+    color: #e0a72c;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* 친구 */
+
+.friend-code-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--kwzm-bg-2);
+    border: 1px dashed var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.friend-code-text {
+    font-family: monospace;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--kwzm-ink);
+}
+
+.friend-add-row {
+    display: flex;
+    gap: 8px;
+}
+
+.friend-code-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--kwzm-line);
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink);
+    font-size: 13.5px;
+    font-family: monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.friend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.friend-card {
+    padding: 12px 16px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.friend-card-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    margin: 0 0 2px;
+}
+
+.friend-card-since {
+    font-size: 11px;
+    color: var(--kwzm-ink-faint);
+    margin: 0;
+}
+
+.friend-card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.friend-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.friend-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* 친구 시간표 모달 안의 리스트는 course-materials-body 안에 들어가므로
+   좌우 여백을 다시 잡아줌 (home.css의 .student-checkin-dock-schedule-list는
+   원래 22px 패딩을 가진 부모 안에서 쓰이도록 설계돼 있어서 0으로 맞춤) */
+#friendScheduleModalBody .student-checkin-dock-schedule-list {
+    padding: 0;
 }

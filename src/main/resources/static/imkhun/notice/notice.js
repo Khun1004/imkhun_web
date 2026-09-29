@@ -45,7 +45,7 @@ async function loadNotices() {
     }
 }
 
-const TIMETABLE_DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
+const TIMETABLE_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 async function loadTimetable() {
     const tbody = document.getElementById("timetableBody");

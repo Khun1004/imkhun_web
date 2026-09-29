@@ -309,6 +309,42 @@ body.admin-standalone-body {
     align-items: stretch;
 }
 
+/* 시간/날짜를 "몇 시부터 몇 시까지"처럼 나란히 보여줄 때 씀 (수업 시간 설정 모달) */
+.admin-range-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.admin-range-row input[type="time"],
+.admin-range-row input[type="date"] {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 4px;
+    border: none;
+    border-bottom: 1.5px dashed var(--line-strong);
+    border-radius: 0;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.admin-range-row input[type="time"]:focus,
+.admin-range-row input[type="date"]:focus {
+    outline: none;
+    border-color: var(--teal);
+    border-style: solid;
+    background: var(--teal-soft);
+}
+
+.admin-range-sep {
+    color: var(--ink-soft);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
 .auth-input-row input {
     flex: 1;
 }
