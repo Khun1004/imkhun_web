@@ -4,11 +4,13 @@ import com.imkhun.imkhun.domain.FriendNote;
 import com.imkhun.imkhun.domain.Friendship;
 import com.imkhun.imkhun.domain.StudentFriendCode;
 import com.imkhun.imkhun.domain.User;
+import com.imkhun.imkhun.dto.ClassmateEntryResponse;
 import com.imkhun.imkhun.dto.FriendBadgesResponse;
 import com.imkhun.imkhun.dto.FriendCodeResponse;
 import com.imkhun.imkhun.dto.FriendNoteResponse;
 import com.imkhun.imkhun.dto.FriendResponse;
 import com.imkhun.imkhun.dto.FriendScheduleResponse;
+import com.imkhun.imkhun.dto.StudentScheduleEntryResponse;
 import com.imkhun.imkhun.repository.FriendNoteRepository;
 import com.imkhun.imkhun.repository.FriendshipRepository;
 import com.imkhun.imkhun.repository.StudentFriendCodeRepository;
@@ -18,8 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 // 학생끼리 초대 코드로 서로 "친구"를 맺는 기능. 친구가 되면 시간표/노트/배지 같은 것을
 // 서로 볼 수 있게 되는 다른 기능들의 기반이 됨
@@ -169,6 +176,51 @@ public class FriendService {
     @Transactional(readOnly = true)
     public boolean isFriend(String usernameOne, String usernameTwo) {
         return findFriendship(usernameOne, usernameTwo).isPresent();
+    }
+
+    // ---------- 같은 수업 듣는 친구 표시 ----------
+
+    // 내 시간표의 각 수업마다, 같은 강의명(courseName)을 같은 요일에 듣는 친구가 있는지 찾아줌.
+    // "이 수업엔 OO님도 같이 들어요" 처럼 보여주는 용도. 친구 관계인 사람만 대상으로 함
+    @Transactional(readOnly = true)
+    public List<ClassmateEntryResponse> getClassmateFriends(String username) {
+        List<StudentScheduleEntryResponse> mySchedule = attendanceService.getWeeklyScheduleForStudent(username);
+        if (mySchedule.isEmpty()) {
+            return List.of();
+        }
+
+        List<FriendResponse> friends = getMyFriends(username);
+        if (friends.isEmpty()) {
+            return List.of();
+        }
+
+        // 친구마다 시간표를 한 번씩만 조회해두고 재사용 (수업 개수만큼 반복 조회하지 않도록)
+        Map<String, List<StudentScheduleEntryResponse>> scheduleByFriend = new LinkedHashMap<>();
+        Map<String, String> nicknameByFriend = new LinkedHashMap<>();
+        for (FriendResponse friend : friends) {
+            scheduleByFriend.put(friend.username(), attendanceService.getWeeklyScheduleForStudent(friend.username()));
+            nicknameByFriend.put(friend.username(), friend.nickname());
+        }
+
+        List<ClassmateEntryResponse> result = new ArrayList<>();
+        for (StudentScheduleEntryResponse entry : mySchedule) {
+            Set<String> myDays = Set.of(entry.classDays().split(","));
+            List<String> matchingNicknames = new ArrayList<>();
+
+            for (Map.Entry<String, List<StudentScheduleEntryResponse>> friendSchedule : scheduleByFriend.entrySet()) {
+                boolean overlaps = friendSchedule.getValue().stream().anyMatch(friendEntry ->
+                        friendEntry.courseName().equals(entry.courseName())
+                                && Arrays.stream(friendEntry.classDays().split(",")).anyMatch(myDays::contains));
+                if (overlaps) {
+                    matchingNicknames.add(nicknameByFriend.get(friendSchedule.getKey()));
+                }
+            }
+
+            if (!matchingNicknames.isEmpty()) {
+                result.add(new ClassmateEntryResponse(entry.courseName(), matchingNicknames));
+            }
+        }
+        return result;
     }
 
     private Optional<Friendship> findFriendship(String usernameOne, String usernameTwo) {

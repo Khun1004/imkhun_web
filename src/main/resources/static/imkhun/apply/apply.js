@@ -2,8 +2,12 @@
 // apply.html은 fragment로 나중에 로드되므로, document 이벤트 위임으로 처리해서
 // 로드 타이밍에 상관없이 항상 동작하게 함
 
-let timetableByCourse = {}; // { "한국어 1급": [{days:["MON","FRI"], startTime:"14:00", endTime:"15:30"}, ...], ... }
+let timetableByTypeAndCourse = { TOGETHER: {}, VIDEO: {} }; // { TOGETHER: { "한국어 1급": { "14:00~15:30": {...} } }, VIDEO: {...} }
 let selectedScheduleKey = null;
+
+function getSelectedStudyType() {
+    return document.querySelector('input[name="studyType"]:checked')?.value || "";
+}
 
 document.addEventListener("fragments:loaded", () => {
     loadTimetableForApply();
@@ -24,40 +28,63 @@ async function loadTimetableForApply() {
         if (!res.ok) return;
         const entries = await res.json();
 
-        // 과목별 → 같은 시간(시작~종료)끼리 묶고, 그 시간에 해당하는 요일들을 모음
-        timetableByCourse = {};
+        // 학습 방식(실시간/영상) → 과목별 → 같은 시간(시작~종료)끼리 묶고, 그 시간에 해당하는 요일들을 모음
+        timetableByTypeAndCourse = { TOGETHER: {}, VIDEO: {} };
         entries.forEach((e) => {
-            if (!timetableByCourse[e.courseName]) timetableByCourse[e.courseName] = {};
+            const studyType = e.studyType === "VIDEO" ? "VIDEO" : "TOGETHER";
+            const byCourse = timetableByTypeAndCourse[studyType];
+            if (!byCourse[e.courseName]) byCourse[e.courseName] = {};
             const timeKey = `${e.startTime}~${e.endTime}`;
-            if (!timetableByCourse[e.courseName][timeKey]) {
-                timetableByCourse[e.courseName][timeKey] = { startTime: e.startTime, endTime: e.endTime, days: [] };
+            if (!byCourse[e.courseName][timeKey]) {
+                byCourse[e.courseName][timeKey] = { startTime: e.startTime, endTime: e.endTime, days: [] };
             }
-            // 같은 요일이 시간표에 중복 등록돼 있어도 "화, 화"처럼 겹쳐 보이지 않게 막아줌
-            if (!timetableByCourse[e.courseName][timeKey].days.includes(e.day)) {
-                timetableByCourse[e.courseName][timeKey].days.push(e.day);
+            if (studyType === "TOGETHER") {
+                // 같은 요일이 시간표에 중복 등록돼 있어도 "화, 화"처럼 겹쳐 보이지 않게 막아줌
+                if (!byCourse[e.courseName][timeKey].days.includes(e.day)) {
+                    byCourse[e.courseName][timeKey].days.push(e.day);
+                }
             }
         });
 
-        // 시간표에 없는 과목은 신청 화면에서 고를 수 없게 숨김
-        courseSelect.querySelectorAll("option[value]").forEach((opt) => {
-            if (!opt.value) return;
-            const hasSchedule = !!timetableByCourse[opt.value];
-            opt.hidden = !hasSchedule;
-            opt.disabled = !hasSchedule;
-        });
-        // optgroup 안 옵션이 전부 숨겨졌으면 그룹 제목도 숨김
-        courseSelect.querySelectorAll("optgroup").forEach((group) => {
-            const visibleOptions = [...group.querySelectorAll("option")].some((opt) => !opt.hidden);
-            group.hidden = !visibleOptions;
-        });
+        filterCourseOptionsByStudyType();
     } catch (err) {
         console.error(err);
     }
 }
 
+// 선택한 학습 방식(실시간/영상)에 시간표가 등록된 과목만 신청 화면에서 고를 수 있게 함
+function filterCourseOptionsByStudyType() {
+    const courseSelect = document.getElementById("applyCourseSelect");
+    if (!courseSelect) return;
+
+    const studyType = getSelectedStudyType();
+    const byCourse = studyType ? timetableByTypeAndCourse[studyType] : null;
+
+    courseSelect.querySelectorAll("option[value]").forEach((opt) => {
+        if (!opt.value) return;
+        // 학습 방식을 아직 안 골랐으면(byCourse === null) 일단 모든 과목을 보여줌
+        const hasSchedule = !studyType || !!byCourse[opt.value];
+        opt.hidden = !hasSchedule;
+        opt.disabled = !hasSchedule;
+    });
+    // optgroup 안 옵션이 전부 숨겨졌으면 그룹 제목도 숨김
+    courseSelect.querySelectorAll("optgroup").forEach((group) => {
+        const visibleOptions = [...group.querySelectorAll("option")].some((opt) => !opt.hidden);
+        group.hidden = !visibleOptions;
+    });
+
+    // 학습 방식이 바뀌면 이미 골라둔 과목이 더 이상 안 맞을 수 있으니 초기화
+    const currentOption = courseSelect.selectedOptions[0];
+    if (currentOption && currentOption.disabled) {
+        courseSelect.value = "";
+    }
+    renderApplyScheduleSlots(courseSelect.value);
+}
+
 const SCHEDULE_DAY_LABEL_APPLY = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI: "금", SAT: "토", SUN: "일" };
 
 function renderApplyScheduleSlots(courseName) {
+    const sectionEl = document.getElementById("applyScheduleSection");
     const slotsEl = document.getElementById("applyScheduleSlots");
     const hintEl = document.getElementById("applyScheduleHint");
     const daysValue = document.getElementById("applyScheduleDaysValue");
@@ -69,14 +96,52 @@ function renderApplyScheduleSlots(courseName) {
     if (timeValue) timeValue.value = "";
     slotsEl.innerHTML = "";
 
+    const studyType = getSelectedStudyType();
+    if (sectionEl) sectionEl.hidden = false;
+
+    if (!studyType) {
+        hintEl.textContent = "먼저 학습 방식을 선택해주세요.";
+        return;
+    }
     if (!courseName) {
         hintEl.textContent = "먼저 과목을 선택해주세요.";
         return;
     }
 
-    const slots = timetableByCourse[courseName];
+    const slots = timetableByTypeAndCourse[studyType][courseName];
     if (!slots || Object.keys(slots).length === 0) {
         hintEl.textContent = "이 과목은 아직 시간표가 등록되지 않았어요. 선생님께 문의해주세요.";
+        return;
+    }
+
+    // 언제든 영상으로 배우기는 요일·시간은 없지만, 수강 기간(회차)은 클릭해서 고를 수 있게 함 (기간이 하나뿐이어도 선택 가능)
+    if (studyType === "VIDEO") {
+        const periodEntries = Object.entries(slots);
+
+        hintEl.textContent = "원하시는 수강 기간(회차)을 골라주세요. (선택 안 하셔도 신청은 가능해요)";
+
+        periodEntries.forEach(([timeKey, slot]) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "apply-slot-chip";
+            chip.dataset.time = `${slot.startTime}~${slot.endTime}`;
+            chip.innerHTML = `<strong>${escapeHtmlForApply(slot.startTime)} ~ ${escapeHtmlForApply(slot.endTime)}</strong><span>언제든 시청 가능</span>`;
+            chip.addEventListener("click", () => {
+                const willSelect = selectedScheduleKey !== timeKey;
+                slotsEl.querySelectorAll(".apply-slot-chip").forEach((c) => c.classList.remove("active"));
+                if (willSelect) {
+                    chip.classList.add("active");
+                    selectedScheduleKey = timeKey;
+                    if (daysValue) daysValue.value = "VIDEO";
+                    if (timeValue) timeValue.value = `${slot.startTime}~${slot.endTime}`;
+                } else {
+                    selectedScheduleKey = null;
+                    if (daysValue) daysValue.value = "";
+                    if (timeValue) timeValue.value = "";
+                }
+            });
+            slotsEl.appendChild(chip);
+        });
         return;
     }
 
@@ -111,6 +176,9 @@ function renderApplyScheduleSlots(courseName) {
 document.addEventListener("change", (e) => {
     if (e.target.id === "applyCourseSelect") {
         renderApplyScheduleSlots(e.target.value);
+    }
+    if (e.target.name === "studyType") {
+        filterCourseOptionsByStudyType();
     }
 });
 
@@ -201,5 +269,5 @@ document.addEventListener("click", (e) => {
     form.hidden = false;
     if (success) success.hidden = true;
     if (errorEl) errorEl.hidden = true;
-    renderApplyScheduleSlots("");
+    filterCourseOptionsByStudyType();
 });

@@ -131,13 +131,53 @@
     color: var(--kwzm-ink-faint);
 }
 
-/* ---------- 선택된 Part: 단어 목록 ---------- */
+/* ---------- 선택된 Part: 단어 목록 (아래에서 위로 올라오는 전체화면) ---------- */
+
+.student-vocab-words-area {
+    position: fixed;
+    inset: 0;
+    z-index: 340;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--kwzm-bg);
+    padding: 18px 20px calc(40px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.student-vocab-words-area.is-open {
+    transform: translateY(0);
+}
+
+.student-vocab-words-area[hidden] {
+    display: none;
+}
+
+/* 큰 화면에서도 본문 폭이 너무 넓어지지 않게 자식 요소들을 가운데로 정렬 */
+.student-vocab-words-area > * {
+    max-width: 880px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .student-vocab-words-area {
+        transition: none;
+    }
+}
+
+.student-vocab-words-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
 
 .student-vocab-back-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 20px;
     padding: 8px 16px;
     border: 1px solid var(--kwzm-line);
     border-radius: 999px;
@@ -157,6 +197,31 @@
 .student-vocab-back-btn svg {
     width: 14px;
     height: 14px;
+}
+
+.student-vocab-close-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 50%;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink-soft);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.student-vocab-close-btn:hover {
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink);
+}
+
+.student-vocab-close-btn svg {
+    width: 15px;
+    height: 15px;
 }
 
 .student-vocab-words-header {
@@ -501,4 +566,40 @@
 
 .vocab-quiz-word-row .vocab-quiz-word {
     margin: 0;
+}
+
+/* 단어 퀴즈 대결 — 친구와 이 Part 점수 비교 */
+
+.vocab-friend-compare {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--kwzm-line);
+}
+
+.vocab-friend-compare-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 4px;
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--kwzm-ink);
+}
+
+.vocab-friend-compare-title svg {
+    flex-shrink: 0;
+    color: var(--kwzm-accent, #2f9aa0);
+}
+
+.vocab-friend-compare .admin-note-hint {
+    margin: 0 0 12px;
+}
+
+.vocab-friend-compare .leaderboard-row-value {
+    color: var(--kwzm-ink-faint);
+}
+
+.vocab-friend-compare .leaderboard-row.has-score .leaderboard-row-value {
+    color: var(--kwzm-ink);
 }

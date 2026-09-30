@@ -30,12 +30,17 @@
         <div class="student-vocab-set-list" id="vocabSetList"></div>
     </div>
 
-    <!-- 선택된 Part의 단어 목록 -->
+    <!-- 선택된 Part의 단어 목록 (위로 올라오는 전체화면) -->
     <div class="student-vocab-words-area" id="vocabWordsArea" hidden>
-        <button type="button" class="student-vocab-back-btn" id="vocabBackToSetsBtn">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Part 목록으로
-        </button>
+        <div class="student-vocab-words-topbar">
+            <button type="button" class="student-vocab-back-btn" id="vocabBackToSetsBtn">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Part 목록으로
+            </button>
+            <button type="button" class="student-vocab-close-btn" id="vocabWordsCloseBtn" aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
 
         <div class="student-vocab-words-header">
             <div>
@@ -51,6 +56,16 @@
 
         <p class="admin-empty-text" id="vocabWordsEmpty" hidden>이 Part에 등록된 단어가 아직 없어요.</p>
         <div class="student-vocab-word-grid" id="vocabWordGrid"></div>
+
+        <!-- 단어 퀴즈 대결 — 친구와 이 Part 점수 비교 -->
+        <div class="vocab-friend-compare" id="vocabFriendCompareSection" hidden>
+            <p class="vocab-friend-compare-title">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 2 9 8l-6 1 4.5 4-1 6 5.5-3 5.5 3-1-6 4.5-4-6-1-2.5-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                이 Part 점수 대결
+            </p>
+            <p class="admin-note-hint">친구와 같은 단어 세트로 점수를 비교해요.</p>
+            <div class="leaderboard-list" id="vocabFriendCompareList"></div>
+        </div>
     </div>
 </div>
 

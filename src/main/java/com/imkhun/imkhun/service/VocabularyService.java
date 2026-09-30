@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,12 +21,17 @@ public class VocabularyService {
     private final VocabularySetRepository vocabularySetRepository;
     private final VocabularyWordRepository vocabularyWordRepository;
     private final VocabularyQuizResultRepository vocabularyQuizResultRepository;
+    private final FriendService friendService;
+    private final BadgeService badgeService;
 
     public VocabularyService(VocabularySetRepository vocabularySetRepository, VocabularyWordRepository vocabularyWordRepository,
-                             VocabularyQuizResultRepository vocabularyQuizResultRepository) {
+                             VocabularyQuizResultRepository vocabularyQuizResultRepository, FriendService friendService,
+                             BadgeService badgeService) {
         this.vocabularySetRepository = vocabularySetRepository;
         this.vocabularyWordRepository = vocabularyWordRepository;
         this.vocabularyQuizResultRepository = vocabularyQuizResultRepository;
+        this.friendService = friendService;
+        this.badgeService = badgeService;
     }
 
     // ---------- Part(세트) 관리 ----------
@@ -113,6 +119,7 @@ public class VocabularyService {
         }
         vocabularyQuizResultRepository.save(
                 com.imkhun.imkhun.domain.VocabularyQuizResult.create(setId, username, request.score(), request.totalQuestions()));
+        badgeService.checkForNewBadges(username);
     }
 
     @Transactional(readOnly = true)
@@ -120,6 +127,33 @@ public class VocabularyService {
         return vocabularyQuizResultRepository.findTopBySetIdAndUsernameOrderByCompletedAtDesc(setId, username)
                 .map(r -> new QuizResultResponse(r.getScore(), r.getTotalQuestions(), r.getCompletedAt().format(DATETIME_FORMAT)))
                 .orElse(new QuizResultResponse(null, null, null));
+    }
+
+    // ---------- 단어 퀴즈 대결 (친구와 같은 Part 점수 비교) ----------
+
+    // 이 Part를 나와 내 친구들이 각각 몇 점 맞혔는지 한 화면에서 비교할 수 있게 모아줌.
+    // 아직 안 풀어본 사람은 점수가 null로 내려가고, 목록 맨 아래로 정렬됨
+    @Transactional(readOnly = true)
+    public List<VocabFriendResultResponse> getFriendsQuizResults(Long setId, String username) {
+        List<VocabFriendResultResponse> result = new ArrayList<>();
+        result.add(toFriendResult(setId, username, "나", true));
+        for (FriendResponse friend : friendService.getMyFriends(username)) {
+            result.add(toFriendResult(setId, friend.username(), friend.nickname(), false));
+        }
+        result.sort((a, b) -> {
+            if (a.score() == null && b.score() == null) return 0;
+            if (a.score() == null) return 1;
+            if (b.score() == null) return -1;
+            return b.score() - a.score();
+        });
+        return result;
+    }
+
+    private VocabFriendResultResponse toFriendResult(Long setId, String username, String nickname, boolean isMe) {
+        return vocabularyQuizResultRepository.findTopBySetIdAndUsernameOrderByCompletedAtDesc(setId, username)
+                .map(r -> new VocabFriendResultResponse(username, nickname, isMe, r.getScore(), r.getTotalQuestions(),
+                        r.getCompletedAt().format(DATETIME_FORMAT)))
+                .orElse(new VocabFriendResultResponse(username, nickname, isMe, null, null, null));
     }
 
     private VocabularyWordResponse toWordResponse(VocabularyWord word) {

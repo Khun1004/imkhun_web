@@ -111,6 +111,12 @@ const NOTIF_TYPE_ICON = {
     SHARED_GOAL_INVITE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5M10.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     SHARED_GOAL_ACCEPTED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5M10.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     SHARED_GOAL_ACHIEVED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    FRIEND_BADGE_EARNED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 9 8l-6 1 4.5 4-1 6 5.5-3 5.5 3-1-6 4.5-4-6-1-2.5-6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+    STUDY_GROUP_INVITE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="7" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/><path d="M2.8 20c.5-3 2.3-4.6 4.2-4.6M20.8 20c-.5-3-2.3-4.6-4.2-4.6M8.3 20c.6-3.4 2.5-5 3.7-5s3.1 1.6 3.7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    STUDY_GROUP_JOINED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="7" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/><path d="M2.8 20c.5-3 2.3-4.6 4.2-4.6M20.8 20c-.5-3-2.3-4.6-4.2-4.6M8.3 20c.6-3.4 2.5-5 3.7-5s3.1 1.6 3.7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    STUDY_GROUP_NOTE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    STUDY_GROUP_GOAL_CREATED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5M10.5 20c.6-3.3 2.6-5 5.5-5s4.9 1.7 5.5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    STUDY_GROUP_GOAL_ACHIEVED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
 };
 const NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
@@ -504,12 +510,38 @@ async function buildStreakHtml() {
     }
 }
 
+// 시간표에 "이 수업엔 OO님도 같이 들어요" 태그를 붙이기 위해 강의명 → 같이 듣는 친구 닉네임 목록을 가져옴
+async function fetchClassmateFriendsMap() {
+    try {
+        const res = await fetch("/api/student/schedule/classmates");
+        if (!res.ok) return {};
+        const rows = await res.json();
+        const map = {};
+        rows.forEach((r) => { map[r.courseName] = r.friendNicknames; });
+        return map;
+    } catch (err) {
+        console.error(err);
+        return {};
+    }
+}
+
+function classmateFriendsTagHtml(courseName, classmateMap) {
+    const nicknames = classmateMap[courseName];
+    if (!nicknames || nicknames.length === 0) return "";
+    const names = nicknames.length > 2
+        ? `${nicknames.slice(0, 2).join(", ")} 외 ${nicknames.length - 2}명`
+        : nicknames.join(", ");
+    return `<span class="student-checkin-dock-schedule-classmate-tag">${escapeHtmlForStudent(names)}님도 같이 들어요</span>`;
+}
+
 async function buildWeeklyScheduleHtml() {
     try {
         const res = await fetch("/api/student/attendance/my-schedule");
         if (!res.ok) return "";
         const entries = await res.json();
         if (entries.length === 0) return "";
+
+        const classmateMap = await fetchClassmateFriendsMap();
 
         const byDay = {};
         entries.forEach((entry) => {
@@ -526,7 +558,11 @@ async function buildWeeklyScheduleHtml() {
             const items = byDay[day] || [];
             const isToday = day === todayCode;
             const itemsHtml = items.length > 0
-                ? items.map((i) => `<span class="student-checkin-dock-schedule-chip">${escapeHtmlForStudent(i.courseName)} · ${scheduleTimeRangeLabel(i)}</span>`).join("")
+                ? items.map((i) => `
+                    <span class="student-checkin-dock-schedule-chip-wrap">
+                      <span class="student-checkin-dock-schedule-chip">${escapeHtmlForStudent(i.courseName)} · ${scheduleTimeRangeLabel(i)}</span>
+                      ${classmateFriendsTagHtml(i.courseName, classmateMap)}
+                    </span>`).join("")
                 : `<span class="student-checkin-dock-schedule-empty">${isToday ? "오늘은 쉬는 날" : "-"}</span>`;
             return `
         <div class="student-checkin-dock-schedule-row${items.length > 0 ? " has-class" : ""}${isToday ? " is-today" : ""}">
@@ -1358,7 +1394,16 @@ async function openVocabSet(set) {
     vocabSelectedSetId = set.id;
     vocabRevealedWordIds = new Set();
     document.getElementById("vocabSetListArea").hidden = true;
-    document.getElementById("vocabWordsArea").hidden = false;
+
+    const wordsArea = document.getElementById("vocabWordsArea");
+    wordsArea.hidden = false;
+    wordsArea.scrollTop = 0;
+    document.body.style.overflow = "hidden";
+    // hidden을 막 풀어준 직후라 리플로우가 아직 안 일어난 상태라, 강제로 한 번 읽어줘야
+    // 그 다음에 붙이는 is-open 클래스가 "아래→위로 올라오는" 트랜지션으로 재생돼요
+    void wordsArea.offsetHeight;
+    wordsArea.classList.add("is-open");
+
     document.getElementById("vocabWordsTitle").textContent = set.name;
     document.getElementById("vocabWordsSubtitle").textContent =
         `${set.category} · 단어 ${set.wordCount}개 · 퀴즈 제한시간 ${set.quizTimeLimitMinutes}분`;
@@ -1410,9 +1455,47 @@ async function openVocabSet(set) {
         });
 
         updateVocabQuizGate();
+        loadVocabFriendCompare(set.id);
     } catch (err) {
         console.error(err);
         gridEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+// 단어 퀴즈 대결 — 지금 보고 있는 Part를 나/친구들이 각각 몇 점 맞혔는지 비교해서 보여줌
+async function loadVocabFriendCompare(setId) {
+    const section = document.getElementById("vocabFriendCompareSection");
+    const listEl = document.getElementById("vocabFriendCompareList");
+    if (!section || !listEl) return;
+
+    try {
+        const res = await fetch(`/api/student/vocabulary/sets/${setId}/quiz-result/friends`);
+        if (!res.ok) {
+            section.hidden = true;
+            return;
+        }
+        const rows = await res.json();
+        // 나 혼자뿐이고 친구가 없으면 굳이 비교할 게 없으니 숨김
+        if (rows.length <= 1) {
+            section.hidden = true;
+            return;
+        }
+
+        listEl.innerHTML = rows.map((r, i) => {
+            const hasScore = r.score !== null && r.score !== undefined;
+            const valueText = hasScore ? `${r.score} / ${r.totalQuestions}개` : "아직 안 풀어봄";
+            return `
+        <div class="leaderboard-row${r.isMe ? " is-me" : ""}${hasScore ? " has-score" : ""}">
+          <span class="leaderboard-row-rank">${i + 1}</span>
+          <span class="leaderboard-row-name">${escapeHtmlForStudent(r.nickname)}</span>
+          <span class="leaderboard-row-value">${valueText}</span>
+        </div>`;
+        }).join("");
+
+        section.hidden = false;
+    } catch (err) {
+        console.error(err);
+        section.hidden = true;
     }
 }
 
@@ -1431,8 +1514,14 @@ function updateVocabQuizGate() {
 }
 
 function backToVocabSets() {
-    document.getElementById("vocabWordsArea").hidden = true;
-    document.getElementById("vocabSetListArea").hidden = false;
+    const wordsArea = document.getElementById("vocabWordsArea");
+    wordsArea.classList.remove("is-open");
+    document.body.style.overflow = "";
+    // 내려가는 트랜지션(0.32초)이 끝난 뒤에 완전히 숨겨서, 화면 밖으로 슬라이드되는 게 보이게 함
+    setTimeout(() => {
+        wordsArea.hidden = true;
+        document.getElementById("vocabSetListArea").hidden = false;
+    }, 320);
 }
 
 function shuffleArray(arr) {
@@ -1580,6 +1669,7 @@ async function completeVocabQuiz(timedOut) {
         alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈는 끝났지만 결과 저장에 실패했어요 (${total}문제 중 ${score}개 맞힘). 인터넷 연결을 확인하고 다시 시도해주세요.`);
     } else {
         alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈 완료! ${total}문제 중 ${score}개 맞혔어요.`);
+        if (!saveFailed && vocabSelectedSetId) loadVocabFriendCompare(vocabSelectedSetId);
     }
 }
 
@@ -1745,7 +1835,11 @@ async function loadVideoMaterials(topic) {
     try {
         const res = await fetch(`/api/student/videos?topic=${topic}`);
         if (!res.ok) {
-            if (res.status === 403 && lockedText) lockedText.hidden = false;
+            if (res.status === 403 && lockedText) {
+                const message = await res.text();
+                lockedText.textContent = message || "아직 이 영상을 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요.";
+                lockedText.hidden = false;
+            }
             return;
         }
         const materials = await res.json();
@@ -2798,7 +2892,7 @@ async function loadBadges() {
 // ---- 친구 (마이페이지 > 친구) ----
 
 async function loadFriendsTab() {
-    await Promise.all([loadMyFriendCode(), loadFriendsList(), loadFriendNotesList()]);
+    await Promise.all([loadMyFriendCode(), loadFriendsList(), loadFriendNotesList(), loadStudyGroups()]);
 }
 
 async function loadMyFriendCode() {
@@ -3049,6 +3143,460 @@ async function loadFriendNotesList() {
     } catch (err) {
         console.error(err);
         listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+// ---- 스터디 그룹 ----
+
+function renderStudyGroupCardHtml(g) {
+    const activeCount = g.members.filter((m) => m.status === "ACTIVE").length;
+    const chipsHtml = g.members.map((m) => {
+        const pending = m.status === "INVITED";
+        return `<span class="study-group-member-chip${pending ? " is-pending" : ""}">${escapeHtmlForStudent(m.nickname)}${m.isCreator ? " 👑" : ""}${pending ? " (대기중)" : ""}</span>`;
+    }).join("");
+
+    let actionsHtml;
+    if (g.myStatus === "INVITED") {
+        actionsHtml = `
+      <button type="button" class="classnote-btn classnote-btn--primary" data-accept-group="${g.id}">수락</button>
+      <button type="button" class="classnote-btn classnote-btn--danger" data-decline-group="${g.id}">거절</button>`;
+    } else {
+        actionsHtml = `
+      <button type="button" class="classnote-btn" data-group-notes="${g.id}" data-group-name="${escapeHtmlForStudent(g.name)}">노트</button>
+      <button type="button" class="classnote-btn" data-group-goals="${g.id}" data-group-name="${escapeHtmlForStudent(g.name)}">목표</button>
+      <button type="button" class="classnote-btn" data-group-invite="${g.id}">멤버 초대</button>
+      ${g.isCreator
+            ? `<button type="button" class="classnote-btn classnote-btn--danger" data-group-delete="${g.id}">그룹 삭제</button>`
+            : `<button type="button" class="classnote-btn classnote-btn--danger" data-group-leave="${g.id}">나가기</button>`}`;
+    }
+
+    return `
+    <div class="friend-card-body friend-card">
+      <div class="friend-card-top">
+        <div>
+          <p class="friend-card-name">${escapeHtmlForStudent(g.name)}</p>
+          <p class="friend-card-since">멤버 ${activeCount}명 · 그룹장 ${escapeHtmlForStudent(g.creatorNickname)}</p>
+        </div>
+        <div class="friend-card-actions">${actionsHtml}</div>
+      </div>
+      <div class="study-group-member-chips">${chipsHtml}</div>
+    </div>`;
+}
+
+async function loadStudyGroups() {
+    const listEl = document.getElementById("studyGroupsList");
+    const emptyEl = document.getElementById("studyGroupsEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/groups");
+        const groups = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = groups.map(renderStudyGroupCardHtml).join("");
+        if (emptyEl) emptyEl.hidden = groups.length > 0;
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+async function openStudyGroupCreateModal() {
+    const modal = document.getElementById("studyGroupCreateModal");
+    if (!modal) return;
+    document.getElementById("studyGroupNameInput").value = "";
+    document.getElementById("studyGroupCreateError").hidden = true;
+    const checklistEl = document.getElementById("studyGroupCreateFriendChecklist");
+    checklistEl.innerHTML = `<p class="study-group-friend-checklist-empty">불러오는 중...</p>`;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    try {
+        const res = await fetch("/api/student/friends");
+        const friends = res.ok ? await res.json() : [];
+        checklistEl.innerHTML = friends.length > 0
+            ? friends.map((f) => `
+          <label>
+            <input type="checkbox" value="${f.username}">
+            ${escapeHtmlForStudent(f.nickname)}
+          </label>`).join("")
+            : `<p class="study-group-friend-checklist-empty">먼저 친구를 추가해주세요. (그룹 만들기는 나 혼자서도 할 수 있어요)</p>`;
+    } catch (err) {
+        console.error(err);
+        checklistEl.innerHTML = `<p class="study-group-friend-checklist-empty">친구 목록을 불러오지 못했어요.</p>`;
+    }
+}
+
+function closeStudyGroupCreateModal() {
+    const modal = document.getElementById("studyGroupCreateModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+async function submitStudyGroupCreate() {
+    const name = document.getElementById("studyGroupNameInput").value.trim();
+    const errorEl = document.getElementById("studyGroupCreateError");
+    const saveBtn = document.getElementById("studyGroupCreateSaveBtn");
+    const inviteUsernames = Array.from(document.querySelectorAll("#studyGroupCreateFriendChecklist input[type=checkbox]:checked"))
+        .map((el) => el.value);
+
+    if (!name) {
+        errorEl.textContent = "그룹 이름을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "만드는 중...";
+
+    try {
+        const res = await fetch("/api/student/groups", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, inviteUsernames }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "그룹을 만들지 못했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        closeStudyGroupCreateModal();
+        loadStudyGroups();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "그룹 만들기";
+    }
+}
+
+async function respondGroupInvite(groupId, action) {
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}/${action}`, { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "처리하지 못했어요.");
+            return;
+        }
+        loadStudyGroups();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function leaveStudyGroup(groupId) {
+    if (!confirm("이 그룹을 나갈까요?")) return;
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}/leave`, { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "처리하지 못했어요.");
+            return;
+        }
+        loadStudyGroups();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+async function deleteStudyGroup(groupId) {
+    if (!confirm("그룹을 삭제할까요? 그룹의 노트와 목표가 모두 사라져요.")) return;
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제하지 못했어요.");
+            return;
+        }
+        loadStudyGroups();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---- 그룹에 멤버 초대 ----
+
+async function openStudyGroupInviteModal(groupId) {
+    const modal = document.getElementById("studyGroupInviteModal");
+    if (!modal) return;
+    document.getElementById("studyGroupInviteTargetGroupId").value = groupId;
+    document.getElementById("studyGroupInviteError").hidden = true;
+    const selectEl = document.getElementById("studyGroupInviteFriendSelect");
+    selectEl.innerHTML = `<option value="" disabled selected>불러오는 중...</option>`;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    try {
+        const res = await fetch("/api/student/friends");
+        const friends = res.ok ? await res.json() : [];
+        selectEl.innerHTML = friends.length > 0
+            ? `<option value="" disabled selected>친구를 선택해주세요</option>` +
+            friends.map((f) => `<option value="${f.username}">${escapeHtmlForStudent(f.nickname)}</option>`).join("")
+            : `<option value="" disabled selected>먼저 친구를 추가해주세요</option>`;
+    } catch (err) {
+        console.error(err);
+        selectEl.innerHTML = `<option value="" disabled selected>친구 목록을 불러오지 못했어요</option>`;
+    }
+}
+
+function closeStudyGroupInviteModal() {
+    const modal = document.getElementById("studyGroupInviteModal");
+    modal?.classList.remove("open");
+    modal?.setAttribute("aria-hidden", "true");
+}
+
+async function submitStudyGroupInvite() {
+    const groupId = document.getElementById("studyGroupInviteTargetGroupId").value;
+    const friendUsername = document.getElementById("studyGroupInviteFriendSelect").value;
+    const errorEl = document.getElementById("studyGroupInviteError");
+    const saveBtn = document.getElementById("studyGroupInviteSaveBtn");
+
+    if (!friendUsername) {
+        errorEl.textContent = "초대할 친구를 선택해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "초대하는 중...";
+
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}/invite`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ friendUsername }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "초대하지 못했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        closeStudyGroupInviteModal();
+        loadStudyGroups();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "초대하기";
+    }
+}
+
+// ---- 그룹 노트 ----
+
+async function openStudyGroupNotesModal(groupId, groupName) {
+    const modal = document.getElementById("studyGroupNotesModal");
+    if (!modal) return;
+    document.getElementById("studyGroupNotesModalTitle").textContent = `${groupName || "그룹"} 노트`;
+    document.getElementById("studyGroupNotesTargetGroupId").value = groupId;
+    document.getElementById("studyGroupNoteMessageInput").value = "";
+    document.getElementById("studyGroupNoteError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    await loadStudyGroupNotes(groupId);
+}
+
+function closeStudyGroupNotesModal() {
+    const modal = document.getElementById("studyGroupNotesModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+}
+
+async function loadStudyGroupNotes(groupId) {
+    const listEl = document.getElementById("studyGroupNotesList");
+    const emptyEl = document.getElementById("studyGroupNotesEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}/notes`);
+        const notes = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.hidden = notes.length > 0;
+
+        notes.forEach((n) => {
+            const row = document.createElement("div");
+            row.className = "mypage-classchange-row";
+            row.innerHTML = `
+        <div class="mypage-classchange-row-head">
+          <span class="mypage-classchange-row-course">${escapeHtmlForStudent(n.senderNickname)}</span>
+          <span class="mypage-classchange-row-status mypage-classchange-row-status--approved">${escapeHtmlForStudent(n.createdAt)}</span>
+        </div>
+        <p class="mypage-classchange-row-detail">${escapeHtmlForStudent(n.message)}</p>
+      `;
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+async function submitStudyGroupNote() {
+    const groupId = document.getElementById("studyGroupNotesTargetGroupId").value;
+    const message = document.getElementById("studyGroupNoteMessageInput").value.trim();
+    const errorEl = document.getElementById("studyGroupNoteError");
+    const sendBtn = document.getElementById("studyGroupNoteSendBtn");
+
+    if (!message) {
+        errorEl.textContent = "노트 내용을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    sendBtn.disabled = true;
+    sendBtn.textContent = "보내는 중...";
+
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}/notes`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "노트를 보내지 못했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        document.getElementById("studyGroupNoteMessageInput").value = "";
+        loadStudyGroupNotes(groupId);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "보내기";
+    }
+}
+
+// ---- 그룹 목표 ----
+
+async function openStudyGroupGoalsModal(groupId, groupName) {
+    const modal = document.getElementById("studyGroupGoalsModal");
+    if (!modal) return;
+    document.getElementById("studyGroupGoalsModalTitle").textContent = `${groupName || "그룹"} · 같이 하는 목표`;
+    document.getElementById("studyGroupGoalsTargetGroupId").value = groupId;
+    document.getElementById("studyGroupGoalTypeSelect").value = "ATTENDANCE_STREAK";
+    document.getElementById("studyGroupGoalTitleInput").value = "";
+    document.getElementById("studyGroupGoalTargetInput").value = "";
+    document.getElementById("studyGroupGoalError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    await loadStudyGroupGoals(groupId);
+}
+
+function closeStudyGroupGoalsModal() {
+    const modal = document.getElementById("studyGroupGoalsModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+}
+
+function renderStudyGroupGoalCardHtml(g) {
+    const memberRowsHtml = g.memberProgress.map((m) => {
+        const percent = Math.min(100, Math.round((m.progress / g.targetValue) * 100));
+        return `
+      <p class="goal-progress-label study-group-goal-member-row">${escapeHtmlForStudent(m.nickname)}${m.achieved ? " · 달성! 🎉" : ""}</p>
+      <div class="goal-progress-bar"><div class="goal-progress-fill" style="width: ${percent}%"></div></div>
+      <p class="goal-progress-label">${m.progress} / ${g.targetValue}</p>`;
+    }).join("");
+
+    return `
+    <div class="goal-card ${g.allAchieved ? "is-achieved" : ""}">
+      <div class="goal-card-head">
+        <div>
+          <p class="goal-card-type">${GOAL_TYPE_LABEL[g.type] || g.type}${g.allAchieved ? " · 다같이 달성! 🎉" : ""}</p>
+          <p class="goal-card-title">${escapeHtmlForStudent(g.title)}</p>
+        </div>
+        <button type="button" class="admin-attendance-row-delete" data-delete-group-goal="${g.id}" aria-label="삭제">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      ${memberRowsHtml}
+    </div>`;
+}
+
+async function loadStudyGroupGoals(groupId) {
+    const listEl = document.getElementById("studyGroupGoalsList");
+    const emptyEl = document.getElementById("studyGroupGoalsEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}/goals`);
+        const goals = res.ok ? await res.json() : [];
+
+        listEl.innerHTML = goals.map(renderStudyGroupGoalCardHtml).join("");
+        if (emptyEl) emptyEl.hidden = goals.length > 0;
+    } catch (err) {
+        console.error(err);
+        listEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+async function submitStudyGroupGoal() {
+    const groupId = document.getElementById("studyGroupGoalsTargetGroupId").value;
+    const type = document.getElementById("studyGroupGoalTypeSelect").value;
+    const title = document.getElementById("studyGroupGoalTitleInput").value.trim();
+    const targetValue = Number(document.getElementById("studyGroupGoalTargetInput").value);
+    const errorEl = document.getElementById("studyGroupGoalError");
+    const createBtn = document.getElementById("studyGroupGoalCreateBtn");
+
+    if (!title || !targetValue || targetValue <= 0) {
+        errorEl.textContent = "목표 이름과 목표 값을 모두 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    createBtn.disabled = true;
+    createBtn.textContent = "만드는 중...";
+
+    try {
+        const res = await fetch(`/api/student/groups/${groupId}/goals`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type, title, targetValue }),
+        });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "목표를 만들지 못했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        document.getElementById("studyGroupGoalTitleInput").value = "";
+        document.getElementById("studyGroupGoalTargetInput").value = "";
+        loadStudyGroupGoals(groupId);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        createBtn.disabled = false;
+        createBtn.textContent = "목표 만들기";
+    }
+}
+
+async function deleteStudyGroupGoal(goalId, groupId) {
+    if (!confirm("이 목표를 삭제할까요?")) return;
+    try {
+        const res = await fetch(`/api/student/groups/goals/${goalId}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제하지 못했어요.");
+            return;
+        }
+        loadStudyGroupGoals(groupId);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
     }
 }
 
@@ -3433,16 +3981,27 @@ async function submitQuestion() {
 // ---------- 랭킹보드 (익명) ----------
 
 let leaderboardCurrentType = "attendance";
+let leaderboardCurrentScope = "all";
 
-async function loadLeaderboard(type) {
+async function loadLeaderboard(type, scope) {
     leaderboardCurrentType = type;
+    if (scope) leaderboardCurrentScope = scope;
     const listEl = document.getElementById("leaderboardList");
     const myRankEl = document.getElementById("leaderboardMyRank");
+    const hintEl = document.getElementById("leaderboardHint");
     if (!listEl) return;
     listEl.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
 
+    const isFriends = leaderboardCurrentScope === "friends";
     const unit = type === "vocab" ? "개" : "일";
-    const url = type === "vocab" ? "/api/student/leaderboard/vocab" : "/api/student/leaderboard/attendance";
+    const base = type === "vocab" ? "/api/student/leaderboard/vocab" : "/api/student/leaderboard/attendance";
+    const url = isFriends ? `${base}/friends` : base;
+
+    if (hintEl) {
+        hintEl.textContent = isFriends
+            ? "친구들과 나만 비교해요. 서로 닉네임이 보여요."
+            : "이름은 안 보이고 등수만 보여요. 내 줄만 파란색으로 표시돼요.";
+    }
 
     try {
         const res = await fetch(url);
@@ -3453,12 +4012,16 @@ async function loadLeaderboard(type) {
         const data = await res.json();
 
         if (myRankEl) {
-            myRankEl.textContent = `내 등수: ${data.myRank}등 / 전체 ${data.totalStudents}명 (${data.myValue}${unit})`;
+            myRankEl.textContent = isFriends
+                ? `내 등수: ${data.myRank}등 / 나 포함 ${data.totalStudents}명 (${data.myValue}${unit})`
+                : `내 등수: ${data.myRank}등 / 전체 ${data.totalStudents}명 (${data.myValue}${unit})`;
         }
 
         listEl.innerHTML = "";
         if (data.top.length === 0) {
-            listEl.innerHTML = `<p class="admin-empty-text">아직 랭킹 데이터가 없어요.</p>`;
+            listEl.innerHTML = isFriends
+                ? `<p class="admin-empty-text">아직 친구가 없어요. "친구" 탭에서 먼저 친구를 추가해보세요.</p>`
+                : `<p class="admin-empty-text">아직 랭킹 데이터가 없어요.</p>`;
             return;
         }
 
@@ -3466,9 +4029,12 @@ async function loadLeaderboard(type) {
             const row = document.createElement("div");
             row.className = `leaderboard-row ${entry.isMe ? "is-me" : ""}`;
             const medal = entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : entry.rank;
+            const nameLabel = isFriends
+                ? (entry.isMe ? "나" : escapeHtmlForStudent(entry.nickname || "친구"))
+                : (entry.isMe ? "나" : "학생");
             row.innerHTML = `
         <span class="leaderboard-row-rank">${medal}</span>
-        <span class="leaderboard-row-name">${entry.isMe ? "나" : "학생"}</span>
+        <span class="leaderboard-row-name">${nameLabel}</span>
         <span class="leaderboard-row-value">${entry.value}${unit}</span>
       `;
             listEl.appendChild(row);
@@ -4100,6 +4666,11 @@ async function submitClassChangeRequest() {
     }
 }
 
+const EXAM_DURATION_MS = 60 * 60 * 1000; // 1시간
+let mypageFilesCache = [];
+let examTimerInterval = null;
+let examSessionFileId = null;
+
 async function loadMypageFiles() {
     const list = document.getElementById("mypageFilesList");
     const emptyText = document.getElementById("mypageFilesEmpty");
@@ -4109,15 +4680,18 @@ async function loadMypageFiles() {
         const res = await fetch("/api/student/files");
         if (!res.ok) return;
         const files = await res.json();
+        mypageFilesCache = files;
 
         list.innerHTML = "";
         if (emptyText) emptyText.hidden = files.length > 0;
 
         files.forEach((f) => {
-            const item = document.createElement("a");
+            const item = document.createElement(f.category === "EXAM" ? "div" : "a");
             item.className = "mypage-file-item";
-            item.href = f.fileData;
-            item.download = f.fileName;
+            if (f.category !== "EXAM") {
+                item.href = f.fileData;
+                item.download = f.fileName;
+            }
             item.innerHTML = `
         <span class="mypage-file-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
@@ -4127,15 +4701,170 @@ async function loadMypageFiles() {
           <span class="mypage-file-name">${escapeHtmlForStudent(f.fileName)}</span>
           <span class="mypage-file-date">${f.createdAt}</span>
         </span>
+        ${f.category === "EXAM" ? examFileActionHtml(f) : `
         <span class="mypage-file-download" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
+        </span>`}
       `;
             list.appendChild(item);
         });
     } catch (err) {
         console.error(err);
     }
+}
+
+// 시험 자료(EXAM) 한 건의 오른쪽 버튼/배지를 상태별로 만들어줌
+function examFileActionHtml(f) {
+    if (f.examCompletedAt) {
+        return `<span class="mypage-file-exam-badge mypage-file-exam-badge--done">응시 완료</span>`;
+    }
+    if (f.examStartedAt) {
+        const elapsed = Date.now() - new Date(f.examStartedAt).getTime();
+        if (elapsed < EXAM_DURATION_MS) {
+            return `<button type="button" class="mypage-file-exam-btn" data-exam-resume-id="${f.id}">이어서 시험 보기</button>`;
+        }
+        // 이미 1시간이 지났는데 완료 처리가 안 된 경우 — 곧 자동으로 완료 처리됨
+        return `<span class="mypage-file-exam-badge mypage-file-exam-badge--progress">시간 종료 처리 중...</span>`;
+    }
+    return `<button type="button" class="mypage-file-exam-btn" data-exam-start-id="${f.id}">시험 보러 가기</button>`;
+}
+
+function openExamConfirmModal(fileId) {
+    const modal = document.getElementById("examConfirmModal");
+    if (!modal) return;
+    modal.dataset.examFileId = fileId;
+    document.getElementById("examConfirmError").hidden = true;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeExamConfirmModal() {
+    const modal = document.getElementById("examConfirmModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function confirmStartExam() {
+    const modal = document.getElementById("examConfirmModal");
+    const fileId = modal?.dataset.examFileId;
+    const errorEl = document.getElementById("examConfirmError");
+    const btn = document.getElementById("examConfirmStartBtn");
+    if (!fileId) return;
+
+    btn.disabled = true;
+    try {
+        const res = await fetch(`/api/student/files/${fileId}/exam-start`, { method: "POST" });
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "시험을 시작할 수 없어요.";
+            errorEl.hidden = false;
+            return;
+        }
+        const data = await res.json();
+        closeExamConfirmModal();
+        openExamSessionModal(data);
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function openExamSessionModal(file) {
+    const modal = document.getElementById("examSessionModal");
+    if (!modal) return;
+
+    examSessionFileId = file.id;
+    document.getElementById("examSessionTitle").textContent = file.fileName;
+    document.getElementById("examSessionFrame").src = file.fileData;
+    document.getElementById("examSessionOpenNewTab").href = file.fileData;
+    document.getElementById("examSessionError").hidden = true;
+
+    modal.dataset.examStartedAt = file.examStartedAt;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+
+    startExamTimer(file.examStartedAt);
+}
+
+function closeExamSessionModal() {
+    const modal = document.getElementById("examSessionModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.getElementById("examSessionFrame").src = "";
+    stopExamTimer();
+    examSessionFileId = null;
+    loadMypageFiles();
+}
+
+function startExamTimer(examStartedAt) {
+    stopExamTimer();
+    const startMs = new Date(examStartedAt).getTime();
+    const timerEl = document.getElementById("examSessionTimer");
+
+    const tick = () => {
+        const remainingMs = startMs + EXAM_DURATION_MS - Date.now();
+        if (remainingMs <= 0) {
+            timerEl.textContent = "00:00";
+            stopExamTimer();
+            finishExam(true);
+            return;
+        }
+        const totalSeconds = Math.floor(remainingMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        timerEl.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+        timerEl.classList.toggle("is-urgent", remainingMs < 5 * 60 * 1000);
+    };
+
+    tick();
+    examTimerInterval = setInterval(tick, 1000);
+}
+
+function stopExamTimer() {
+    if (examTimerInterval) {
+        clearInterval(examTimerInterval);
+        examTimerInterval = null;
+    }
+}
+
+// autoByTimeout: 1시간이 지나서 타이머가 자동으로 완료 처리하는 경우 true
+async function finishExam(autoByTimeout) {
+    const fileId = examSessionFileId;
+    if (!fileId) return;
+
+    const errorEl = document.getElementById("examSessionError");
+    const btn = document.getElementById("examSessionCompleteBtn");
+    if (btn) btn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/student/files/${fileId}/exam-complete`, { method: "POST" });
+        if (!res.ok && !autoByTimeout) {
+            const data = await res.text();
+            if (errorEl) {
+                errorEl.textContent = data || "시험 완료 처리에 실패했어요.";
+                errorEl.hidden = false;
+            }
+            if (btn) btn.disabled = false;
+            return;
+        }
+    } catch (err) {
+        console.error(err);
+        if (!autoByTimeout && errorEl) {
+            errorEl.textContent = "서버에 연결할 수 없어요.";
+            errorEl.hidden = false;
+            if (btn) btn.disabled = false;
+            return;
+        }
+    }
+
+    if (autoByTimeout) {
+        alert("시험 시간(1시간)이 끝나서 자동으로 종료됐어요.");
+    }
+    closeExamSessionModal();
 }
 
 async function renderMyPosts() {
@@ -4592,12 +5321,29 @@ document.addEventListener("fragments:loaded", () => {
     window.addEventListener("resize", syncKwzmFixedOffsets);
 
     document.getElementById("boardWriteBtn")?.addEventListener("click", () => openBoardWriteModal());
+    document.getElementById("examConfirmStartBtn")?.addEventListener("click", confirmStartExam);
+    document.getElementById("examSessionCompleteBtn")?.addEventListener("click", () => finishExam(false));
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-board-modal-close]")) closeBoardWriteModal();
         if (e.target.closest("[data-course-materials-close]")) closeCourseMaterialsModal();
         if (e.target.closest("[data-friend-schedule-close]")) closeFriendScheduleModal();
         if (e.target.closest("[data-friend-badges-close]")) closeFriendBadgesModal();
         if (e.target.closest("[data-friend-note-close]")) closeFriendNoteModal();
+        if (e.target.closest("[data-study-group-create-close]")) closeStudyGroupCreateModal();
+        if (e.target.closest("[data-study-group-invite-close]")) closeStudyGroupInviteModal();
+        if (e.target.closest("[data-study-group-notes-close]")) closeStudyGroupNotesModal();
+        if (e.target.closest("[data-study-group-goals-close]")) closeStudyGroupGoalsModal();
+        if (e.target.closest("[data-exam-confirm-close]")) closeExamConfirmModal();
+        if (e.target.closest("[data-exam-session-close]")) closeExamSessionModal();
+
+        const examStartBtn = e.target.closest("[data-exam-start-id]");
+        if (examStartBtn) openExamConfirmModal(examStartBtn.dataset.examStartId);
+
+        const examResumeBtn = e.target.closest("[data-exam-resume-id]");
+        if (examResumeBtn) {
+            const file = mypageFilesCache.find((f) => String(f.id) === String(examResumeBtn.dataset.examResumeId));
+            if (file) openExamSessionModal(file);
+        }
 
         const checkinBtn = e.target.closest("[data-checkin-id]");
         if (checkinBtn) submitCheckin(checkinBtn.dataset.checkinId, checkinBtn);
@@ -4908,6 +5654,7 @@ document.addEventListener("fragments:loaded", () => {
         }
     });
     document.getElementById("vocabBackToSetsBtn")?.addEventListener("click", backToVocabSets);
+    document.getElementById("vocabWordsCloseBtn")?.addEventListener("click", backToVocabSets);
     document.getElementById("vocabQuizStartBtn")?.addEventListener("click", startVocabQuiz);
     document.getElementById("vocabQuizCompleteBtn")?.addEventListener("click", () => completeVocabQuiz(false));
     document.getElementById("surveySubmitBtn")?.addEventListener("click", submitSurvey);
@@ -4989,6 +5736,13 @@ document.addEventListener("fragments:loaded", () => {
             loadLeaderboard(btn.dataset.leaderboardType);
         });
     });
+    document.querySelectorAll("[data-leaderboard-scope]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-leaderboard-scope]").forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            loadLeaderboard(leaderboardCurrentType, btn.dataset.leaderboardScope);
+        });
+    });
     document.getElementById("parentReportCopyBtn")?.addEventListener("click", copyParentReportLink);
     document.getElementById("parentReportRegenBtn")?.addEventListener("click", regenerateParentReportLink);
     document.addEventListener("click", (e) => {
@@ -5058,6 +5812,57 @@ document.addEventListener("fragments:loaded", () => {
                 console.error(err);
                 alert("서버에 연결할 수 없어요.");
             });
+    });
+
+    document.getElementById("studyGroupNewBtn")?.addEventListener("click", openStudyGroupCreateModal);
+    document.getElementById("studyGroupCreateSaveBtn")?.addEventListener("click", submitStudyGroupCreate);
+    document.getElementById("studyGroupInviteSaveBtn")?.addEventListener("click", submitStudyGroupInvite);
+    document.getElementById("studyGroupNoteSendBtn")?.addEventListener("click", submitStudyGroupNote);
+    document.getElementById("studyGroupGoalCreateBtn")?.addEventListener("click", submitStudyGroupGoal);
+
+    document.getElementById("studyGroupsList")?.addEventListener("click", (e) => {
+        const acceptBtn = e.target.closest("[data-accept-group]");
+        const declineBtn = e.target.closest("[data-decline-group]");
+        const notesBtn = e.target.closest("[data-group-notes]");
+        const goalsBtn = e.target.closest("[data-group-goals]");
+        const inviteBtn = e.target.closest("[data-group-invite]");
+        const leaveBtn = e.target.closest("[data-group-leave]");
+        const deleteBtn = e.target.closest("[data-group-delete]");
+
+        if (acceptBtn) {
+            respondGroupInvite(acceptBtn.dataset.acceptGroup, "accept");
+            return;
+        }
+        if (declineBtn) {
+            respondGroupInvite(declineBtn.dataset.declineGroup, "decline");
+            return;
+        }
+        if (notesBtn) {
+            openStudyGroupNotesModal(notesBtn.dataset.groupNotes, notesBtn.dataset.groupName);
+            return;
+        }
+        if (goalsBtn) {
+            openStudyGroupGoalsModal(goalsBtn.dataset.groupGoals, goalsBtn.dataset.groupName);
+            return;
+        }
+        if (inviteBtn) {
+            openStudyGroupInviteModal(inviteBtn.dataset.groupInvite);
+            return;
+        }
+        if (leaveBtn) {
+            leaveStudyGroup(leaveBtn.dataset.groupLeave);
+            return;
+        }
+        if (deleteBtn) {
+            deleteStudyGroup(deleteBtn.dataset.groupDelete);
+        }
+    });
+
+    document.getElementById("studyGroupGoalsList")?.addEventListener("click", (e) => {
+        const deleteBtn = e.target.closest("[data-delete-group-goal]");
+        if (deleteBtn) {
+            deleteStudyGroupGoal(deleteBtn.dataset.deleteGroupGoal, document.getElementById("studyGroupGoalsTargetGroupId").value);
+        }
     });
 
     document.getElementById("classNotesList")?.addEventListener("click", (e) => {

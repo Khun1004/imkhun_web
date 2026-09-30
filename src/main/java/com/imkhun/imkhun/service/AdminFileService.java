@@ -94,8 +94,57 @@ public class AdminFileService {
                 .toList();
     }
 
+    // 학생 - "네, 계속 진행합니다"를 눌러서 시험 시작 (이미 시작했으면 그 시각 그대로 반환)
+    @Transactional
+    public SentFileResponse startExam(Long fileId, String username) {
+        AdminSentFile file = findOwnedExamFile(fileId, username);
+        if (file.getExamCompletedAt() != null) {
+            throw new IllegalStateException("이미 완료한 시험이에요. 다시 볼 수 없어요.");
+        }
+        file.startExam();
+        adminSentFileRepository.save(file);
+        return toResponse(file, courseNameFor(file));
+    }
+
+    // 학생 - "시험 완료하기" (또는 1시간이 지나서 화면에서 자동으로 호출)
+    @Transactional
+    public SentFileResponse completeExam(Long fileId, String username) {
+        AdminSentFile file = findOwnedExamFile(fileId, username);
+        if (file.getExamCompletedAt() != null) {
+            return toResponse(file, courseNameFor(file));
+        }
+        if (file.getExamStartedAt() == null) {
+            throw new IllegalStateException("아직 시험을 시작하지 않았어요.");
+        }
+        file.completeExam();
+        adminSentFileRepository.save(file);
+        return toResponse(file, courseNameFor(file));
+    }
+
+    private AdminSentFile findOwnedExamFile(Long fileId, String username) {
+        AdminSentFile file = adminSentFileRepository.findById(fileId)
+                .orElseThrow(() -> new IllegalStateException("파일을 찾을 수 없어요."));
+        if (!"EXAM".equals(file.getCategory())) {
+            throw new IllegalStateException("시험 자료가 아니에요.");
+        }
+        Application application = applicationRepository.findById(file.getApplicationId())
+                .orElseThrow(() -> new IllegalStateException("신청 내역을 찾을 수 없어요."));
+        if (!application.getUsername().equals(username)) {
+            throw new IllegalStateException("본인에게 온 시험만 볼 수 있어요.");
+        }
+        return file;
+    }
+
+    private String courseNameFor(AdminSentFile file) {
+        return applicationRepository.findById(file.getApplicationId())
+                .map(Application::getCourseName)
+                .orElse(null);
+    }
+
     private SentFileResponse toResponse(AdminSentFile file, String courseName) {
         return new SentFileResponse(file.getId(), file.getCategory(), file.getFileName(), file.getFileData(),
-                courseName, file.getCreatedAt().format(DATE_FORMAT));
+                courseName, file.getCreatedAt().format(DATE_FORMAT),
+                file.getExamStartedAt() == null ? null : file.getExamStartedAt().toString(),
+                file.getExamCompletedAt() == null ? null : file.getExamCompletedAt().toString());
     }
 }

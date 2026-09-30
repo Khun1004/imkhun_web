@@ -16,6 +16,7 @@ public class TimetableService {
     private final TimetableEntryRepository timetableEntryRepository;
     private static final Set<String> VALID_DAYS = Set.of("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN");
     private static final Set<String> VALID_COLOR_TYPES = Set.of("korean", "computer", "other");
+    private static final Set<String> VALID_STUDY_TYPES = Set.of("TOGETHER", "VIDEO");
 
     public TimetableService(TimetableEntryRepository timetableEntryRepository) {
         this.timetableEntryRepository = timetableEntryRepository;
@@ -31,19 +32,27 @@ public class TimetableService {
 
     @Transactional
     public TimetableEntryResponse createEntry(CreateTimetableEntryRequest request) {
-        validate(request);
+        String studyType = normalizeStudyType(request.studyType());
+        validate(studyType, request);
         TimetableEntry saved = timetableEntryRepository.save(TimetableEntry.create(
-                request.day(), request.startTime(), request.endTime(), request.courseName(), request.colorType()));
+                studyType, studyType.equals("VIDEO") ? null : request.day(),
+                request.startTime(), request.endTime(), request.courseName(), request.colorType()));
         return toResponse(saved);
     }
 
     @Transactional
     public TimetableEntryResponse updateEntry(Long id, CreateTimetableEntryRequest request) {
-        validate(request);
+        String studyType = normalizeStudyType(request.studyType());
+        validate(studyType, request);
         TimetableEntry entry = timetableEntryRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("시간표 항목을 찾을 수 없어요."));
-        entry.update(request.day(), request.startTime(), request.endTime(), request.courseName(), request.colorType());
+        entry.update(studyType, studyType.equals("VIDEO") ? null : request.day(),
+                request.startTime(), request.endTime(), request.courseName(), request.colorType());
         return toResponse(timetableEntryRepository.save(entry));
+    }
+
+    private String normalizeStudyType(String studyType) {
+        return VALID_STUDY_TYPES.contains(studyType) ? studyType : "TOGETHER";
     }
 
     @Transactional
@@ -54,13 +63,20 @@ public class TimetableService {
         timetableEntryRepository.deleteById(id);
     }
 
-    private void validate(CreateTimetableEntryRequest request) {
-        if (request.day() == null || !VALID_DAYS.contains(request.day())) {
-            throw new IllegalStateException("올바른 요일을 선택해주세요.");
-        }
-        if (request.startTime() == null || request.startTime().isBlank()
-                || request.endTime() == null || request.endTime().isBlank()) {
-            throw new IllegalStateException("시작·종료 시간을 입력해주세요.");
+    private void validate(String studyType, CreateTimetableEntryRequest request) {
+        if (studyType.equals("TOGETHER")) {
+            if (request.day() == null || !VALID_DAYS.contains(request.day())) {
+                throw new IllegalStateException("올바른 요일을 선택해주세요.");
+            }
+            if (request.startTime() == null || request.startTime().isBlank()
+                    || request.endTime() == null || request.endTime().isBlank()) {
+                throw new IllegalStateException("시작·종료 시간을 입력해주세요.");
+            }
+        } else {
+            if (request.startTime() == null || request.startTime().isBlank()
+                    || request.endTime() == null || request.endTime().isBlank()) {
+                throw new IllegalStateException("시작월·종료월을 입력해주세요.");
+            }
         }
         if (request.courseName() == null || request.courseName().isBlank()) {
             throw new IllegalStateException("과목명을 입력해주세요.");
@@ -71,7 +87,7 @@ public class TimetableService {
     }
 
     private TimetableEntryResponse toResponse(TimetableEntry entry) {
-        return new TimetableEntryResponse(entry.getId(), entry.getDay(), entry.getStartTime(),
+        return new TimetableEntryResponse(entry.getId(), entry.getStudyType(), entry.getDay(), entry.getStartTime(),
                 entry.getEndTime(), entry.getCourseName(), entry.getColorType());
     }
 }

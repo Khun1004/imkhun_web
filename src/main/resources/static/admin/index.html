@@ -517,9 +517,14 @@
                         <span aria-hidden="true">+</span> 시간표 항목 추가
                     </button>
                 </div>
-                <p class="admin-note-hint">홈페이지 공지사항 탭에 나오는 시간표예요. 같은 시간대에 여러 요일 수업을 추가할 수 있어요.</p>
+                <p class="admin-note-hint">홈페이지 공지사항 탭에 나오는 시간표예요. 1:1 수업은 요일·시간으로, 온라인 강좌는 시작일·종료일로 등록해요.</p>
 
-                <div class="admin-view-toggle" role="tablist" aria-label="시간표 보기 방식">
+                <div class="admin-view-toggle" role="tablist" aria-label="시간표 종류">
+                    <button type="button" class="admin-view-toggle-btn active" data-timetable-type="TOGETHER" role="tab" aria-selected="true">실시간으로 함께 배우기</button>
+                    <button type="button" class="admin-view-toggle-btn" data-timetable-type="VIDEO" role="tab" aria-selected="false">언제든 영상으로 배우기</button>
+                </div>
+
+                <div class="admin-view-toggle" role="tablist" aria-label="시간표 보기 방식" id="adminTimetableViewToggle">
                     <button type="button" class="admin-view-toggle-btn active" data-timetable-view="list" role="tab" aria-selected="true">목록</button>
                     <button type="button" class="admin-view-toggle-btn" data-timetable-view="calendar" role="tab" aria-selected="false">캘린더</button>
                 </div>
@@ -1039,8 +1044,9 @@
         </div>
         <div class="admin-register-body">
             <input type="hidden" id="timetableEditingId">
+            <input type="hidden" id="timetableStudyType" value="TOGETHER">
 
-            <div class="auth-form-field">
+            <div class="auth-form-field" id="timetableDayField">
                 <label>요일 (여러 개 선택 가능 — 한 번에 여러 날짜에 같은 수업을 추가해요)</label>
                 <div class="admin-category-grid">
                     <label class="admin-category-chip"><input type="checkbox" name="timetableDay" value="MON"><span>월</span></label>
@@ -1053,7 +1059,7 @@
                 </div>
             </div>
 
-            <div class="admin-timetable-time-row">
+            <div class="admin-timetable-time-row" id="timetableTimeField">
                 <div class="auth-form-field">
                     <label for="timetableStartInput">시작 시간</label>
                     <input type="text" id="timetableStartInput" placeholder="예: 14:00">
@@ -1061,6 +1067,17 @@
                 <div class="auth-form-field">
                     <label for="timetableEndInput">종료 시간</label>
                     <input type="text" id="timetableEndInput" placeholder="예: 15:30">
+                </div>
+            </div>
+
+            <div class="admin-timetable-time-row" id="timetableMonthField" hidden>
+                <div class="auth-form-field">
+                    <label for="timetableStartMonthInput">시작일</label>
+                    <input type="date" id="timetableStartMonthInput">
+                </div>
+                <div class="auth-form-field">
+                    <label for="timetableEndMonthInput">종료일</label>
+                    <input type="date" id="timetableEndMonthInput">
                 </div>
             </div>
 
@@ -1306,9 +1323,10 @@
         </div>
         <div class="admin-register-body">
             <input type="hidden" id="scheduleApplicationId">
-            <p class="admin-note-hint">여기서 등록한 요일·시간에 맞춰 "오늘 출석 체크" 화면과 학생의 출석 버튼이 자동으로 동작해요.</p>
+            <p class="admin-note-hint" id="scheduleTogetherHint">여기서 등록한 요일·시간에 맞춰 "오늘 출석 체크" 화면과 학생의 출석 버튼이 자동으로 동작해요.</p>
+            <p class="admin-note-hint" id="scheduleVideoHint" hidden>온라인 영상 강좌는 요일·시간이 자유라서, 수강 기간(몇 월부터 몇 월까지)만 정해주면 돼요.</p>
 
-            <div class="auth-form-field">
+            <div class="auth-form-field" id="scheduleDaysField">
                 <label>수업 요일 (여러 개 선택 가능)</label>
                 <div class="admin-category-grid">
                     <label class="admin-category-chip"><input type="checkbox" name="scheduleDay" value="MON"><span>월</span></label>
@@ -1321,7 +1339,7 @@
                 </div>
             </div>
 
-            <div class="auth-form-field">
+            <div class="auth-form-field" id="scheduleTimeField">
                 <label>수업 시간 (몇 시부터 몇 시까지)</label>
                 <div class="admin-range-row">
                     <input type="time" id="scheduleTimeInput">
@@ -1331,7 +1349,7 @@
                 <p class="admin-note-hint" style="margin-top: 6px;">종료 시간은 화면에 보여주는 용도예요 (선택). 출석 체크 가능 시간대는 시작 시간 기준으로 계산돼요.</p>
             </div>
 
-            <div class="auth-form-field">
+            <div class="auth-form-field" id="scheduleDateField">
                 <label>수강 기간 (몇 월부터 몇 월까지, 선택)</label>
                 <div class="admin-range-row">
                     <input type="date" id="enrollmentStartDateInput">
@@ -1339,6 +1357,24 @@
                     <input type="date" id="enrollmentEndDateInput">
                 </div>
                 <p class="admin-note-hint" style="margin-top: 6px;">종료일을 정해두면, 종료 7일 전에 학생한테 자동으로 재등록 안내 알림이 가요. 둘 다 비워두면 리마인더 대상이 아니에요.</p>
+            </div>
+
+            <div class="auth-form-field" id="scheduleVideoLevelField" hidden>
+                <label>영상 강좌 레벨</label>
+                <select id="scheduleVideoLevelSelect">
+                    <option value="basic">기초 (5개월)</option>
+                    <option value="custom">직접 입력</option>
+                </select>
+            </div>
+
+            <div class="auth-form-field" id="scheduleVideoMonthField" hidden>
+                <label>수강 기간 (시작 월 ~ 종료 월)</label>
+                <div class="admin-range-row">
+                    <input type="month" id="enrollmentStartMonthInput">
+                    <span class="admin-range-sep">~</span>
+                    <input type="month" id="enrollmentEndMonthInput">
+                </div>
+                <p class="admin-note-hint" style="margin-top: 6px;">레벨을 "기초"로 두면 시작 월을 고를 때 종료 월이 5개월 뒤로 자동 계산돼요. 날짜·시간은 자유라서 따로 안 정해도 돼요.</p>
             </div>
 
             <p class="auth-form-error" id="scheduleError" hidden></p>

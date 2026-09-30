@@ -851,6 +851,13 @@
     gap: 3px;
 }
 
+.student-checkin-dock-schedule-chip-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
 .student-checkin-dock-schedule-chip {
     font-size: 12px;
     font-weight: 700;
@@ -858,6 +865,23 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.student-checkin-dock-schedule-classmate-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    align-self: flex-start;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--kwzm-accent-2, #1c6b70);
+    background: rgba(47, 154, 160, 0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 .student-checkin-dock-schedule-empty {

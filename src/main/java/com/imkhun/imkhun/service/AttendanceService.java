@@ -30,6 +30,7 @@ public class AttendanceService {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final ApplicationRepository applicationRepository;
     private final NotificationService notificationService;
+    private final BadgeService badgeService;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd");
     private static final Set<String> VALID_STATUSES = Set.of("PRESENT", "LATE", "ABSENT", "MAKEUP");
 
@@ -45,10 +46,12 @@ public class AttendanceService {
     private static final long CHECK_IN_CLOSE_MINUTES_AFTER = 60; // 수업 시작 1시간 후부터는 결석 처리 구간 — 학생은 더 이상 체크 못 함
 
     public AttendanceService(AttendanceRecordRepository attendanceRecordRepository,
-                             ApplicationRepository applicationRepository, NotificationService notificationService) {
+                             ApplicationRepository applicationRepository, NotificationService notificationService,
+                             BadgeService badgeService) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.applicationRepository = applicationRepository;
         this.notificationService = notificationService;
+        this.badgeService = badgeService;
     }
 
     // ---------- 개별 학생 출석부 (관리자가 학생 하나 클릭해서 보는 화면) ----------
@@ -306,6 +309,7 @@ public class AttendanceService {
 
         String status = minutesFromStart <= LATE_CUTOFF_MINUTES_AFTER ? "PRESENT" : "LATE";
         attendanceRecordRepository.save(AttendanceRecord.createByStudent(applicationId, today, status));
+        badgeService.checkForNewBadges(username);
         return status;
     }
 

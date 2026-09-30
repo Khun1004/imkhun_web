@@ -1059,27 +1059,57 @@ async function deleteFuturePlanItem(id) {
 // ---- 강의 시간표 관리 ----
 
 let adminTimetableCache = [];
+let currentTimetableTypeFilter = "TOGETHER";
 const TIMETABLE_DAY_LABEL = { MON: "월", TUE: "화", WED: "수", THU: "목", FRI: "금", SAT: "토", SUN: "일" };
 const TIMETABLE_COLOR_LABEL = { korean: "한국어", computer: "컴퓨터", other: "기타" };
 
 async function loadAdminTimetable() {
-    const list = document.getElementById("adminTimetableList");
-    const emptyText = document.getElementById("adminTimetableEmpty");
-    if (!list) return;
-
     try {
         const res = await fetch("/api/admin/timetable");
         if (!res.ok) return;
-        const entries = await res.json();
-        adminTimetableCache = entries;
+        adminTimetableCache = await res.json();
+        renderAdminTimetablePanel();
+    } catch (err) {
+        console.error(err);
+    }
+}
 
-        list.innerHTML = "";
-        if (emptyText) emptyText.hidden = entries.length > 0;
+// 상단 "1:1 시간표 / 온라인 시간표" 토글에 맞춰 목록·캘린더를 다시 그려줌 (서버에 다시 안 물어봐도 됨)
+function renderAdminTimetablePanel() {
+    const list = document.getElementById("adminTimetableList");
+    const emptyText = document.getElementById("adminTimetableEmpty");
+    const viewToggle = document.getElementById("adminTimetableViewToggle");
+    if (!list) return;
 
-        entries.forEach((entry) => {
-            const item = document.createElement("div");
-            item.className = "admin-timetable-item";
-            item.innerHTML = `
+    const isVideo = currentTimetableTypeFilter === "VIDEO";
+    const entries = adminTimetableCache.filter((e) => (e.studyType || "TOGETHER") === currentTimetableTypeFilter);
+
+    // 온라인 시간표는 요일이 없어서 캘린더 보기가 의미 없음 — 토글을 숨기고 목록만 보여줌
+    if (viewToggle) viewToggle.hidden = isVideo;
+    if (isVideo) {
+        list.hidden = false;
+        const calendarEl = document.getElementById("adminTimetableCalendar");
+        if (calendarEl) calendarEl.hidden = true;
+    }
+
+    list.innerHTML = "";
+    emptyText && (emptyText.hidden = entries.length > 0);
+
+    entries.forEach((entry) => {
+        const item = document.createElement("div");
+        item.className = "admin-timetable-item";
+        item.innerHTML = isVideo ? `
+        <span class="admin-timetable-day admin-timetable-day--${entry.colorType}" title="온라인" aria-label="온라인">
+          <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><rect x="3" y="5" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M17 10l4.5-3v10L17 14" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="admin-timetable-time">${escapeHtmlForAdmin(entry.startTime)} ~ ${escapeHtmlForAdmin(entry.endTime)}</span>
+        <span class="admin-timetable-course">${escapeHtmlForAdmin(entry.courseName)}</span>
+        <span class="admin-timetable-color-tag">${TIMETABLE_COLOR_LABEL[entry.colorType] || entry.colorType}</span>
+        <div class="admin-timetable-item-actions">
+          <button type="button" class="admin-material-action-btn" data-edit-timetable-id="${entry.id}">수정</button>
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-timetable-id="${entry.id}">삭제</button>
+        </div>
+      ` : `
         <span class="admin-timetable-day admin-timetable-day--${entry.colorType}">${TIMETABLE_DAY_LABEL[entry.day] || entry.day}</span>
         <span class="admin-timetable-time">${escapeHtmlForAdmin(entry.startTime)} - ${escapeHtmlForAdmin(entry.endTime)}</span>
         <span class="admin-timetable-course">${escapeHtmlForAdmin(entry.courseName)}</span>
@@ -1089,13 +1119,10 @@ async function loadAdminTimetable() {
           <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-timetable-id="${entry.id}">삭제</button>
         </div>
       `;
-            list.appendChild(item);
-        });
+        list.appendChild(item);
+    });
 
-        renderAdminTimetableCalendar(entries);
-    } catch (err) {
-        console.error(err);
-    }
+    if (!isVideo) renderAdminTimetableCalendar(entries);
 }
 
 const TIMETABLE_CALENDAR_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -1130,20 +1157,35 @@ function renderAdminTimetableCalendar(entries) {
 }
 
 
-function openTimetableModal(entryId) {
+function openTimetableModal(entryId, studyTypeForNew) {
     const modal = document.getElementById("timetableModal");
     if (!modal) return;
 
     const entry = entryId ? adminTimetableCache.find((e) => String(e.id) === String(entryId)) : null;
+    const studyType = entry ? (entry.studyType || "TOGETHER") : (studyTypeForNew || currentTimetableTypeFilter);
+    const isVideo = studyType === "VIDEO";
 
-    document.getElementById("timetableModalTitle").textContent = entry ? "시간표 항목 수정" : "시간표 항목 추가";
+    document.getElementById("timetableModalTitle").textContent = entry
+        ? (isVideo ? "언제든 영상으로 배우기 수정" : "실시간으로 함께 배우기 수정")
+        : (isVideo ? "언제든 영상으로 배우기 추가" : "실시간으로 함께 배우기 추가");
     document.getElementById("timetableSaveBtn").textContent = entry ? "수정하기" : "추가하기";
     document.getElementById("timetableEditingId").value = entry ? entry.id : "";
+    document.getElementById("timetableStudyType").value = studyType;
+
+    document.getElementById("timetableDayField").hidden = isVideo;
+    document.getElementById("timetableTimeField").hidden = isVideo;
+    document.getElementById("timetableMonthField").hidden = !isVideo;
+
     document.querySelectorAll('input[name="timetableDay"]').forEach((cb) => {
         cb.checked = entry ? cb.value === entry.day : false;
     });
-    document.getElementById("timetableStartInput").value = entry ? entry.startTime : "";
-    document.getElementById("timetableEndInput").value = entry ? entry.endTime : "";
+    if (isVideo) {
+        document.getElementById("timetableStartMonthInput").value = entry ? entry.startTime : "";
+        document.getElementById("timetableEndMonthInput").value = entry ? entry.endTime : "";
+    } else {
+        document.getElementById("timetableStartInput").value = entry ? entry.startTime : "";
+        document.getElementById("timetableEndInput").value = entry ? entry.endTime : "";
+    }
     document.getElementById("timetableCourseInput").value = entry ? entry.courseName : "";
     const colorRadio = document.querySelector(`input[name="timetableColorType"][value="${entry ? entry.colorType : "korean"}"]`);
     if (colorRadio) colorRadio.checked = true;
@@ -1162,40 +1204,69 @@ function closeTimetableModal() {
 
 async function submitTimetableEntry() {
     const editingId = document.getElementById("timetableEditingId").value;
-    const days = Array.from(document.querySelectorAll('input[name="timetableDay"]:checked')).map((cb) => cb.value);
-    const startTime = document.getElementById("timetableStartInput").value.trim();
-    const endTime = document.getElementById("timetableEndInput").value.trim();
+    const studyType = document.getElementById("timetableStudyType").value || "TOGETHER";
+    const isVideo = studyType === "VIDEO";
     const courseName = document.getElementById("timetableCourseInput").value.trim();
     const colorType = document.querySelector('input[name="timetableColorType"]:checked')?.value;
     const errorEl = document.getElementById("timetableError");
     const saveBtn = document.getElementById("timetableSaveBtn");
     const isEditing = !!editingId;
 
-    if (days.length === 0) {
-        errorEl.textContent = "요일을 하나 이상 선택해주세요.";
-        errorEl.hidden = false;
-        return;
+    let days = [];
+    let startTime = "";
+    let endTime = "";
+
+    if (isVideo) {
+        startTime = document.getElementById("timetableStartMonthInput").value;
+        endTime = document.getElementById("timetableEndMonthInput").value;
+        if (!startTime || !endTime || !courseName) {
+            errorEl.textContent = "시작일·종료일과 과목명을 모두 입력해주세요.";
+            errorEl.hidden = false;
+            return;
+        }
+    } else {
+        days = Array.from(document.querySelectorAll('input[name="timetableDay"]:checked')).map((cb) => cb.value);
+        startTime = document.getElementById("timetableStartInput").value.trim();
+        endTime = document.getElementById("timetableEndInput").value.trim();
+
+        if (days.length === 0) {
+            errorEl.textContent = "요일을 하나 이상 선택해주세요.";
+            errorEl.hidden = false;
+            return;
+        }
+        if (isEditing && days.length > 1) {
+            errorEl.textContent = "수정할 때는 요일을 하나만 선택해주세요.";
+            errorEl.hidden = false;
+            return;
+        }
+        if (!startTime || !endTime || !courseName) {
+            errorEl.textContent = "시간과 과목명을 모두 입력해주세요.";
+            errorEl.hidden = false;
+            return;
+        }
     }
-    if (isEditing && days.length > 1) {
-        errorEl.textContent = "수정할 때는 요일을 하나만 선택해주세요.";
-        errorEl.hidden = false;
-        return;
-    }
-    if (!startTime || !endTime || !courseName) {
-        errorEl.textContent = "시간과 과목명을 모두 입력해주세요.";
-        errorEl.hidden = false;
-        return;
-    }
+
     errorEl.hidden = true;
     saveBtn.disabled = true;
     saveBtn.textContent = isEditing ? "수정하는 중..." : "추가하는 중...";
 
     try {
-        if (isEditing) {
+        if (isVideo) {
+            const res = await fetch(isEditing ? `/api/admin/timetable/${editingId}` : "/api/admin/timetable", {
+                method: isEditing ? "PUT" : "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ studyType, day: null, startTime, endTime, courseName, colorType }),
+            });
+            if (!res.ok) {
+                errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+                errorEl.hidden = false;
+                return;
+            }
+        } else if (isEditing) {
             const res = await fetch(`/api/admin/timetable/${editingId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ day: days[0], startTime, endTime, courseName, colorType }),
+                body: JSON.stringify({ studyType, day: days[0], startTime, endTime, courseName, colorType }),
             });
             if (!res.ok) {
                 errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
@@ -1208,7 +1279,7 @@ async function submitTimetableEntry() {
                 const res = await fetch("/api/admin/timetable", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ day, startTime, endTime, courseName, colorType }),
+                    body: JSON.stringify({ studyType, day, startTime, endTime, courseName, colorType }),
                 });
                 if (!res.ok) {
                     errorEl.textContent = `${TIMETABLE_DAY_LABEL[day] || day}요일 저장 중 오류: ${(await res.text()) || "저장에 실패했어요."}`;
@@ -2263,12 +2334,29 @@ async function changeAttendanceHistoryStatus(selectEl) {
 
 
 
-function openScheduleModal(applicationId, courseName, classDays, classTime, enrollmentEndDate, classEndTime, enrollmentStartDate) {
+const VIDEO_LEVEL_MONTHS = { basic: 5 };
+let currentScheduleStudyType = "TOGETHER";
+
+function openScheduleModal(applicationId, courseName, classDays, classTime, enrollmentEndDate, classEndTime, enrollmentStartDate, studyType) {
     const modal = document.getElementById("scheduleModal");
     if (!modal) return;
 
+    currentScheduleStudyType = studyType === "VIDEO" ? "VIDEO" : "TOGETHER";
+    const isVideo = currentScheduleStudyType === "VIDEO";
+
     document.getElementById("scheduleApplicationId").value = applicationId;
-    document.getElementById("scheduleModalTitle").textContent = `수업 시간 설정 · ${courseName}`;
+    document.getElementById("scheduleModalTitle").textContent = isVideo
+        ? `수강 기간 설정 · ${courseName}`
+        : `수업 시간 설정 · ${courseName}`;
+
+    document.getElementById("scheduleTogetherHint").hidden = isVideo;
+    document.getElementById("scheduleVideoHint").hidden = !isVideo;
+    document.getElementById("scheduleDaysField").hidden = isVideo;
+    document.getElementById("scheduleTimeField").hidden = isVideo;
+    document.getElementById("scheduleDateField").hidden = isVideo;
+    document.getElementById("scheduleVideoLevelField").hidden = !isVideo;
+    document.getElementById("scheduleVideoMonthField").hidden = !isVideo;
+
     document.querySelectorAll('input[name="scheduleDay"]').forEach((cb) => {
         cb.checked = classDays ? classDays.split(",").includes(cb.value) : false;
     });
@@ -2276,10 +2364,30 @@ function openScheduleModal(applicationId, courseName, classDays, classTime, enro
     document.getElementById("scheduleEndTimeInput").value = classEndTime || "";
     document.getElementById("enrollmentStartDateInput").value = enrollmentStartDate || "";
     document.getElementById("enrollmentEndDateInput").value = enrollmentEndDate || "";
+
+    if (isVideo) {
+        document.getElementById("scheduleVideoLevelSelect").value = "basic";
+        document.getElementById("enrollmentStartMonthInput").value = enrollmentStartDate ? enrollmentStartDate.slice(0, 7) : "";
+        document.getElementById("enrollmentEndMonthInput").value = enrollmentEndDate ? enrollmentEndDate.slice(0, 7) : "";
+    }
+
     document.getElementById("scheduleError").hidden = true;
 
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
+}
+
+// 영상 강좌 레벨을 고르거나 시작 월을 바꾸면, "기초" 같은 정해진 레벨은 종료 월을 자동으로 계산해줌
+function recalcVideoEndMonth() {
+    const level = document.getElementById("scheduleVideoLevelSelect")?.value;
+    const startValue = document.getElementById("enrollmentStartMonthInput")?.value;
+    const monthsToAdd = VIDEO_LEVEL_MONTHS[level];
+    if (!monthsToAdd || !startValue) return;
+
+    const [year, month] = startValue.split("-").map(Number);
+    const endDate = new Date(year, month - 1 + monthsToAdd, 1);
+    const endValue = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}`;
+    document.getElementById("enrollmentEndMonthInput").value = endValue;
 }
 
 function closeScheduleModal() {
@@ -2291,36 +2399,72 @@ function closeScheduleModal() {
 
 async function submitSchedule() {
     const applicationId = document.getElementById("scheduleApplicationId").value;
-    const days = [...document.querySelectorAll('input[name="scheduleDay"]:checked')].map((cb) => cb.value);
-    const time = document.getElementById("scheduleTimeInput").value;
-    const endTime = document.getElementById("scheduleEndTimeInput").value;
-    const enrollmentStartDate = document.getElementById("enrollmentStartDateInput").value;
-    const enrollmentEndDate = document.getElementById("enrollmentEndDateInput").value;
     const errorEl = document.getElementById("scheduleError");
     const saveBtn = document.getElementById("scheduleSaveBtn");
+    const isVideo = currentScheduleStudyType === "VIDEO";
 
-    if (days.length === 0 || !time) {
-        errorEl.textContent = "요일을 하나 이상 고르고, 시간도 입력해주세요.";
-        errorEl.hidden = false;
-        return;
+    let enrollmentStartDate;
+    let enrollmentEndDate;
+
+    if (isVideo) {
+        const startMonth = document.getElementById("enrollmentStartMonthInput").value;
+        const endMonth = document.getElementById("enrollmentEndMonthInput").value;
+        if (!startMonth || !endMonth) {
+            errorEl.textContent = "시작 월과 종료 월을 모두 골라주세요.";
+            errorEl.hidden = false;
+            return;
+        }
+        // 시작 월은 1일부터, 종료 월은 그 달의 마지막 날까지로 저장해서 종료 월 내내 수강할 수 있게 함
+        enrollmentStartDate = `${startMonth}-01`;
+        const [endYear, endMonthNum] = endMonth.split("-").map(Number);
+        const lastDay = new Date(endYear, endMonthNum, 0).getDate();
+        enrollmentEndDate = `${endMonth}-${String(lastDay).padStart(2, "0")}`;
+    } else {
+        const days = [...document.querySelectorAll('input[name="scheduleDay"]:checked')].map((cb) => cb.value);
+        const time = document.getElementById("scheduleTimeInput").value;
+        const endTime = document.getElementById("scheduleEndTimeInput").value;
+        enrollmentStartDate = document.getElementById("enrollmentStartDateInput").value;
+        enrollmentEndDate = document.getElementById("enrollmentEndDateInput").value;
+
+        if (days.length === 0 || !time) {
+            errorEl.textContent = "요일을 하나 이상 고르고, 시간도 입력해주세요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        errorEl.hidden = true;
+        saveBtn.disabled = true;
+        saveBtn.textContent = "저장하는 중...";
+
+        try {
+            const res = await fetch(`/api/admin/applications/${applicationId}/schedule`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ classDays: days.join(","), classTime: time, classEndTime: endTime || null }),
+            });
+
+            if (!res.ok) {
+                errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+                errorEl.hidden = false;
+                saveBtn.disabled = false;
+                saveBtn.textContent = "저장하기";
+                return;
+            }
+        } catch (err) {
+            console.error(err);
+            errorEl.textContent = "서버에 연결할 수 없어요.";
+            errorEl.hidden = false;
+            saveBtn.disabled = false;
+            saveBtn.textContent = "저장하기";
+            return;
+        }
     }
+
     errorEl.hidden = true;
     saveBtn.disabled = true;
     saveBtn.textContent = "저장하는 중...";
 
     try {
-        const res = await fetch(`/api/admin/applications/${applicationId}/schedule`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ classDays: days.join(","), classTime: time, classEndTime: endTime || null }),
-        });
-
-        if (!res.ok) {
-            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
-            errorEl.hidden = false;
-            return;
-        }
-
         const endDateRes = await fetch(`/api/admin/applications/${applicationId}/enrollment-end-date`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2328,7 +2472,7 @@ async function submitSchedule() {
         });
 
         if (!endDateRes.ok) {
-            errorEl.textContent = (await endDateRes.text()) || "수강 종료일 저장에 실패했어요.";
+            errorEl.textContent = (await endDateRes.text()) || "수강 기간 저장에 실패했어요.";
             errorEl.hidden = false;
             return;
         }
@@ -2772,8 +2916,8 @@ async function submitRegisterMaterial() {
         errorEl.hidden = false;
         return;
     }
-    if (selectedFiles.some((f) => f.size > 20 * 1024 * 1024)) {
-        errorEl.textContent = "파일 하나당 용량은 20MB 이하로 올려주세요.";
+    if (selectedFiles.some((f) => f.size > 200 * 1024 * 1024)) {
+        errorEl.textContent = "파일 하나당 용량은 200MB 이하로 올려주세요.";
         errorEl.hidden = false;
         return;
     }
@@ -3080,7 +3224,7 @@ async function loadStudentList() {
         <div class="admin-student-actions-row">
           <button type="button" class="admin-material-action-btn" data-change-course-id="${app.id}">강의 변경</button>
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-payment-info-id="${app.id}">${app.hasPaymentInfo ? "결제 안내 수정" : "결제 안내 등록"}</button>` : ""}
-          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}" data-schedule-enrollment-end="${app.enrollmentEndDate || ""}" data-schedule-end-time="${app.classEndTime || ""}" data-schedule-enrollment-start="${app.enrollmentStartDate || ""}">${app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정"}</button>` : ""}
+          ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-schedule-id="${app.id}" data-schedule-course="${escapeHtmlForAdmin(app.courseName)}" data-schedule-days="${app.classDays || ""}" data-schedule-time="${app.classTime || ""}" data-schedule-enrollment-end="${app.enrollmentEndDate || ""}" data-schedule-end-time="${app.classEndTime || ""}" data-schedule-enrollment-start="${app.enrollmentStartDate || ""}" data-schedule-study-type="${app.studyType || ""}">${app.studyType === "VIDEO" ? (app.enrollmentStartDate ? "수강 기간 확인/수정" : "수강 기간 설정") : (app.classDays ? "수업 시간 확인/수정" : "수업 시간 설정")}</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-attendance-id="${app.id}" data-attendance-course="${escapeHtmlForAdmin(app.courseName)}">출석부</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn" data-send-file-id="${app.id}" data-send-file-course="${escapeHtmlForAdmin(app.courseName)}">파일 보내기</button>` : ""}
           ${app.status === "APPROVED" ? `<button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-set-status-id="${app.id}" data-set-status-value="SUSPENDED">휴면 처리</button>` : ""}
@@ -4896,7 +5040,7 @@ document.addEventListener("fragments:loaded", () => {
         if (scheduleBtn) {
             openScheduleModal(scheduleBtn.dataset.scheduleId, scheduleBtn.dataset.scheduleCourse,
                 scheduleBtn.dataset.scheduleDays, scheduleBtn.dataset.scheduleTime, scheduleBtn.dataset.scheduleEnrollmentEnd,
-                scheduleBtn.dataset.scheduleEndTime, scheduleBtn.dataset.scheduleEnrollmentStart);
+                scheduleBtn.dataset.scheduleEndTime, scheduleBtn.dataset.scheduleEnrollmentStart, scheduleBtn.dataset.scheduleStudyType);
         }
 
         const markAttendanceBtn = e.target.closest("[data-mark-attendance]");
@@ -4924,7 +5068,19 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("futureplanSectionSaveBtn")?.addEventListener("click", submitFuturePlanSection);
     document.getElementById("futureplanItemNewBtn")?.addEventListener("click", () => openFuturePlanItemModal(null));
     document.getElementById("futureplanItemSaveBtn")?.addEventListener("click", submitFuturePlanItem);
-    document.getElementById("adminTimetableNewBtn")?.addEventListener("click", () => openTimetableModal());
+    document.getElementById("adminTimetableNewBtn")?.addEventListener("click", () => openTimetableModal(null, currentTimetableTypeFilter));
+    document.querySelectorAll("[data-timetable-type]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-timetable-type]").forEach((b) => {
+                b.classList.remove("active");
+                b.setAttribute("aria-selected", "false");
+            });
+            btn.classList.add("active");
+            btn.setAttribute("aria-selected", "true");
+            currentTimetableTypeFilter = btn.dataset.timetableType;
+            renderAdminTimetablePanel();
+        });
+    });
     document.getElementById("timetableSaveBtn")?.addEventListener("click", submitTimetableEntry);
     document.getElementById("attendanceSaveBtn")?.addEventListener("click", submitAttendanceRecord);
     document.getElementById("lessonNoteSaveBtn")?.addEventListener("click", submitLessonNote);
@@ -4989,6 +5145,8 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("assignmentSaveBtn")?.addEventListener("click", submitAssignment);
     document.getElementById("sendFileSubmitBtn")?.addEventListener("click", submitSendFile);
     document.getElementById("scheduleSaveBtn")?.addEventListener("click", submitSchedule);
+    document.getElementById("scheduleVideoLevelSelect")?.addEventListener("change", recalcVideoEndMonth);
+    document.getElementById("enrollmentStartMonthInput")?.addEventListener("change", recalcVideoEndMonth);
     document.getElementById("sendPaymentReminderBtn")?.addEventListener("click", sendPaymentRemindersNow);
 
     document.querySelectorAll("[data-timetable-view]").forEach((btn) => {

@@ -13,16 +13,21 @@ public class TimetableEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // "MON" / "TUE" / "WED" / "THU" / "FRI"
+    // "TOGETHER"(1:1 시간표 — 요일·시간 기준) / "VIDEO"(온라인 시간표 — 시작월·종료월 기준)
+    @Column(name = "study_type", nullable = false)
+    private String studyType = "TOGETHER";
+
+    // "MON" / "TUE" / "WED" / "THU" / "FRI" — studyType이 VIDEO면 요일이 없어서 null
     // 컬럼명을 day_of_week로 지정함 — "day"는 H2에서 예약어라 그대로 쓰면 SQL 오류가 남
-    @Column(name = "day_of_week", nullable = false)
+    @Column(name = "day_of_week")
     private String day;
 
-    // "14:00" 같은 문자열 그대로 저장 (자유 형식)
-    @Column(name = "start_time", nullable = false)
+    // TOGETHER면 "14:00" 같은 시간, VIDEO면 "2026-09" 같은 시작월을 그대로 저장 (자유 형식)
+    @Column(name = "start_time")
     private String startTime;
 
-    @Column(name = "end_time", nullable = false)
+    // TOGETHER면 종료 시간, VIDEO면 종료월
+    @Column(name = "end_time")
     private String endTime;
 
     @Column(name = "course_name", nullable = false)
@@ -39,8 +44,9 @@ public class TimetableEntry {
         // JPA 기본 생성자
     }
 
-    public static TimetableEntry create(String day, String startTime, String endTime, String courseName, String colorType) {
+    public static TimetableEntry create(String studyType, String day, String startTime, String endTime, String courseName, String colorType) {
         TimetableEntry entry = new TimetableEntry();
+        entry.studyType = studyType;
         entry.day = day;
         entry.startTime = startTime;
         entry.endTime = endTime;
@@ -49,7 +55,8 @@ public class TimetableEntry {
         return entry;
     }
 
-    public void update(String day, String startTime, String endTime, String courseName, String colorType) {
+    public void update(String studyType, String day, String startTime, String endTime, String courseName, String colorType) {
+        this.studyType = studyType;
         this.day = day;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -59,6 +66,10 @@ public class TimetableEntry {
 
     public Long getId() {
         return id;
+    }
+
+    public String getStudyType() {
+        return studyType;
     }
 
     public String getDay() {

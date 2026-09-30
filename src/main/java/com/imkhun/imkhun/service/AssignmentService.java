@@ -25,13 +25,16 @@ public class AssignmentService {
     private final ApplicationRepository applicationRepository;
     private final AssignmentSubmissionRepository assignmentSubmissionRepository;
     private final NotificationService notificationService;
+    private final BadgeService badgeService;
 
     public AssignmentService(AssignmentRepository assignmentRepository, ApplicationRepository applicationRepository,
-                             AssignmentSubmissionRepository assignmentSubmissionRepository, NotificationService notificationService) {
+                             AssignmentSubmissionRepository assignmentSubmissionRepository, NotificationService notificationService,
+                             BadgeService badgeService) {
         this.assignmentRepository = assignmentRepository;
         this.applicationRepository = applicationRepository;
         this.assignmentSubmissionRepository = assignmentSubmissionRepository;
         this.notificationService = notificationService;
+        this.badgeService = badgeService;
     }
 
     @Transactional
@@ -98,10 +101,12 @@ public class AssignmentService {
             assignment.markComplete();
             notificationService.notifyAdmin("ASSIGNMENT_COMPLETED",
                     username + "님이 \"" + assignment.getTitle() + "\" 숙제를 완료했어요.", null);
+            assignmentRepository.save(assignment);
+            badgeService.checkForNewBadges(username);
         } else {
             assignment.markIncomplete();
+            assignmentRepository.save(assignment);
         }
-        assignmentRepository.save(assignment);
     }
 
     public void deleteAssignment(Long id) {

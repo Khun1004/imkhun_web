@@ -37,6 +37,12 @@
     --kwzm-ink-soft: #4d5c73;
     --kwzm-ink-faint: #8393a8;
     --kwzm-line: #dbe3ea;
+
+    /* 프리미엄 골드 포인트 — 마이페이지 배지/목표 달성 등 "특별한 순간"을 강조할 때 씀 */
+    --kwzm-gold: #c8952e;
+    --kwzm-gold-soft: #e0a72c;
+    --kwzm-gold-gradient: linear-gradient(120deg, #a9781f 0%, #e0a72c 50%, #f3ce7a 100%);
+    --kwzm-gold-line: rgba(200, 149, 46, 0.35);
 }
 
 /* 어두운 모드 — 마이페이지 > 화면 설정에서 켜고 끌 수 있어요 (localStorage에 기억됨) */
@@ -49,6 +55,11 @@
     --kwzm-ink-soft: #b7c0d3;
     --kwzm-ink-faint: #7c869c;
     --kwzm-line: #2b3448;
+
+    --kwzm-gold: #e0a72c;
+    --kwzm-gold-soft: #f3ce7a;
+    --kwzm-gold-gradient: linear-gradient(120deg, #c8952e 0%, #e0a72c 50%, #f3ce7a 100%);
+    --kwzm-gold-line: rgba(224, 167, 44, 0.4);
 }
 
 :root[data-theme="dark"] .admin-material-thumb,

@@ -3,14 +3,18 @@ package com.imkhun.imkhun.service;
 import com.imkhun.imkhun.domain.Application;
 import com.imkhun.imkhun.domain.Assignment;
 import com.imkhun.imkhun.domain.AttendanceRecord;
+import com.imkhun.imkhun.domain.Friendship;
 import com.imkhun.imkhun.domain.LearningGoal;
 import com.imkhun.imkhun.domain.StudentBadge;
+import com.imkhun.imkhun.domain.User;
 import com.imkhun.imkhun.domain.VocabularyQuizResult;
 import com.imkhun.imkhun.dto.BadgeResponse;
 import com.imkhun.imkhun.repository.AssignmentRepository;
 import com.imkhun.imkhun.repository.AttendanceRecordRepository;
+import com.imkhun.imkhun.repository.FriendshipRepository;
 import com.imkhun.imkhun.repository.LearningGoalRepository;
 import com.imkhun.imkhun.repository.StudentBadgeRepository;
+import com.imkhun.imkhun.repository.UserRepository;
 import com.imkhun.imkhun.repository.VocabularyQuizResultRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,12 +73,15 @@ public class BadgeService {
     private final StudyPostService studyPostService;
     private final VoiceSubmissionService voiceSubmissionService;
     private final NotificationService notificationService;
+    private final FriendshipRepository friendshipRepository;
+    private final UserRepository userRepository;
 
     public BadgeService(StudentBadgeRepository studentBadgeRepository, StudentAuthService studentAuthService,
                         AttendanceRecordRepository attendanceRecordRepository, AttendanceStreakService attendanceStreakService,
                         VocabularyQuizResultRepository vocabularyQuizResultRepository, AssignmentRepository assignmentRepository,
                         LearningGoalRepository learningGoalRepository, StudyPostService studyPostService,
-                        VoiceSubmissionService voiceSubmissionService, NotificationService notificationService) {
+                        VoiceSubmissionService voiceSubmissionService, NotificationService notificationService,
+                        FriendshipRepository friendshipRepository, UserRepository userRepository) {
         this.studentBadgeRepository = studentBadgeRepository;
         this.studentAuthService = studentAuthService;
         this.attendanceRecordRepository = attendanceRecordRepository;
@@ -85,6 +92,8 @@ public class BadgeService {
         this.studyPostService = studyPostService;
         this.voiceSubmissionService = voiceSubmissionService;
         this.notificationService = notificationService;
+        this.friendshipRepository = friendshipRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -103,6 +112,7 @@ public class BadgeService {
                         existing = studentBadgeRepository.save(StudentBadge.create(username, def.key()));
                         notificationService.notifyStudent(username, "BADGE_EARNED",
                                 "\"" + def.name() + "\" 배지를 획득했어요! 축하해요 🎉", null);
+                        notifyFriendsOfNewBadge(username, def.name());
                     }
 
                     boolean earned = existing != null;
@@ -113,6 +123,24 @@ public class BadgeService {
                     );
                 })
                 .toList();
+    }
+
+    // 학생이 새 배지를 딸 때마다 자동으로 호출해서, 미뤄뒀다가(다음에 배지 탭을 열 때) 알림이 가는 게
+    // 아니라 그 행동을 한 순간 바로 감지되게 함. 반환값은 필요 없어서 그냥 무시해도 됨
+    @Transactional
+    public void checkForNewBadges(String username) {
+        getBadgesForStudent(username);
+    }
+
+    // 친구가 새 배지를 땄을 때 나에게도 자동으로 알려줌. FriendService를 거치면 서로 의존하는
+    // 순환참조가 생기기 때문에, 친구 목록 조회에 필요한 리포지토리만 직접 가져와서 씀
+    private void notifyFriendsOfNewBadge(String username, String badgeName) {
+        String nickname = userRepository.findByUsername(username).map(User::getNickname).orElse("친구");
+        for (Friendship friendship : friendshipRepository.findByUsernameAOrUsernameB(username, username)) {
+            String friendUsername = friendship.getUsernameA().equals(username) ? friendship.getUsernameB() : friendship.getUsernameA();
+            notificationService.notifyStudent(friendUsername, "FRIEND_BADGE_EARNED",
+                    nickname + "님이 \"" + badgeName + "\" 배지를 땄어요!", null);
+        }
     }
 
     private Map<String, Integer> computeStats(String username) {

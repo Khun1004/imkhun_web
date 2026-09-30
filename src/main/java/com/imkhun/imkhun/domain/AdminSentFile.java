@@ -31,6 +31,15 @@ public class AdminSentFile {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    // ---- 시험 응시 (category가 "EXAM"인 파일에만 의미가 있음) ----
+    // 학생이 "네, 계속 진행합니다"를 누른 시각 (null이면 아직 시작 안 함) — 여기서 1시간을 셈
+    @Column(name = "exam_started_at")
+    private LocalDateTime examStartedAt;
+
+    // 학생이 "시험 완료하기"를 누른 시각 (null이면 아직 완료 안 함) — 한 번 채워지면 다시 응시 불가
+    @Column(name = "exam_completed_at")
+    private LocalDateTime examCompletedAt;
+
     protected AdminSentFile() {
         // JPA 기본 생성자
     }
@@ -66,5 +75,25 @@ public class AdminSentFile {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getExamStartedAt() {
+        return examStartedAt;
+    }
+
+    public LocalDateTime getExamCompletedAt() {
+        return examCompletedAt;
+    }
+
+    // "네, 계속 진행합니다"를 누른 순간 호출. 이미 시작했으면(새로고침 등) 그대로 두고 무시함 —
+    // 그래야 타이머가 처음 시작한 시각 기준으로 계속 흘러가요
+    public void startExam() {
+        if (this.examStartedAt == null) {
+            this.examStartedAt = LocalDateTime.now();
+        }
+    }
+
+    public void completeExam() {
+        this.examCompletedAt = LocalDateTime.now();
     }
 }

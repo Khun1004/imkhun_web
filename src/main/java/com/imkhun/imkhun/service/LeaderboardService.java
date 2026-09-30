@@ -2,6 +2,7 @@ package com.imkhun.imkhun.service;
 
 import com.imkhun.imkhun.domain.Application;
 import com.imkhun.imkhun.domain.VocabularyQuizResult;
+import com.imkhun.imkhun.dto.FriendResponse;
 import com.imkhun.imkhun.dto.LeaderboardEntryResponse;
 import com.imkhun.imkhun.dto.LeaderboardResponse;
 import com.imkhun.imkhun.repository.ApplicationRepository;
@@ -12,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// 랭킹보드 — 이름은 절대 안 보여주고 등수/점수만 보여줌 (익명). 학생 본인 줄만 화면에서 강조 표시함
+// 랭킹보드. 전체 랭킹은 이름은 절대 안 보여주고 등수/점수만 보여줌 (익명).
+// 친구 한정 랭킹은 서로 아는 사이라 닉네임을 보여줌 — "나 vs 내 친구들"만 비교함.
+// 어느 쪽이든 학생 본인 줄만 화면에서 강조 표시함
 @Service
 public class LeaderboardService {
 
@@ -21,12 +24,14 @@ public class LeaderboardService {
     private final ApplicationRepository applicationRepository;
     private final AttendanceStreakService attendanceStreakService;
     private final VocabularyQuizResultRepository vocabularyQuizResultRepository;
+    private final FriendService friendService;
 
     public LeaderboardService(ApplicationRepository applicationRepository, AttendanceStreakService attendanceStreakService,
-                              VocabularyQuizResultRepository vocabularyQuizResultRepository) {
+                              VocabularyQuizResultRepository vocabularyQuizResultRepository, FriendService friendService) {
         this.applicationRepository = applicationRepository;
         this.attendanceStreakService = attendanceStreakService;
         this.vocabularyQuizResultRepository = vocabularyQuizResultRepository;
+        this.friendService = friendService;
     }
 
     @Transactional(readOnly = true)
@@ -52,6 +57,62 @@ public class LeaderboardService {
         return buildResponse(valueByUsername, currentUsername);
     }
 
+    @Transactional(readOnly = true)
+    public LeaderboardResponse getFriendsAttendanceStreakLeaderboard(String currentUsername) {
+        Map<String, String> nicknameByUsername = collectFriendsAndSelf(currentUsername);
+        Map<String, Integer> valueByUsername = new HashMap<>();
+        for (String username : nicknameByUsername.keySet()) {
+            valueByUsername.put(username, attendanceStreakService.getStreakForStudent(username).currentStreak());
+        }
+        return buildFriendsResponse(valueByUsername, nicknameByUsername, currentUsername);
+    }
+
+    @Transactional(readOnly = true)
+    public LeaderboardResponse getFriendsVocabLeaderboard(String currentUsername) {
+        Map<String, String> nicknameByUsername = collectFriendsAndSelf(currentUsername);
+        Map<String, Integer> valueByUsername = new HashMap<>();
+        for (String username : nicknameByUsername.keySet()) {
+            valueByUsername.put(username, 0);
+        }
+        for (VocabularyQuizResult result : vocabularyQuizResultRepository.findAll()) {
+            if (nicknameByUsername.containsKey(result.getUsername())) {
+                valueByUsername.merge(result.getUsername(), result.getScore(), Integer::sum);
+            }
+        }
+        return buildFriendsResponse(valueByUsername, nicknameByUsername, currentUsername);
+    }
+
+    private Map<String, String> collectFriendsAndSelf(String currentUsername) {
+        Map<String, String> nicknameByUsername = new LinkedHashMap<>();
+        nicknameByUsername.put(currentUsername, "나");
+        for (FriendResponse friend : friendService.getMyFriends(currentUsername)) {
+            nicknameByUsername.put(friend.username(), friend.nickname());
+        }
+        return nicknameByUsername;
+    }
+
+    private LeaderboardResponse buildFriendsResponse(Map<String, Integer> valueByUsername, Map<String, String> nicknameByUsername,
+                                                     String currentUsername) {
+        List<Map.Entry<String, Integer>> sorted = valueByUsername.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue())
+                .collect(Collectors.toList());
+
+        List<LeaderboardEntryResponse> top = new ArrayList<>();
+        int myRank = 0;
+        int myValue = valueByUsername.getOrDefault(currentUsername, 0);
+
+        for (int i = 0; i < sorted.size(); i++) {
+            Map.Entry<String, Integer> entry = sorted.get(i);
+            int rank = i + 1;
+            boolean isMe = entry.getKey().equals(currentUsername);
+            if (isMe) myRank = rank;
+            String nickname = nicknameByUsername.getOrDefault(entry.getKey(), "(알 수 없음)");
+            top.add(new LeaderboardEntryResponse(rank, entry.getValue(), isMe, nickname));
+        }
+
+        return new LeaderboardResponse(top, myRank, myValue, sorted.size());
+    }
+
     private List<String> distinctApprovedUsernames() {
         return applicationRepository.findByStatus("APPROVED").stream()
                 .map(Application::getUsername)
@@ -74,7 +135,7 @@ public class LeaderboardService {
             boolean isMe = entry.getKey().equals(currentUsername);
             if (isMe) myRank = rank;
             if (i < TOP_COUNT) {
-                top.add(new LeaderboardEntryResponse(rank, entry.getValue(), isMe));
+                top.add(new LeaderboardEntryResponse(rank, entry.getValue(), isMe, null));
             }
         }
 
