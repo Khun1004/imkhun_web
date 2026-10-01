@@ -1977,7 +1977,7 @@ async function loadTrialMaterials(topic) {
         <div class="student-material-types">${typeBadgeHtml}</div>
         <p class="student-material-date">${m.createdAt}</p>
       `;
-            item.addEventListener("click", () => handleStudentViewMaterial(m));
+            item.addEventListener("click", () => handleTrialViewMaterial(m));
             list.appendChild(item);
         });
     } catch (err) {
@@ -2121,6 +2121,124 @@ function handleStudentViewMaterial(material) {
     } else if (first.fileData) {
         openStudentFileInNewTab(first.fileData);
     }
+}
+
+// ---------- 무료체험 전용 자료 보기 (새 탭으로 안 가고, 화면 안 창에서 워터마크와 함께 보여줌) ----------
+
+function handleTrialViewMaterial(material) {
+    const files = material.files || [];
+    if (files.length === 0) return;
+
+    const allImages = files.every((f) => f.fileType && f.fileType.startsWith("image/"));
+    if (allImages) {
+        openStudentLightbox(files); // 사진 여러 장은 기존 넘겨보기 방식 그대로 유지
+        return;
+    }
+
+    const first = files[0];
+    if (first.textContent && !first.fileData && !first.linkUrl) {
+        openTrialMaterialModal({ type: "text", text: first.textContent, title: material.title });
+    } else if (first.linkUrl) {
+        openTrialMaterialModal({ type: "iframe", src: first.linkUrl, title: material.title });
+    } else if (first.fileData) {
+        openTrialMaterialModal({ type: "iframe", src: first.fileData, title: material.title });
+    }
+}
+
+// PDF를 브라우저 기본 뷰어로 열면 거기 자체 다운로드·인쇄 버튼이 그대로 보여서,
+// "다운로드·인쇄 제한"이 무색해짐. 그래서 브라우저 PDF 뷰어의 툴바/사이드바를 최대한 숨기는
+// 옵션을 주소에 붙여줌 (크롬·엣지 등 대부분의 브라우저가 지원, 100% 보장은 아님)
+function withTrialViewerProtectionParams(url) {
+    if (!url) return url;
+    const isLikelyPdf = /\.pdf(\?|#|$)/i.test(url) || url.startsWith("blob:") || url.startsWith("data:application/pdf");
+    if (!isLikelyPdf) return url;
+    const hashParams = "toolbar=0&navpanes=0&statusbar=0&scrollbar=0";
+    return url.includes("#") ? `${url}&${hashParams}` : `${url}#${hashParams}`;
+}
+
+// "data:" 로 시작하는 예전 base64 자료는 blob 주소로 바꿔서 iframe에 넣어줌(하위 호환), 실제 업로드 주소는 그대로 씀
+function resolveTrialFileSrc(fileUrlOrDataUri) {
+    if (!fileUrlOrDataUri) return "";
+    if (!fileUrlOrDataUri.startsWith("data:")) return fileUrlOrDataUri;
+
+    try {
+        const [header, base64] = fileUrlOrDataUri.split(",");
+        const mimeMatch = header.match(/data:(.*?);base64/);
+        const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: mimeType });
+        return URL.createObjectURL(blob);
+    } catch (err) {
+        console.error(err);
+        return "";
+    }
+}
+
+function openTrialMaterialModal({ type, src, text, title }) {
+    const modal = document.getElementById("trialMaterialModal");
+    const frame = document.getElementById("trialMaterialFrame");
+    const textBox = document.getElementById("trialMaterialText");
+    const titleEl = document.getElementById("trialMaterialModalTitle");
+    if (!modal || !frame) return;
+
+    if (type === "iframe") {
+        const resolvedSrc = resolveTrialFileSrc(src);
+        if (!resolvedSrc) {
+            alert("파일을 여는 데 실패했어요.");
+            return;
+        }
+        frame.src = withTrialViewerProtectionParams(resolvedSrc);
+        frame.hidden = false;
+        if (textBox) textBox.hidden = true;
+    } else {
+        frame.src = "";
+        frame.hidden = true;
+        if (textBox) {
+            textBox.textContent = text || "";
+            textBox.hidden = false;
+        }
+    }
+
+    if (titleEl) titleEl.textContent = title || "자료";
+    renderTrialWatermark();
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+}
+
+function closeTrialMaterialModal() {
+    const modal = document.getElementById("trialMaterialModal");
+    const frame = document.getElementById("trialMaterialFrame");
+    const textBox = document.getElementById("trialMaterialText");
+    const watermark = document.getElementById("trialMaterialWatermark");
+    if (!modal) return;
+
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (frame) frame.src = "";
+    if (textBox) textBox.textContent = "";
+    if (watermark) watermark.innerHTML = "";
+}
+
+// 보는 학생 닉네임 + 경고 문구 + 날짜·시간을 화면 가득 옅게 반복해서 보여줌(스크린샷 억제용)
+function renderTrialWatermark() {
+    const el = document.getElementById("trialMaterialWatermark");
+    if (!el) return;
+
+    const label = studentNicknameForCheckin ? `${studentNicknameForCheckin} 님` : "KWZM 수강생";
+    const now = new Date();
+    const stamp = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const text = `${label} · 무단 캡처·배포 금지 · ${stamp}`;
+
+    const rowsHtml = Array.from({ length: 10 })
+        .map(() => `<div class="trial-material-watermark-row">${Array.from({ length: 4 }).map(() => `<span>${escapeHtmlForStudent(text)}</span>`).join("")}</div>`)
+        .join("");
+
+    el.innerHTML = rowsHtml;
 }
 
 let studentLightboxFiles = [];
@@ -5616,6 +5734,7 @@ document.addEventListener("fragments:loaded", () => {
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             closeStudentLightbox();
+            closeTrialMaterialModal();
         }
         if (document.getElementById("studentLightbox")?.classList.contains("open")) {
             if (e.key === "ArrowLeft") showStudentLightboxPrev();
@@ -5625,6 +5744,12 @@ document.addEventListener("fragments:loaded", () => {
 
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-student-lightbox-close]")) closeStudentLightbox();
+        if (e.target.closest("[data-trial-material-close]")) closeTrialMaterialModal();
+    });
+
+    // 우클릭(다운로드/저장 메뉴) 방지 — 보조 수단일 뿐, 완벽한 차단은 아님
+    document.addEventListener("contextmenu", (e) => {
+        if (e.target.closest(".trial-material-modal-body")) e.preventDefault();
     });
 
     document.getElementById("studentLightboxPrev")?.addEventListener("click", showStudentLightboxPrev);

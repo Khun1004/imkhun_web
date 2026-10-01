@@ -179,7 +179,8 @@ public class StudentPortalController {
             return ResponseEntity.status(403).body("아직 이 언어 자료를 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요.");
         }
 
-        return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "KWZM"));
+        Set<String> levels = materialLevelsFor(user.getUsername(), language);
+        return ResponseEntity.ok(studyMaterialService.getMaterialsForLevels(language, category, "KWZM", levels));
     }
 
     // "내 수강 정보" 카드를 눌렀을 때 — 그 강의(언어)의 자료를 항목 구분 없이 한 번에 다 보여줘요
@@ -193,7 +194,18 @@ public class StudentPortalController {
             return ResponseEntity.status(403).body("아직 이 언어 자료를 볼 수 있게 초대받지 못했어요. 선생님께 문의해주세요.");
         }
 
-        return ResponseEntity.ok(studyMaterialService.getAllMaterialsForLanguage(language, "KWZM"));
+        Set<String> levels = materialLevelsFor(user.getUsername(), language);
+        return ResponseEntity.ok(studyMaterialService.getAllMaterialsForLanguageAndLevels(language, "KWZM", levels));
+    }
+
+    // 컴퓨터/기타를 뺀 모든 언어에서 등급을 구분함 — 학생이 승인받은 해당 언어 신청서들에서 등급 코드를 모아서 반환 (등급이 없으면 빈 Set → 필터 없이 전체를 보여줌)
+    private Set<String> materialLevelsFor(String username, String language) {
+        if ("computer".equals(language) || "other".equals(language)) return Set.of();
+        return studentAuthService.getApprovedApplications(username).stream()
+                .filter(a -> language.equals(applicationService.extractLanguageCode(a.getCourseName())))
+                .map(a -> applicationService.extractMaterialLevel(a.getCourseName()))
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     // 온라인 영상 — "언어 자료"와는 별도의 초대(type=VIDEO)로 관리해요.
@@ -212,7 +224,19 @@ public class StudentPortalController {
             return ResponseEntity.status(403).body("수강 기간이 끝나서 더 이상 영상을 볼 수 없어요. 재등록은 선생님께 문의해주세요.");
         }
 
-        return ResponseEntity.ok(studyMaterialService.getMaterials(topic, "VIDEO", "VIDEO"));
+        Set<String> levels = materialLevelsForVideo(user.getUsername(), topic);
+        return ResponseEntity.ok(studyMaterialService.getMaterialsForLevels(topic, "VIDEO", "VIDEO", levels));
+    }
+
+    // 컴퓨터/기타를 뺀 온라인 영상 언어에서 등급을 구분함 — 학생이 승인받은 "영상으로" 듣는 해당 언어 신청서들에서 등급 코드를 모음
+    private Set<String> materialLevelsForVideo(String username, String language) {
+        if ("computer".equals(language) || "other".equals(language)) return Set.of();
+        return studentAuthService.getApprovedApplications(username).stream()
+                .filter(a -> language.equals(applicationService.extractLanguageCode(a.getCourseName())))
+                .filter(a -> "VIDEO".equals(a.getStudyType()))
+                .map(a -> applicationService.extractMaterialLevel(a.getCourseName()))
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     // 이 학생의 이 언어 온라인(VIDEO) 강좌 중 수강 기간이 안 지난 게 하나라도 있는지 확인.

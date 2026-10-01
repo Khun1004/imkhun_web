@@ -149,8 +149,26 @@ function autoSelectFirstMaterials(prefix, scope) {
     firstLangPill.classList.add("active");
     const language = firstLangPill.dataset.lang;
 
+    if (scope === "VIDEO" && language !== "computer" && language !== "other") {
+        renderLevelPills(prefix, scope, language);
+        const levelContainer = document.getElementById(`${prefix}LevelPills`);
+        const firstLevelPill = levelContainer?.querySelector(".admin-pill");
+        firstLevelPill?.click();
+        return;
+    }
+
     if (scope === "VIDEO" || scope === "TRIAL") {
+        const levelEl = document.getElementById(`${prefix}LevelPills`);
+        if (levelEl) levelEl.hidden = true;
         loadMaterials(language, scope, scope);
+        return;
+    }
+
+    if (scope === "KWZM" && language !== "computer" && language !== "other") {
+        renderLevelPills(prefix, scope, language);
+        const levelContainer = document.getElementById(`${prefix}LevelPills`);
+        const firstLevelPill = levelContainer?.querySelector(".admin-pill");
+        firstLevelPill?.click();
         return;
     }
 
@@ -220,6 +238,7 @@ const ADMIN_NOTIF_TYPE_ICON = {
 const ADMIN_NOTIF_ICON_DEFAULT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
 const CATEGORY_LABEL = { GRAMMAR: "문법", READING: "읽기", WRITING: "쓰기", SPEAKING: "말하기", OTHER: "기타" };
+const KWZM_LEVEL_LABEL = { BEGINNER: "초급", LEVEL1: "1급", LEVEL2: "2급", LEVEL3: "3급", LEVEL4: "4급" };
 const COMPUTER_CATEGORY_LABEL = { BASIC: "Basic", WORD: "Word", EXCEL: "Excel", POWERPOINT: "PowerPoint", PAGEMAKER: "PageMaker", PHOTOSHOP: "Photoshop" };
 const LANGUAGE_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터", video: "영상", other: "기타" };
 
@@ -236,6 +255,7 @@ function escapeHtmlForAdminMaterial(text) {
 
 let currentMaterialScope = "PERSONAL";
 let editingMaterialScope = "PERSONAL";
+let currentMaterialLevel = null; // KWZM + 한국어일 때만 씀 ("BEGINNER"/"LEVEL1"~"LEVEL4")
 
 function materialsApiBase(scope) {
     if (scope === "KWZM") return "/api/admin/kwzm-materials";
@@ -244,7 +264,7 @@ function materialsApiBase(scope) {
     return "/api/admin/materials";
 }
 
-function renderCategoryPills(prefix, scope, language) {
+function renderCategoryPills(prefix, scope, language, level) {
     const catEl = document.getElementById(`${prefix}CategoryPills`);
     const viewEl = document.getElementById(`${prefix}MaterialsView`);
     if (!catEl) return;
@@ -252,7 +272,7 @@ function renderCategoryPills(prefix, scope, language) {
     if (language === "other") {
         catEl.hidden = true;
         catEl.innerHTML = "";
-        loadMaterials(language, "OTHER", scope);
+        loadMaterials(language, "OTHER", scope, level);
         return;
     }
 
@@ -268,9 +288,48 @@ function renderCategoryPills(prefix, scope, language) {
         btn.addEventListener("click", () => {
             catEl.querySelectorAll(".admin-pill").forEach((p) => p.classList.remove("active"));
             btn.classList.add("active");
-            loadMaterials(language, key, scope);
+            loadMaterials(language, key, scope, level);
         });
         catEl.appendChild(btn);
+    });
+}
+
+// 컴퓨터/기타를 뺀 모든 "언어"의 KWZM/온라인 영상 자료 — 언어 필터 아래에 등급(초급/1급~4급) 필터를 한 단계 더 보여줌
+function renderLevelPills(prefix, scope, language) {
+    const levelEl = document.getElementById(`${prefix}LevelPills`);
+    const catEl = document.getElementById(`${prefix}CategoryPills`);
+    const viewEl = document.getElementById(`${prefix}MaterialsView`);
+    if (!levelEl) return;
+
+    levelEl.hidden = false;
+    if (catEl) {
+        catEl.hidden = true;
+        catEl.innerHTML = "";
+    }
+    if (viewEl) viewEl.hidden = true;
+    levelEl.innerHTML = "";
+
+    Object.entries(KWZM_LEVEL_LABEL).forEach(([key, label]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "admin-pill";
+        btn.textContent = label;
+        btn.addEventListener("click", () => {
+            levelEl.querySelectorAll(".admin-pill").forEach((p) => p.classList.remove("active"));
+            btn.classList.add("active");
+            currentMaterialLevel = key;
+
+            if (scope === "VIDEO") {
+                loadMaterials(language, scope, scope, key);
+                return;
+            }
+
+            renderCategoryPills(prefix, scope, language, key);
+            const catContainer = document.getElementById(`${prefix}CategoryPills`);
+            const firstCatPill = catContainer?.querySelector(".admin-pill");
+            firstCatPill?.click();
+        });
+        levelEl.appendChild(btn);
     });
 }
 
@@ -292,8 +351,11 @@ function inviteBtnIdForScope(scope) {
     return scope === "VIDEO" ? "videoInviteBtn" : "adminInviteBtn";
 }
 
-async function loadMaterials(language, category, scope) {
+async function loadMaterials(language, category, scope, level) {
     currentMaterialScope = scope || "PERSONAL";
+    currentMaterialLevel = ((currentMaterialScope === "KWZM" || currentMaterialScope === "VIDEO") && language !== "computer" && language !== "other")
+        ? (level || currentMaterialLevel || null)
+        : null;
     const prefix = prefixForScope(currentMaterialScope);
     const emptyText = document.getElementById(`${prefix}MaterialsEmpty`);
     const list = document.getElementById(`${prefix}MaterialsList`);
@@ -303,9 +365,10 @@ async function loadMaterials(language, category, scope) {
     if (!list) return;
 
     if (view) view.hidden = false;
+    const levelLabelPart = currentMaterialLevel ? ` · ${KWZM_LEVEL_LABEL[currentMaterialLevel] || currentMaterialLevel}` : "";
     heading.textContent = (currentMaterialScope === "VIDEO" || currentMaterialScope === "TRIAL")
-        ? `${LANGUAGE_LABEL[language] || language}`
-        : `${LANGUAGE_LABEL[language] || language} · ${categoryLabelSetFor(language)[category] || category}`;
+        ? `${LANGUAGE_LABEL[language] || language}${currentMaterialScope === "VIDEO" ? levelLabelPart : ""}`
+        : `${LANGUAGE_LABEL[language] || language}${levelLabelPart} · ${categoryLabelSetFor(language)[category] || category}`;
 
     if (inviteBtn) {
         if (currentMaterialScope === "KWZM" || currentMaterialScope === "VIDEO") {
@@ -319,7 +382,8 @@ async function loadMaterials(language, category, scope) {
     }
 
     try {
-        const res = await fetch(`${materialsApiBase(currentMaterialScope)}?language=${language}&category=${category}`);
+        const levelQuery = currentMaterialLevel ? `&level=${currentMaterialLevel}` : "";
+        const res = await fetch(`${materialsApiBase(currentMaterialScope)}?language=${language}&category=${category}${levelQuery}`);
         if (!res.ok) return;
         const materials = await res.json();
 
@@ -1432,6 +1496,190 @@ async function deleteFaq(id) {
             return;
         }
         loadAdminFaqs();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    }
+}
+
+// ---- 강의 자료 관리 (imkhun 공개 사이트 "강의 자료" 탭) ----
+
+let adminLanguageMaterialsCache = [];
+
+async function loadAdminLanguageMaterials() {
+    const list = document.getElementById("languageMaterialList");
+    const emptyText = document.getElementById("languageMaterialsEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/language-materials");
+        if (!res.ok) return;
+        const materials = await res.json();
+        adminLanguageMaterialsCache = materials;
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = materials.length > 0;
+
+        materials.forEach((m) => {
+            const item = document.createElement("div");
+            item.className = "admin-notice-item";
+            item.innerHTML = `
+        <div class="admin-notice-item-head">
+          <p class="admin-notice-item-title">[${LANGUAGE_LABEL[m.language] || m.language}] ${m.sortOrder}. ${escapeHtmlForAdmin(m.title)}${m.badge ? ` · 🏷️ ${escapeHtmlForAdmin(m.badge)}` : ""}</p>
+        </div>
+        ${m.imageUrl ? `<img src="${escapeHtmlForAdmin(m.imageUrl)}" alt="" style="max-width: 160px; border-radius: 10px; margin: 6px 0;">` : ""}
+        ${m.description ? `<p class="admin-notice-item-content">${escapeHtmlForAdmin(m.description)}</p>` : ""}
+        ${m.fileUrl ? `<p class="admin-notice-item-content"><a href="${escapeHtmlForAdmin(m.fileUrl)}" target="_blank" rel="noopener">📎 ${escapeHtmlForAdmin(m.fileName || "첨부 파일")}</a></p>` : ""}
+        <div class="admin-notice-item-actions">
+          <button type="button" class="admin-material-action-btn" data-edit-language-material-id="${m.id}">수정</button>
+          <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-language-material-id="${m.id}">삭제</button>
+        </div>
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function openLanguageMaterialModal(materialId) {
+    const modal = document.getElementById("languageMaterialModal");
+    if (!modal) return;
+
+    const material = materialId ? adminLanguageMaterialsCache.find((m) => String(m.id) === String(materialId)) : null;
+
+    document.getElementById("languageMaterialModalTitle").textContent = material ? "자료 수정" : "새 자료 등록";
+    document.getElementById("languageMaterialSaveBtn").textContent = material ? "수정하기" : "등록하기";
+    document.getElementById("languageMaterialEditingId").value = material ? material.id : "";
+    document.getElementById("languageMaterialLanguageSelect").value = material ? (material.language || "korean") : "korean";
+    document.getElementById("languageMaterialOrderInput").value = material ? material.sortOrder : adminLanguageMaterialsCache.length + 1;
+    document.getElementById("languageMaterialTitleInput").value = material ? material.title : "";
+    document.getElementById("languageMaterialDescriptionInput").value = material ? (material.description || "") : "";
+    document.getElementById("languageMaterialBadgeInput").value = material ? (material.badge || "") : "";
+    document.getElementById("languageMaterialImageUrl").value = material ? (material.imageUrl || "") : "";
+    document.getElementById("languageMaterialImageInput").value = "";
+    document.getElementById("languageMaterialImagePreviewName").textContent = "";
+
+    document.getElementById("languageMaterialFileUrl").value = material ? (material.fileUrl || "") : "";
+    document.getElementById("languageMaterialFileName").value = material ? (material.fileName || "") : "";
+    document.getElementById("languageMaterialFileInput").value = "";
+    document.getElementById("languageMaterialFilePreviewName").textContent = material && material.fileName ? `현재 파일: ${material.fileName}` : "";
+
+    const previewImg = document.getElementById("languageMaterialImagePreview");
+    if (material && material.imageUrl) {
+        previewImg.src = material.imageUrl;
+        previewImg.hidden = false;
+    } else {
+        previewImg.hidden = true;
+        previewImg.src = "";
+    }
+
+    document.getElementById("languageMaterialError").hidden = true;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeLanguageMaterialModal() {
+    const modal = document.getElementById("languageMaterialModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function submitLanguageMaterial() {
+    const editingId = document.getElementById("languageMaterialEditingId").value;
+    const language = document.getElementById("languageMaterialLanguageSelect").value;
+    const sortOrder = Number(document.getElementById("languageMaterialOrderInput").value) || 1;
+    const title = document.getElementById("languageMaterialTitleInput").value.trim();
+    const description = document.getElementById("languageMaterialDescriptionInput").value.trim();
+    const badge = document.getElementById("languageMaterialBadgeInput").value.trim();
+    const imageInput = document.getElementById("languageMaterialImageInput");
+    const fileInput = document.getElementById("languageMaterialFileInput");
+    const errorEl = document.getElementById("languageMaterialError");
+    const saveBtn = document.getElementById("languageMaterialSaveBtn");
+    const isEditing = !!editingId;
+    const newImageFile = imageInput.files[0];
+    const newAttachedFile = fileInput.files[0];
+
+    if (!title) {
+        errorEl.textContent = "제목을 입력해주세요.";
+        errorEl.hidden = false;
+        return;
+    }
+    errorEl.hidden = true;
+    saveBtn.disabled = true;
+    saveBtn.textContent = isEditing ? "수정하는 중..." : "등록하는 중...";
+
+    try {
+        let imageUrl = document.getElementById("languageMaterialImageUrl").value || null;
+
+        if (newImageFile) {
+            const uploadForm = new FormData();
+            uploadForm.append("file", newImageFile);
+            const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: uploadForm });
+            if (!uploadRes.ok) {
+                errorEl.textContent = (await uploadRes.text()) || "이미지 업로드에 실패했어요.";
+                errorEl.hidden = false;
+                return;
+            }
+            const uploaded = await uploadRes.json();
+            imageUrl = uploaded.url;
+        }
+
+        let fileUrl = document.getElementById("languageMaterialFileUrl").value || null;
+        let fileName = document.getElementById("languageMaterialFileName").value || null;
+
+        if (newAttachedFile) {
+            const uploadForm = new FormData();
+            uploadForm.append("file", newAttachedFile);
+            const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: uploadForm });
+            if (!uploadRes.ok) {
+                errorEl.textContent = (await uploadRes.text()) || "파일 업로드에 실패했어요.";
+                errorEl.hidden = false;
+                return;
+            }
+            const uploaded = await uploadRes.json();
+            fileUrl = uploaded.url;
+            fileName = newAttachedFile.name;
+        }
+
+        const url = isEditing ? `/api/admin/language-materials/${editingId}` : "/api/admin/language-materials";
+        const method = isEditing ? "PUT" : "POST";
+        const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ language, sortOrder, title, description, badge: badge || null, imageUrl, fileUrl, fileName }),
+        });
+
+        if (!res.ok) {
+            errorEl.textContent = (await res.text()) || "저장에 실패했어요.";
+            errorEl.hidden = false;
+            return;
+        }
+
+        closeLanguageMaterialModal();
+        loadAdminLanguageMaterials();
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = "서버에 연결할 수 없어요.";
+        errorEl.hidden = false;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = isEditing ? "수정하기" : "등록하기";
+    }
+}
+
+async function deleteLanguageMaterial(id) {
+    if (!confirm("이 자료를 삭제할까요? 되돌릴 수 없어요.")) return;
+
+    try {
+        const res = await fetch(`/api/admin/language-materials/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+            alert((await res.text()) || "삭제에 실패했어요.");
+            return;
+        }
+        loadAdminLanguageMaterials();
     } catch (err) {
         console.error(err);
         alert("서버에 연결할 수 없어요.");
@@ -2813,6 +3061,8 @@ function openEditModal(material) {
     const categoryRadioName = material.language === "computer" ? "registerComputerCategory" : "registerCategory";
     const categoryRadio = document.querySelector(`input[name="${categoryRadioName}"][value="${material.category}"]`);
     if (categoryRadio) categoryRadio.checked = true;
+    const levelRadio = material.level && document.querySelector(`input[name="registerLevel"][value="${material.level}"]`);
+    if (levelRadio) levelRadio.checked = true;
     document.querySelector(`input[name="registerScope"][value="${editingMaterialScope}"]`).checked = true;
     document.querySelectorAll('input[name="registerScope"]').forEach((r) => (r.disabled = true));
     updateCategoryFieldVisibility();
@@ -2833,8 +3083,10 @@ function updateCategoryFieldVisibility() {
     const isCategoryless = scope === "VIDEO" || scope === "TRIAL";
     const categoryField = document.getElementById("registerCategoryField");
     const computerCategoryField = document.getElementById("registerComputerCategoryField");
+    const levelField = document.getElementById("registerLevelField");
     if (categoryField) categoryField.hidden = isCategoryless || language === "other" || language === "computer" || language === "video";
     if (computerCategoryField) computerCategoryField.hidden = isCategoryless || language !== "computer";
+    if (levelField) levelField.hidden = !((scope === "KWZM" || scope === "VIDEO") && language !== "computer" && language !== "other");
 }
 
 async function deleteMaterial(id, language, category, scope) {
@@ -2880,6 +3132,8 @@ function closeRegisterModal() {
     if (linkInput) linkInput.value = "";
     if (textInput) textInput.value = "";
     document.getElementById("registerLanguageSelect").value = "korean";
+    const beginnerLevelRadio = document.querySelector('input[name="registerLevel"][value="BEGINNER"]');
+    if (beginnerLevelRadio) beginnerLevelRadio.checked = true;
     updateCategoryFieldVisibility();
     editingExistingFiles = [];
     renderExistingFiles();
@@ -2901,6 +3155,9 @@ async function submitRegisterMaterial() {
             : language === "computer"
                 ? document.querySelector('input[name="registerComputerCategory"]:checked')?.value
                 : document.querySelector('input[name="registerCategory"]:checked')?.value;
+    const level = ((selectedScope === "KWZM" || selectedScope === "VIDEO") && language !== "computer" && language !== "other")
+        ? (document.querySelector('input[name="registerLevel"]:checked')?.value || null)
+        : null;
     const title = document.getElementById("registerTitleInput").value.trim();
     const description = document.getElementById("registerDescriptionInput").value.trim();
     const fileInput = document.getElementById("registerFileInput");
@@ -2971,7 +3228,7 @@ async function submitRegisterMaterial() {
         const res = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ language, category, title, description, files, assignedStudentNumbers: [] }),
+            body: JSON.stringify({ language, category, title, description, files, assignedStudentNumbers: [], level }),
         });
 
         if (!res.ok) {
@@ -2985,15 +3242,17 @@ async function submitRegisterMaterial() {
         const prefix = prefixForScope(submitScope);
         const activeLangPill = document.querySelector(`#${prefix}LanguagePills .admin-pill.active`);
         if (submitScope === "VIDEO" || submitScope === "TRIAL") {
-            if (activeLangPill && activeLangPill.dataset.lang === language) {
-                loadMaterials(language, submitScope, submitScope);
+            const videoLevelMatches = !(submitScope === "VIDEO" && language !== "computer" && language !== "other") || currentMaterialLevel === level;
+            if (activeLangPill && activeLangPill.dataset.lang === language && videoLevelMatches) {
+                loadMaterials(language, submitScope, submitScope, level);
             }
             return;
         }
         const activeCatPill = document.querySelector(`#${prefix}CategoryPills .admin-pill.active`);
         const activeCategory = language === "other" ? "OTHER" : activeCatPill?.textContent && Object.entries(categoryLabelSetFor(language)).find(([, v]) => v === activeCatPill.textContent)?.[0];
-        if (activeLangPill && activeLangPill.dataset.lang === language && activeCategory === category) {
-            loadMaterials(language, category, submitScope);
+        const levelMatches = !(submitScope === "KWZM" && language !== "computer" && language !== "other") || currentMaterialLevel === level;
+        if (activeLangPill && activeLangPill.dataset.lang === language && activeCategory === category && levelMatches) {
+            loadMaterials(language, category, submitScope, level);
         }
     } catch (err) {
         console.error(err);
@@ -4759,10 +5018,30 @@ document.addEventListener("fragments:loaded", () => {
             document.querySelectorAll(`#${prefix}LanguagePills .admin-pill`).forEach((p) => p.classList.remove("active"));
             pill.classList.add("active");
 
+            if (scope === "VIDEO" && language !== "computer" && language !== "other") {
+                renderLevelPills(prefix, scope, language);
+                const levelContainer = document.getElementById(`${prefix}LevelPills`);
+                const firstLevelPill = levelContainer?.querySelector(".admin-pill");
+                firstLevelPill?.click();
+                return;
+            }
+
             if (scope === "VIDEO" || scope === "TRIAL") {
+                const videoLevelEl = document.getElementById(`${prefix}LevelPills`);
+                if (videoLevelEl) videoLevelEl.hidden = true;
                 loadMaterials(language, scope, scope);
                 return;
             }
+
+            if (scope === "KWZM" && language !== "computer" && language !== "other") {
+                renderLevelPills(prefix, scope, language);
+                const levelContainer = document.getElementById(`${prefix}LevelPills`);
+                const firstLevelPill = levelContainer?.querySelector(".admin-pill");
+                firstLevelPill?.click();
+                return;
+            }
+            const levelEl = document.getElementById(`${prefix}LevelPills`);
+            if (levelEl) levelEl.hidden = true;
 
             renderCategoryPills(prefix, scope, language);
 
@@ -4879,6 +5158,7 @@ document.addEventListener("fragments:loaded", () => {
 
             if (key === "timetable") loadAdminTimetable();
             if (key === "faq") loadAdminFaqs();
+            if (key === "materials") loadAdminLanguageMaterials();
             if (key === "events") loadAdminEvents();
             if (key === "companyinfo") {
                 loadCompanyInfoAdmin();
@@ -5051,6 +5331,12 @@ document.addEventListener("fragments:loaded", () => {
         if (editFaqBtn) openFaqModal(editFaqBtn.dataset.editFaqId);
         const deleteFaqBtn = e.target.closest("[data-delete-faq-id]");
         if (deleteFaqBtn) deleteFaq(deleteFaqBtn.dataset.deleteFaqId);
+
+        if (e.target.closest("[data-language-material-modal-close]")) closeLanguageMaterialModal();
+        const editLanguageMaterialBtn = e.target.closest("[data-edit-language-material-id]");
+        if (editLanguageMaterialBtn) openLanguageMaterialModal(editLanguageMaterialBtn.dataset.editLanguageMaterialId);
+        const deleteLanguageMaterialBtn = e.target.closest("[data-delete-language-material-id]");
+        if (deleteLanguageMaterialBtn) deleteLanguageMaterial(deleteLanguageMaterialBtn.dataset.deleteLanguageMaterialId);
 
         const dashboardGotoBtn = e.target.closest("[data-dashboard-goto]");
         if (dashboardGotoBtn) {
@@ -5225,6 +5511,25 @@ document.addEventListener("fragments:loaded", () => {
     });
     document.getElementById("adminFaqNewBtn")?.addEventListener("click", () => openFaqModal());
     document.getElementById("faqSaveBtn")?.addEventListener("click", submitFaq);
+    document.getElementById("languageMaterialNewBtn")?.addEventListener("click", () => openLanguageMaterialModal());
+    document.getElementById("languageMaterialSaveBtn")?.addEventListener("click", submitLanguageMaterial);
+    document.getElementById("languageMaterialImageInput")?.addEventListener("change", () => {
+        const file = document.getElementById("languageMaterialImageInput").files[0];
+        const nameEl = document.getElementById("languageMaterialImagePreviewName");
+        const previewImg = document.getElementById("languageMaterialImagePreview");
+        if (!file) return;
+        if (nameEl) nameEl.textContent = file.name;
+        if (previewImg) {
+            previewImg.src = URL.createObjectURL(file);
+            previewImg.hidden = false;
+        }
+    });
+    document.getElementById("languageMaterialFileInput")?.addEventListener("change", () => {
+        const file = document.getElementById("languageMaterialFileInput").files[0];
+        const nameEl = document.getElementById("languageMaterialFilePreviewName");
+        if (!file) return;
+        if (nameEl) nameEl.textContent = file.name;
+    });
     document.getElementById("inviteAddBtn")?.addEventListener("click", inviteStudentToLanguage);
     document.getElementById("inviteStudentNumberInput")?.addEventListener("keydown", (e) => {
         if (e.key === "Enter") inviteStudentToLanguage();

@@ -29,6 +29,7 @@ public class StudyMaterialService {
     );
 
     private static final Set<String> VALID_SCOPES = Set.of("PERSONAL", "KWZM", "VIDEO", "TRIAL");
+    private static final Set<String> VALID_LEVELS = Set.of("BEGINNER", "LEVEL1", "LEVEL2", "LEVEL3", "LEVEL4");
 
     public StudyMaterialService(StudyMaterialRepository studyMaterialRepository, FileStorageService fileStorageService) {
         this.studyMaterialRepository = studyMaterialRepository;
@@ -39,7 +40,7 @@ public class StudyMaterialService {
     public MaterialResponse createMaterial(CreateMaterialRequest request, String scope) {
         validate(request);
 
-        StudyMaterial material = StudyMaterial.create(request.language(), request.category(), request.title(), request.description(), scope);
+        StudyMaterial material = StudyMaterial.create(request.language(), request.category(), request.title(), request.description(), scope, request.level());
         material.updateAssignedStudents(toStudentNumberSet(request.assignedStudentNumbers()));
         addFiles(material, request.files());
         StudyMaterial saved = studyMaterialRepository.save(material);
@@ -54,10 +55,43 @@ public class StudyMaterialService {
                 .toList();
     }
 
+    // 한국어 KWZM 자료 — 관리자가 등급을 하나 골라서 볼 때 (level이 null이면 등급 구분 없이 예전처럼 전체)
+    @Transactional(readOnly = true)
+    public List<MaterialResponse> getMaterialsByLevel(String language, String category, String scope, String level) {
+        List<StudyMaterial> results = (level == null)
+                ? studyMaterialRepository.findByLanguageAndCategoryAndScopeOrderByCreatedAtDesc(language, category, scope)
+                : studyMaterialRepository.findByLanguageAndCategoryAndScopeAndLevelOrderByCreatedAtDesc(language, category, scope, level);
+        return results.stream().map(this::toResponse).toList();
+    }
+
+    // 한국어 KWZM 자료 — 학생이 속한 등급(들) 안에 있는 것만 (levels가 비어있으면 등급 구분 없는 언어라 전체를 보여줌)
+    @Transactional(readOnly = true)
+    public List<MaterialResponse> getMaterialsForLevels(String language, String category, String scope, Set<String> levels) {
+        if (levels == null || levels.isEmpty()) {
+            return getMaterials(language, category, scope);
+        }
+        return studyMaterialRepository.findByLanguageAndCategoryAndScopeAndLevelInOrderByCreatedAtDesc(language, category, scope, levels)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     // "내 수강 정보" 카드를 눌렀을 때 — 항목(category) 구분 없이 그 언어의 자료를 전부 보여줌
     @Transactional(readOnly = true)
     public List<MaterialResponse> getAllMaterialsForLanguage(String language, String scope) {
         return studyMaterialRepository.findByLanguageAndScopeOrderByCreatedAtDesc(language, scope)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    // "내 수강 정보" 카드 — 한국어일 때는 학생이 속한 등급(들) 안에 있는 것만 (levels가 비어있으면 전체)
+    @Transactional(readOnly = true)
+    public List<MaterialResponse> getAllMaterialsForLanguageAndLevels(String language, String scope, Set<String> levels) {
+        if (levels == null || levels.isEmpty()) {
+            return getAllMaterialsForLanguage(language, scope);
+        }
+        return studyMaterialRepository.findByLanguageAndScopeAndLevelInOrderByCreatedAtDesc(language, scope, levels)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -92,7 +126,7 @@ public class StudyMaterialService {
         if (!material.getScope().equals(scope)) {
             throw new IllegalStateException("자료를 찾을 수 없어요.");
         }
-        material.updateInfo(request.language(), request.category(), request.title(), request.description());
+        material.updateInfo(request.language(), request.category(), request.title(), request.description(), request.level());
         material.updateAssignedStudents(toStudentNumberSet(request.assignedStudentNumbers()));
 
         // 새 파일을 골랐을 때만 기존 파일을 지우고 교체 (안 골랐으면 기존 파일 유지)
@@ -140,6 +174,9 @@ public class StudyMaterialService {
         if (request.title() == null || request.title().isBlank()) {
             throw new IllegalStateException("제목을 입력해주세요.");
         }
+        if (request.level() != null && !VALID_LEVELS.contains(request.level())) {
+            throw new IllegalStateException("올바르지 않은 등급이에요.");
+        }
     }
 
     private Set<String> toStudentNumberSet(List<String> studentNumbers) {
@@ -156,7 +193,7 @@ public class StudyMaterialService {
         return new MaterialResponse(
                 material.getId(), material.getLanguage(), material.getCategory(), material.getTitle(),
                 material.getDescription(), fileResponses, material.getCreatedAt().format(DATE_FORMAT),
-                material.getAssignedStudentNumbers().stream().toList(), material.getScope()
+                material.getAssignedStudentNumbers().stream().toList(), material.getScope(), material.getLevel()
         );
     }
 }

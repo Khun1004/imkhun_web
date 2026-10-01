@@ -14,6 +14,15 @@ public interface StudyMaterialRepository extends JpaRepository<StudyMaterial, Lo
 
     List<StudyMaterial> findByLanguageAndScopeOrderByCreatedAtDesc(String language, String scope);
 
+    // 한국어 KWZM 자료 — 관리자가 등급 하나를 골라서 볼 때 (정확히 그 등급만)
+    List<StudyMaterial> findByLanguageAndCategoryAndScopeAndLevelOrderByCreatedAtDesc(String language, String category, String scope, String level);
+
+    // 한국어 KWZM 자료 — 학생이 속한 등급(들) 안에 있는 것만 (항목 구분 없이, "내 수강 정보"용)
+    List<StudyMaterial> findByLanguageAndScopeAndLevelInOrderByCreatedAtDesc(String language, String scope, Collection<String> levels);
+
+    // 한국어 KWZM 자료 — 학생이 속한 등급(들) 안에 있는 것만 (항목별로)
+    List<StudyMaterial> findByLanguageAndCategoryAndScopeAndLevelInOrderByCreatedAtDesc(String language, String category, String scope, Collection<String> levels);
+
     // 학생 홈 화면 "최근 등록된 자료" — 승인받은 언어들 중에서 최근 것부터 (KWZM 자료만)
     List<StudyMaterial> findByLanguageInAndScopeOrderByCreatedAtDesc(Collection<String> languages, String scope);
 

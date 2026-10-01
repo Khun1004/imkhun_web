@@ -31,6 +31,10 @@ public class StudyMaterial {
     @Column(nullable = false)
     private String scope = "PERSONAL";
 
+    // 한국어 KWZM 자료에서만 쓰는 등급 구분 ("BEGINNER"/"LEVEL1"/"LEVEL2"/"LEVEL3"/"LEVEL4") — 등급이 없는 자료는 null
+    @Column(name = "level")
+    private String level;
+
     // 제목 밑에 들어가는 부가 설명 (선택)
     @Lob
     @Column(columnDefinition = "LONGTEXT")
@@ -55,21 +59,23 @@ public class StudyMaterial {
         // JPA 기본 생성자
     }
 
-    public static StudyMaterial create(String language, String category, String title, String description, String scope) {
+    public static StudyMaterial create(String language, String category, String title, String description, String scope, String level) {
         StudyMaterial material = new StudyMaterial();
         material.language = language;
         material.category = category;
         material.title = title;
         material.description = description;
         material.scope = scope;
+        material.level = level;
         return material;
     }
 
-    public void updateInfo(String language, String category, String title, String description) {
+    public void updateInfo(String language, String category, String title, String description, String level) {
         this.language = language;
         this.category = category;
         this.title = title;
         this.description = description;
+        this.level = level;
     }
 
     public void updateAssignedStudents(Set<String> studentNumbers) {
@@ -107,6 +113,10 @@ public class StudyMaterial {
 
     public String getScope() {
         return scope;
+    }
+
+    public String getLevel() {
+        return level;
     }
 
     public String getDescription() {

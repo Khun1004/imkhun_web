@@ -49,3 +49,174 @@
         padding: 12px 4px;
     }
 }
+
+/* ---------- 무료체험 자료 보기 창 (새 탭 대신 화면 안에서, 워터마크 포함) ---------- */
+
+.trial-material-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.trial-material-modal.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.trial-material-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(14, 19, 30, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.trial-material-modal-panel {
+    position: relative;
+    width: min(880px, 92vw);
+    height: min(85vh, 900px);
+    background: var(--kwzm-bg-3);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 40px 80px -24px rgba(14, 19, 30, 0.55);
+}
+
+.trial-material-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--kwzm-line);
+}
+
+.trial-material-modal-head h3 {
+    font-family: "Noto Serif KR", serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--kwzm-ink);
+}
+
+.trial-material-modal-close {
+    height: 32px;
+    padding: 0 14px 0 10px;
+    border: 1px solid var(--kwzm-line);
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.trial-material-modal-close:hover {
+    background: var(--kwzm-bg);
+    border-color: var(--kwzm-accent);
+}
+
+.trial-material-modal-close svg {
+    width: 14px;
+    height: 14px;
+}
+
+.trial-material-modal-body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.trial-material-modal-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.trial-material-text {
+    padding: 24px 28px;
+    font-size: 14.5px;
+    line-height: 1.9;
+    color: var(--kwzm-ink);
+    white-space: pre-wrap;
+}
+
+.trial-material-modal-note {
+    padding: 10px 20px;
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    text-align: center;
+    border-top: 1px solid var(--kwzm-line);
+}
+
+/* 항상 눈에 보이도록, 창 오른쪽 아래에도 큼직한 닫기 버튼을 하나 더 둠 */
+.trial-material-modal-close-bottom {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 18px 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--kwzm-primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px -8px rgba(15, 37, 71, 0.5);
+    transition: background 0.15s, transform 0.15s;
+}
+
+.trial-material-modal-close-bottom:hover {
+    background: var(--kwzm-primary-2);
+    transform: translateY(-2px);
+}
+
+.trial-material-modal-close-bottom svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- 워터마크 (보는 학생 + 경고문, 자료 위에 옅게 겹쳐 보임) ---------- */
+
+.trial-material-watermark {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    overflow: hidden;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    transform: rotate(-22deg) scale(1.35);
+}
+
+.trial-material-watermark-row {
+    display: flex;
+    justify-content: space-around;
+    white-space: nowrap;
+}
+
+.trial-material-watermark-row span {
+    margin: 0 28px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--kwzm-accent);
+    opacity: 0.18;
+    white-space: nowrap;
+}

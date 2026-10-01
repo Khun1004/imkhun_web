@@ -1,4 +1,4 @@
-/* '강의 자료' 화면 전용 스타일 */
+/* '강의 자료' 화면 전용 스타일 — 원래 디자인 그대로(검정·금색 카드 / 컴퓨터는 초록색 카드) */
 
 .material-group-label {
     font-family: "EB Garamond", serif;
@@ -6,6 +6,10 @@
     font-size: 16px;
     color: var(--ink);
     margin: 8px 0 18px;
+}
+
+.material-group-label--spaced {
+    margin-top: 40px;
 }
 
 .material-group-label--computer {
@@ -32,7 +36,8 @@
     text-decoration: none;
     overflow: hidden;
     border: 1px solid rgba(247, 243, 233, 0.08);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.5s ease, border-color 0.5s ease;
+    cursor: pointer;
 }
 
 .material-card--down {
@@ -42,6 +47,14 @@
 .material-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 40px -20px rgba(23, 20, 15, 0.5);
+    background: linear-gradient(165deg, #2b2213 0%, #17140f 55%, #3a2c12 100%);
+    border-color: rgba(214, 169, 61, 0.35);
+}
+
+.material-card--computer:hover {
+    box-shadow: 0 20px 40px -20px rgba(14, 46, 35, 0.6);
+    background: linear-gradient(165deg, #113b2d 0%, #0e2e23 55%, #1f5542 100%);
+    border-color: rgba(143, 217, 188, 0.35);
 }
 
 .material-badge {
@@ -115,7 +128,7 @@
     color: #8fd9bc;
 }
 
-/* 컴퓨터 캐러셀 (좌우 화살표) */
+/* 캐러셀 (좌우 화살표 + 자동 슬라이드) */
 
 .material-carousel {
     display: flex;
@@ -202,7 +215,7 @@
     }
 }
 
-/* PDF 뷰어 모달 */
+/* 자료 뷰어 모달 */
 
 .material-modal {
     position: fixed;
@@ -257,29 +270,33 @@
 }
 
 .material-modal-close {
-    width: 30px;
-    height: 30px;
-    border: none;
-    background: none;
-    color: var(--ink-soft);
+    height: 32px;
+    padding: 0 14px 0 10px;
+    border: 1px solid var(--line);
+    background: var(--paper-2);
+    color: var(--ink);
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
+    gap: 6px;
+    border-radius: 999px;
     cursor: pointer;
-    transition: background 0.15s;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, border-color 0.15s;
 }
 
 .material-modal-close:hover {
-    background: var(--paper-2);
+    background: var(--paper-3);
+    border-color: var(--accent);
 }
 
 .material-modal-close svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
 }
 
 .material-modal-body {
+    position: relative;
     flex: 1;
     min-height: 0;
 }
@@ -290,12 +307,73 @@
     border: none;
 }
 
+/* ---------- 워터마크 (보는 사람 표시 + 경고문, 자료 화면 위에 옅게 겹쳐 보임) ---------- */
+
+.material-watermark {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    overflow: hidden;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    transform: rotate(-22deg) scale(1.35);
+}
+
+.material-watermark-row {
+    display: flex;
+    justify-content: space-around;
+    white-space: nowrap;
+}
+
+.material-watermark-row span {
+    margin: 0 28px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(23, 20, 15, 0.1);
+    white-space: nowrap;
+}
+
 .material-modal-note {
     padding: 10px 20px;
     font-size: 11.5px;
     color: var(--ink-faint);
     text-align: center;
     border-top: 1px solid var(--line);
+}
+
+/* 항상 눈에 보이도록, 창 오른쪽 아래에도 큼직한 닫기 버튼을 하나 더 둠 */
+.material-modal-close-bottom {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 18px 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: #17140f;
+    color: #f7f3e9;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px -8px rgba(23, 20, 15, 0.5);
+    transition: background 0.15s, transform 0.15s;
+}
+
+.material-modal-close-bottom:hover {
+    background: #29231a;
+    transform: translateY(-2px);
+}
+
+.material-modal-close-bottom svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* 하단 전체 폭 안내 배너 (오른쪽→왼쪽 흐르는 문구) */
@@ -331,5 +409,9 @@
 @media (prefers-reduced-motion: reduce) {
     .material-notice-track {
         animation: none;
+    }
+
+    .material-grid--scroll {
+        scroll-behavior: auto;
     }
 }

@@ -120,6 +120,7 @@
             <button type="button" class="admin-maintab active" data-imkhun-tab="posts" role="tab" aria-selected="true">공지 글</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="timetable" role="tab" aria-selected="false">강의 시간표</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="faq" role="tab" aria-selected="false">FAQ</button>
+            <button type="button" class="admin-maintab" data-imkhun-tab="materials" role="tab" aria-selected="false">강의 자료</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="events" role="tab" aria-selected="false">이벤트 &amp; 행사</button>
             <button type="button" class="admin-maintab" data-imkhun-tab="companyinfo" role="tab" aria-selected="false">회사/사업/미래</button>
         </nav>
@@ -314,14 +315,17 @@
                 <button type="button" class="admin-pill" data-lang="other" data-scope="KWZM">기타</button>
             </div>
             <div class="admin-materials-col">
+                <div class="admin-level-pills" id="kwzmLevelPills" hidden></div>
+                <div class="admin-kwzm-invite-row">
+                    <button type="button" class="admin-invite-btn" id="adminInviteBtn" hidden>
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        학생 초대 관리 <span id="adminInviteCountBadge"></span>
+                    </button>
+                </div>
                 <div class="admin-category-pills" id="kwzmCategoryPills" hidden></div>
                 <div class="admin-materials-view" id="kwzmMaterialsView" hidden>
                     <div class="admin-materials-head-row">
                         <p class="admin-materials-heading" id="kwzmMaterialsHeading"></p>
-                        <button type="button" class="admin-invite-btn" id="adminInviteBtn" hidden>
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            학생 초대 관리 <span id="adminInviteCountBadge"></span>
-                        </button>
                     </div>
                     <div class="admin-materials-columns" aria-hidden="true">
                         <span></span>
@@ -346,13 +350,16 @@
                 <button type="button" class="admin-pill" data-lang="computer" data-scope="VIDEO">컴퓨터</button>
             </div>
             <div class="admin-materials-col">
+                <div class="admin-level-pills" id="videoLevelPills" hidden></div>
+                <div class="admin-kwzm-invite-row">
+                    <button type="button" class="admin-invite-btn" id="videoInviteBtn" hidden>
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        학생 초대 관리 <span id="videoInviteCountBadge"></span>
+                    </button>
+                </div>
                 <div class="admin-materials-view" id="videoMaterialsView" hidden>
                     <div class="admin-materials-head-row">
                         <p class="admin-materials-heading" id="videoMaterialsHeading"></p>
-                        <button type="button" class="admin-invite-btn" id="videoInviteBtn" hidden>
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M16 19v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            학생 초대 관리 <span id="videoInviteCountBadge"></span>
-                        </button>
                     </div>
                     <div class="admin-materials-columns" aria-hidden="true">
                         <span></span>
@@ -545,6 +552,18 @@
                 <div class="admin-faq-list" id="adminFaqList"></div>
             </div>
 
+            <div class="admin-inline-panel" data-notice-panel="materials" hidden>
+                <div class="admin-materials-head-row">
+                    <p class="admin-materials-heading">강의 자료</p>
+                    <button type="button" class="admin-register-btn" id="languageMaterialNewBtn">
+                        <span aria-hidden="true">+</span> 새 자료 등록
+                    </button>
+                </div>
+                <p class="admin-note-hint">imkhun 공개 사이트의 "강의 자료" 탭에 나와요. 로그인 안 해도 누구나 볼 수 있고, 왼쪽/오른쪽으로 천천히 자동으로 넘어가요. 순서 번호가 작을수록 먼저 나와요.</p>
+                <p class="admin-empty-text" id="languageMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
+                <div class="admin-notice-list" id="languageMaterialList"></div>
+            </div>
+
             <div class="admin-inline-panel" data-notice-panel="events" hidden>
                 <div class="admin-materials-head-row">
                     <p class="admin-materials-heading">이벤트 &amp; 행사</p>
@@ -673,6 +692,32 @@
                     <option value="video">영상 (무료체험용)</option>
                     <option value="other">기타</option>
                 </select>
+            </div>
+
+            <div class="auth-form-field" id="registerLevelField" hidden>
+                <label>등급</label>
+                <div class="admin-category-grid">
+                    <label class="admin-category-chip">
+                        <input type="radio" name="registerLevel" value="BEGINNER" checked>
+                        <span>초급</span>
+                    </label>
+                    <label class="admin-category-chip">
+                        <input type="radio" name="registerLevel" value="LEVEL1">
+                        <span>1급</span>
+                    </label>
+                    <label class="admin-category-chip">
+                        <input type="radio" name="registerLevel" value="LEVEL2">
+                        <span>2급</span>
+                    </label>
+                    <label class="admin-category-chip">
+                        <input type="radio" name="registerLevel" value="LEVEL3">
+                        <span>3급</span>
+                    </label>
+                    <label class="admin-category-chip">
+                        <input type="radio" name="registerLevel" value="LEVEL4">
+                        <span>4급</span>
+                    </label>
+                </div>
             </div>
 
             <div class="auth-form-field" id="registerCategoryField">
@@ -1159,6 +1204,76 @@
             <div class="admin-note-footer">
                 <span></span>
                 <button type="button" class="admin-note-save-btn" id="faqSaveBtn">추가하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-invite-modal" id="languageMaterialModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-language-material-modal-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3 id="languageMaterialModalTitle">새 자료 등록</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-language-material-modal-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <input type="hidden" id="languageMaterialEditingId">
+            <input type="hidden" id="languageMaterialImageUrl">
+            <input type="hidden" id="languageMaterialFileUrl">
+            <input type="hidden" id="languageMaterialFileName">
+
+            <div class="auth-form-field">
+                <label for="languageMaterialLanguageSelect">언어</label>
+                <select class="apply-select" id="languageMaterialLanguageSelect">
+                    <option value="korean">한국어</option>
+                    <option value="japanese">일본어</option>
+                    <option value="thai">태국어</option>
+                    <option value="english">영어</option>
+                    <option value="computer">컴퓨터</option>
+                    <option value="other">기타</option>
+                </select>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="languageMaterialOrderInput">순서 (숫자, 작을수록 먼저 나와요)</label>
+                <input type="number" id="languageMaterialOrderInput" min="1" value="1">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="languageMaterialTitleInput">제목</label>
+                <input type="text" id="languageMaterialTitleInput" placeholder="예: 한국어 기초 교재 맛보기">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="languageMaterialDescriptionInput">설명 (선택)</label>
+                <textarea class="admin-note-textarea" id="languageMaterialDescriptionInput" placeholder="이 자료에 대한 짧은 소개를 적어주세요."></textarea>
+            </div>
+
+            <div class="auth-form-field">
+                <label for="languageMaterialBadgeInput">리본 글자 (선택, 예: BEST)</label>
+                <input type="text" id="languageMaterialBadgeInput" placeholder="예: BEST">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="languageMaterialImageInput">이미지 (선택)</label>
+                <input type="file" id="languageMaterialImageInput" accept="image/*">
+                <p class="admin-note-hint" id="languageMaterialImagePreviewName"></p>
+                <img id="languageMaterialImagePreview" alt="" hidden style="max-width: 160px; border-radius: 10px; margin-top: 8px;">
+            </div>
+
+            <div class="auth-form-field">
+                <label for="languageMaterialFileInput">첨부 파일 (선택, PDF·워드·한글 파일 등)</label>
+                <input type="file" id="languageMaterialFileInput">
+                <p class="admin-note-hint" id="languageMaterialFilePreviewName"></p>
+            </div>
+
+            <p class="auth-form-error" id="languageMaterialError" hidden></p>
+
+            <div class="admin-note-footer">
+                <span></span>
+                <button type="button" class="admin-note-save-btn" id="languageMaterialSaveBtn">등록하기</button>
             </div>
         </div>
     </div>

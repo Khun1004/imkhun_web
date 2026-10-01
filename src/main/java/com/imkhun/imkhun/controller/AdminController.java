@@ -18,6 +18,7 @@ import com.imkhun.imkhun.service.ClassChangeRequestService;
 import com.imkhun.imkhun.service.DashboardService;
 import com.imkhun.imkhun.service.FaqService;
 import com.imkhun.imkhun.service.KwzmInviteService;
+import com.imkhun.imkhun.service.LanguageMaterialService;
 import com.imkhun.imkhun.service.LessonNoteService;
 import com.imkhun.imkhun.service.NoticeService;
 import com.imkhun.imkhun.service.NotificationService;
@@ -76,6 +77,7 @@ public class AdminController {
     private final CompanyInfoService companyInfoService;
     private final FuturePlanService futurePlanService;
     private final StudentQuestionService studentQuestionService;
+    private final LanguageMaterialService languageMaterialService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -91,7 +93,7 @@ public class AdminController {
                            VoiceSubmissionService voiceSubmissionService, AssignmentSubmissionService assignmentSubmissionService,
                            EventService eventService, FileStorageService fileStorageService,
                            CompanyInfoService companyInfoService, FuturePlanService futurePlanService,
-                           StudentQuestionService studentQuestionService) {
+                           StudentQuestionService studentQuestionService, LanguageMaterialService languageMaterialService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -122,6 +124,7 @@ public class AdminController {
         this.companyInfoService = companyInfoService;
         this.futurePlanService = futurePlanService;
         this.studentQuestionService = studentQuestionService;
+        this.languageMaterialService = languageMaterialService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -376,9 +379,10 @@ public class AdminController {
 
     @GetMapping("/kwzm-materials")
     public ResponseEntity<?> getKwzmMaterials(HttpServletRequest request,
-                                              @RequestParam String language, @RequestParam String category) {
+                                              @RequestParam String language, @RequestParam String category,
+                                              @RequestParam(required = false) String level) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
-        return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "KWZM"));
+        return ResponseEntity.ok(studyMaterialService.getMaterialsByLevel(language, category, "KWZM", level));
     }
 
     @PutMapping("/kwzm-materials/{id}")
@@ -417,9 +421,10 @@ public class AdminController {
 
     @GetMapping("/video-materials")
     public ResponseEntity<?> getVideoMaterials(HttpServletRequest request,
-                                               @RequestParam String language, @RequestParam String category) {
+                                               @RequestParam String language, @RequestParam String category,
+                                               @RequestParam(required = false) String level) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
-        return ResponseEntity.ok(studyMaterialService.getMaterials(language, category, "VIDEO"));
+        return ResponseEntity.ok(studyMaterialService.getMaterialsByLevel(language, category, "VIDEO", level));
     }
 
     @PutMapping("/video-materials/{id}")
@@ -822,6 +827,46 @@ public class AdminController {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         try {
             faqService.deleteFaq(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ---------- 강의 자료 관리 (imkhun 공개 사이트) ----------
+
+    @GetMapping("/language-materials")
+    public ResponseEntity<?> getLanguageMaterials(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(languageMaterialService.getAllMaterials());
+    }
+
+    @PostMapping("/language-materials")
+    public ResponseEntity<?> createLanguageMaterial(HttpServletRequest request, @RequestBody CreateLanguageMaterialRequest materialRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(languageMaterialService.createMaterial(materialRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/language-materials/{id}")
+    public ResponseEntity<?> updateLanguageMaterial(HttpServletRequest request, @PathVariable Long id,
+                                                    @RequestBody CreateLanguageMaterialRequest materialRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(languageMaterialService.updateMaterial(id, materialRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/language-materials/{id}")
+    public ResponseEntity<?> deleteLanguageMaterial(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            languageMaterialService.deleteMaterial(id);
             return ResponseEntity.ok().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

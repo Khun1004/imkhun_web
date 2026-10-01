@@ -285,6 +285,23 @@ public class ApplicationService {
         return "other";
     }
 
+    // 언어 신청서 과목명에서 자료 등급 코드를 뽑아냄 (KWZM 학생 자료를 등급별로 나눠 보여줄 때 씀).
+    // 컴퓨터 과목이거나, 등급이 안 적혀 있으면 null(등급 구분 없음). 한국어뿐 아니라 일본어/태국어/영어도 "OO 기초"/"OO 1급" 식 과목명이면 등급을 인식함.
+    public String extractMaterialLevel(String courseName) {
+        if (courseName == null || courseName.startsWith("컴퓨터")) return null;
+        if (courseName.contains("기초")) return "BEGINNER";
+        if (courseName.contains("1급")) return "LEVEL1";
+        if (courseName.contains("2급")) return "LEVEL2";
+        if (courseName.contains("3급")) return "LEVEL3";
+        if (courseName.contains("4급")) return "LEVEL4";
+        return null;
+    }
+
+    // 예전 이름으로 호출하는 코드가 남아 있을 수 있어 둔 호환용 별칭
+    public String extractKoreanMaterialLevel(String courseName) {
+        return extractMaterialLevel(courseName);
+    }
+
     private String extractLanguage(String courseName) {
         if (courseName.startsWith("한국어")) return "Korean";
         if (courseName.startsWith("일본어")) return "Japanese";
