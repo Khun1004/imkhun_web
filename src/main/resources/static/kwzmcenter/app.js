@@ -302,7 +302,16 @@ async function loadCheckinOptions() {
                 }
 
                 let actionHtml;
-                if (minutesFromStart !== null && minutesFromStart > 60) {
+                if (opt.status) {
+                    // 선생님이 이미 출석/지각/결석/보강 중 하나로 기록을 남긴 경우엔,
+                    // 자습 시간이 지났다는 고정 안내 문구 대신 실제로 기록된 상태를 보여줌.
+                    const recordedLabel = { PRESENT: "출석", LATE: "지각", ABSENT: "결석", MAKEUP: "보강" }[opt.status] || opt.status;
+                    actionHtml = `
+            <div class="student-checkin-dock-closed student-checkin-dock-closed--${opt.status.toLowerCase()}">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M9 12.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg>
+              오늘 ${recordedLabel}(으)로 기록됐어요.
+            </div>`;
+                } else if (minutesFromStart !== null && minutesFromStart > 60) {
                     actionHtml = `
             <div class="student-checkin-dock-closed">
               <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 16.5h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -2150,8 +2159,8 @@ function handleTrialViewMaterial(material) {
 // 옵션을 주소에 붙여줌 (크롬·엣지 등 대부분의 브라우저가 지원, 100% 보장은 아님)
 function withTrialViewerProtectionParams(url) {
     if (!url) return url;
-    const isLikelyPdf = /\.pdf(\?|#|$)/i.test(url) || url.startsWith("blob:") || url.startsWith("data:application/pdf");
-    if (!isLikelyPdf) return url;
+    // 확장자로 PDF인지 구분하지 않고 항상 붙임 — 확장자가 없는 파일도 놓치지 않기 위해서.
+    // PDF가 아닌 파일에는 이 옵션이 그냥 무시되니 문제 없음
     const hashParams = "toolbar=0&navpanes=0&statusbar=0&scrollbar=0";
     return url.includes("#") ? `${url}&${hashParams}` : `${url}#${hashParams}`;
 }
@@ -4789,28 +4798,9 @@ let mypageFilesCache = [];
 let examTimerInterval = null;
 let examSessionFileId = null;
 
-async function loadMypageFiles() {
-    const list = document.getElementById("mypageFilesList");
-    const emptyText = document.getElementById("mypageFilesEmpty");
-    if (!list) return;
-
-    try {
-        const res = await fetch("/api/student/files");
-        if (!res.ok) return;
-        const files = await res.json();
-        mypageFilesCache = files;
-
-        list.innerHTML = "";
-        if (emptyText) emptyText.hidden = files.length > 0;
-
-        files.forEach((f) => {
-            const item = document.createElement(f.category === "EXAM" ? "div" : "a");
-            item.className = "mypage-file-item";
-            if (f.category !== "EXAM") {
-                item.href = f.fileData;
-                item.download = f.fileName;
-            }
-            item.innerHTML = `
+function mypageFileItemHtml(f) {
+    const isExam = f.category === "EXAM";
+    return `
         <span class="mypage-file-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h9l4 4v12H6V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         </span>
@@ -4819,13 +4809,51 @@ async function loadMypageFiles() {
           <span class="mypage-file-name">${escapeHtmlForStudent(f.fileName)}</span>
           <span class="mypage-file-date">${f.createdAt}</span>
         </span>
-        ${f.category === "EXAM" ? examFileActionHtml(f) : `
-        <span class="mypage-file-download" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${isExam ? examFileActionHtml(f) : `
+        <span class="mypage-file-view" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
         </span>`}
       `;
-            list.appendChild(item);
-        });
+}
+
+async function loadMypageFiles() {
+    const listCertificate = document.getElementById("mypageFilesListCertificate");
+    const listExam = document.getElementById("mypageFilesListExam");
+    const emptyCertificate = document.getElementById("mypageFilesEmptyCertificate");
+    const emptyExam = document.getElementById("mypageFilesEmptyExam");
+    if (!listCertificate && !listExam) return;
+
+    try {
+        const res = await fetch("/api/student/files");
+        if (!res.ok) return;
+        const files = await res.json();
+        mypageFilesCache = files;
+
+        const certificateFiles = files.filter((f) => f.category !== "EXAM");
+        const examFiles = files.filter((f) => f.category === "EXAM");
+
+        if (listCertificate) {
+            listCertificate.innerHTML = "";
+            if (emptyCertificate) emptyCertificate.hidden = certificateFiles.length > 0;
+            certificateFiles.forEach((f) => {
+                const item = document.createElement("div");
+                item.className = "mypage-file-item";
+                item.dataset.mypageCertViewId = f.id;
+                item.innerHTML = mypageFileItemHtml(f);
+                listCertificate.appendChild(item);
+            });
+        }
+
+        if (listExam) {
+            listExam.innerHTML = "";
+            if (emptyExam) emptyExam.hidden = examFiles.length > 0;
+            examFiles.forEach((f) => {
+                const item = document.createElement("div");
+                item.className = "mypage-file-item";
+                item.innerHTML = mypageFileItemHtml(f);
+                listExam.appendChild(item);
+            });
+        }
     } catch (err) {
         console.error(err);
     }
@@ -5461,6 +5489,24 @@ document.addEventListener("fragments:loaded", () => {
         if (examResumeBtn) {
             const file = mypageFilesCache.find((f) => String(f.id) === String(examResumeBtn.dataset.examResumeId));
             if (file) openExamSessionModal(file);
+        }
+
+        // 자격증 파일 — 누르면 바로 다운로드하지 않고, 새 창에서 먼저 볼 수 있게 함
+        const certViewItem = e.target.closest("[data-mypage-cert-view-id]");
+        if (certViewItem) {
+            const file = mypageFilesCache.find((f) => String(f.id) === String(certViewItem.dataset.mypageCertViewId));
+            if (file) openStudentFileInNewTab(file.fileData);
+        }
+
+        const mypageFileTabBtn = e.target.closest("[data-mypage-file-tab]");
+        if (mypageFileTabBtn) {
+            document.querySelectorAll("[data-mypage-file-tab]").forEach((b) => b.classList.remove("active"));
+            mypageFileTabBtn.classList.add("active");
+
+            const scope = mypageFileTabBtn.dataset.mypageFileTab;
+            document.querySelectorAll("[data-mypage-file-panel]").forEach((p) => {
+                p.hidden = p.dataset.mypageFilePanel !== scope;
+            });
         }
 
         const checkinBtn = e.target.closest("[data-checkin-id]");

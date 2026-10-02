@@ -240,8 +240,12 @@ em {
     transition: z-index 0s;
 }
 
-/* 모달(리뷰 작성, PDF 뷰어 등)이 열려있을 때는 헤더/푸터/채팅버튼을 확실히 뒤로 보냄
-   (backdrop-filter를 쓰는 고정 요소끼리는 z-index만으로 순서가 꼬이는 경우가 있어서 보강) */
+/* 모달(리뷰 작성, PDF 뷰어 등)이 열려있을 때는 헤더/푸터/채팅버튼을 뒤로 보냄.
+   (주의) 이 z-index 보강만으로는 부족한 경우가 있었음 — 모달 엘리먼트가 화면 안쪽 깊숙이
+   (헤더와 다른 부모 밑에) 들어있으면, backdrop-filter를 쓰는 헤더가 z-index와 무관하게
+   그 위에 그려지는 렌더링 버그가 실제로 있었음. 그래서 모달을 열 때 모달 엘리먼트 자체를
+   body 바로 아래로 옮기는 처리를 JS 쪽에서 같이 해줌(예: openMaterialModal). 이 z-index는
+   그 보강책 중 하나로 남겨둠. */
 body.modal-open .site-header,
 body.modal-open .site-footer,
 body.modal-open .chat-widget {

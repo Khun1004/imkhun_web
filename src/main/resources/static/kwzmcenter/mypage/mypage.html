@@ -205,9 +205,22 @@
                     </div>
 
                     <div class="mypage-tab-panel" data-mypage-panel="shortcuts" hidden>
-                        <p class="admin-note-hint">선생님이 보내주신 자격증·시험 자료를 여기서 다운로드할 수 있어요.</p>
-                        <p class="admin-empty-text" id="mypageFilesEmpty" hidden>아직 받은 파일이 없어요.</p>
-                        <div class="mypage-files-list" id="mypageFilesList"></div>
+                        <p class="admin-note-hint">선생님이 보내주신 자격증·시험 자료를 여기서 확인할 수 있어요.</p>
+
+                        <div class="mypage-filetabs">
+                            <button type="button" class="mypage-filetab active" data-mypage-file-tab="certificate">자격증</button>
+                            <button type="button" class="mypage-filetab" data-mypage-file-tab="exam">시험 보기</button>
+                        </div>
+
+                        <div class="mypage-file-scope-panel" data-mypage-file-panel="certificate">
+                            <p class="admin-empty-text" id="mypageFilesEmptyCertificate" hidden>아직 받은 자격증 파일이 없어요.</p>
+                            <div class="mypage-files-list" id="mypageFilesListCertificate"></div>
+                        </div>
+
+                        <div class="mypage-file-scope-panel" data-mypage-file-panel="exam" hidden>
+                            <p class="admin-empty-text" id="mypageFilesEmptyExam" hidden>아직 받은 시험 자료가 없어요.</p>
+                            <div class="mypage-files-list" id="mypageFilesListExam"></div>
+                        </div>
                     </div>
 
                     <div class="mypage-tab-panel" data-mypage-panel="settings" hidden>

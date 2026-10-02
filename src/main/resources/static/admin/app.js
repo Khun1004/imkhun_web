@@ -1506,24 +1506,15 @@ async function deleteFaq(id) {
 
 let adminLanguageMaterialsCache = [];
 
-async function loadAdminLanguageMaterials() {
-    const list = document.getElementById("languageMaterialList");
-    const emptyText = document.getElementById("languageMaterialsEmpty");
-    if (!list) return;
+function renderLanguageMaterialItemsInto(container, emptyText, items) {
+    if (!container) return;
+    container.innerHTML = "";
+    if (emptyText) emptyText.hidden = items.length > 0;
 
-    try {
-        const res = await fetch("/api/admin/language-materials");
-        if (!res.ok) return;
-        const materials = await res.json();
-        adminLanguageMaterialsCache = materials;
-
-        list.innerHTML = "";
-        if (emptyText) emptyText.hidden = materials.length > 0;
-
-        materials.forEach((m) => {
-            const item = document.createElement("div");
-            item.className = "admin-notice-item";
-            item.innerHTML = `
+    items.forEach((m) => {
+        const item = document.createElement("div");
+        item.className = "admin-notice-item";
+        item.innerHTML = `
         <div class="admin-notice-item-head">
           <p class="admin-notice-item-title">[${LANGUAGE_LABEL[m.language] || m.language}] ${m.sortOrder}. ${escapeHtmlForAdmin(m.title)}${m.badge ? ` · 🏷️ ${escapeHtmlForAdmin(m.badge)}` : ""}</p>
         </div>
@@ -1535,14 +1526,39 @@ async function loadAdminLanguageMaterials() {
           <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-language-material-id="${m.id}">삭제</button>
         </div>
       `;
-            list.appendChild(item);
+        container.appendChild(item);
+    });
+}
+
+// "언어" 탭 안에서 다시 나누는 개별 언어 목록 (컴퓨터는 별도 탭이라 여기 안 넣음)
+const ADMIN_MATERIAL_LANGUAGE_KEYS = ["korean", "japanese", "thai", "english", "other"];
+
+async function loadAdminLanguageMaterials() {
+    const listComputer = document.getElementById("languageMaterialListComputer");
+    const emptyComputer = document.getElementById("languageMaterialsEmptyComputer");
+    if (!listComputer && !document.querySelector("[data-material-list]")) return;
+
+    try {
+        const res = await fetch("/api/admin/language-materials");
+        if (!res.ok) return;
+        const materials = await res.json();
+        adminLanguageMaterialsCache = materials;
+
+        ADMIN_MATERIAL_LANGUAGE_KEYS.forEach((key) => {
+            const items = materials.filter((m) => (m.language || "other") === key);
+            const container = document.querySelector(`[data-material-list="${key}"]`);
+            const emptyText = document.querySelector(`[data-material-empty="${key}"]`);
+            renderLanguageMaterialItemsInto(container, emptyText, items);
         });
+
+        const computerItems = materials.filter((m) => m.language === "computer");
+        renderLanguageMaterialItemsInto(listComputer, emptyComputer, computerItems);
     } catch (err) {
         console.error(err);
     }
 }
 
-function openLanguageMaterialModal(materialId) {
+function openLanguageMaterialModal(materialId, defaultScope) {
     const modal = document.getElementById("languageMaterialModal");
     if (!modal) return;
 
@@ -1551,7 +1567,9 @@ function openLanguageMaterialModal(materialId) {
     document.getElementById("languageMaterialModalTitle").textContent = material ? "자료 수정" : "새 자료 등록";
     document.getElementById("languageMaterialSaveBtn").textContent = material ? "수정하기" : "등록하기";
     document.getElementById("languageMaterialEditingId").value = material ? material.id : "";
-    document.getElementById("languageMaterialLanguageSelect").value = material ? (material.language || "korean") : "korean";
+    document.getElementById("languageMaterialLanguageSelect").value = material
+        ? (material.language || "korean")
+        : (defaultScope || "korean");
     document.getElementById("languageMaterialOrderInput").value = material ? material.sortOrder : adminLanguageMaterialsCache.length + 1;
     document.getElementById("languageMaterialTitleInput").value = material ? material.title : "";
     document.getElementById("languageMaterialDescriptionInput").value = material ? (material.description || "") : "";
@@ -2434,10 +2452,10 @@ async function loadAttendanceToday() {
           ${statusLabel}${entry.checkedInByStudent ? " · 학생 체크" : ""}
         </span>
         <div class="admin-attendance-today-actions">
-          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--present" data-mark-attendance="${entry.applicationId}" data-mark-status="PRESENT">출석</button>
-          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--late" data-mark-attendance="${entry.applicationId}" data-mark-status="LATE">지각</button>
-          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--absent" data-mark-attendance="${entry.applicationId}" data-mark-status="ABSENT">결석</button>
-          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--makeup" data-mark-attendance="${entry.applicationId}" data-mark-status="MAKEUP">보강</button>
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--present${entry.status === "PRESENT" ? " active" : ""}" data-mark-attendance="${entry.applicationId}" data-mark-status="PRESENT">출석</button>
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--late${entry.status === "LATE" ? " active" : ""}" data-mark-attendance="${entry.applicationId}" data-mark-status="LATE">지각</button>
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--absent${entry.status === "ABSENT" ? " active" : ""}" data-mark-attendance="${entry.applicationId}" data-mark-status="ABSENT">결석</button>
+          <button type="button" class="admin-attendance-today-btn admin-attendance-today-btn--makeup${entry.status === "MAKEUP" ? " active" : ""}" data-mark-attendance="${entry.applicationId}" data-mark-status="MAKEUP">보강</button>
         </div>
       `;
             list.appendChild(row);
@@ -5501,7 +5519,16 @@ document.addEventListener("fragments:loaded", () => {
         dock.classList.toggle("is-open", willOpen);
         tab.setAttribute("aria-expanded", willOpen ? "true" : "false");
     });
-    document.getElementById("adminCheckinDockPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    // (버그 수정) 바로 위 stopPropagation 때문에, 이 패널 안에서 일어나는 클릭은
+    // document에 달려있는 다른 델리게이션 핸들러(출석/지각/결석/보강 버튼 처리 포함)로
+    // 아예 전달되지 않고 있었음 — 그래서 버튼을 눌러도 fetch 자체가 실행되지 않았음.
+    // 패널 바깥 클릭 시 닫히는 동작(stopPropagation)은 그대로 유지하면서, 출석 상태
+    // 버튼만은 이 리스너에서 직접 처리해줌.
+    document.getElementById("adminCheckinDockPanel")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const markAttendanceBtn = e.target.closest("[data-mark-attendance]");
+        if (markAttendanceBtn) markTodayAttendance(markAttendanceBtn.dataset.markAttendance, markAttendanceBtn.dataset.markStatus);
+    });
     document.addEventListener("click", (e) => {
         const dock = document.getElementById("adminCheckinDock");
         if (dock && dock.classList.contains("is-open") && !dock.contains(e.target)) {
@@ -5511,8 +5538,37 @@ document.addEventListener("fragments:loaded", () => {
     });
     document.getElementById("adminFaqNewBtn")?.addEventListener("click", () => openFaqModal());
     document.getElementById("faqSaveBtn")?.addEventListener("click", submitFaq);
-    document.getElementById("languageMaterialNewBtn")?.addEventListener("click", () => openLanguageMaterialModal());
+    document.querySelectorAll("[data-material-new-btn]").forEach((btn) => {
+        btn.addEventListener("click", () => openLanguageMaterialModal(null, btn.dataset.materialNewBtn));
+    });
+    document.getElementById("computerMaterialNewBtn")?.addEventListener("click", () => openLanguageMaterialModal(null, "computer"));
     document.getElementById("languageMaterialSaveBtn")?.addEventListener("click", submitLanguageMaterial);
+
+    // 강의 자료 안의 "언어" / "컴퓨터" 탭 전환
+    document.querySelectorAll("[data-material-scope-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-material-scope-tab]").forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const scope = btn.dataset.materialScopeTab;
+            document.querySelectorAll("[data-material-scope-panel]").forEach((p) => {
+                p.hidden = p.dataset.materialScopePanel !== scope;
+            });
+        });
+    });
+
+    // "언어" 탭 안에서 다시 한국어/일본어/태국어/영어/기타로 나누는 탭 전환
+    document.querySelectorAll("[data-material-lang-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-material-lang-tab]").forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const lang = btn.dataset.materialLangTab;
+            document.querySelectorAll("[data-material-lang-panel]").forEach((p) => {
+                p.hidden = p.dataset.materialLangPanel !== lang;
+            });
+        });
+    });
     document.getElementById("languageMaterialImageInput")?.addEventListener("change", () => {
         const file = document.getElementById("languageMaterialImageInput").files[0];
         const nameEl = document.getElementById("languageMaterialImagePreviewName");

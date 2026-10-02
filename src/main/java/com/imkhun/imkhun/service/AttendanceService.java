@@ -166,10 +166,19 @@ public class AttendanceService {
             attendanceRecordRepository.save(AttendanceRecord.create(applicationId, date, status, null));
         }
 
+        // (주의) 결석(ABSENT) 처리에만 있는 알림 보내기 로직임. 이 부분에서 예외가 나면
+        // 위에서 이미 저장한 출석 기록까지 같은 트랜잭션으로 묶여서 전부 롤백될 수 있었음
+        // ("결석"을 눌렀는데 저장 자체가 안 되고 "미체크"로 되돌아가 보이는 버그의 원인).
+        // 그래서 알림 보내기는 try/catch로 감싸서, 알림이 실패해도 출석 기록 저장 자체는
+        // 반드시 남도록 함.
         if ("ABSENT".equals(status)) {
-            notificationService.notifyStudent(application.getUsername(), "ATTENDANCE_ABSENT",
-                    application.getCourseName() + " " + date.format(DATE_FORMAT) + " 수업이 결석으로 기록됐어요.", null);
-            checkConsecutiveAbsences(application);
+            try {
+                notificationService.notifyStudent(application.getUsername(), "ATTENDANCE_ABSENT",
+                        application.getCourseName() + " " + date.format(DATE_FORMAT) + " 수업이 결석으로 기록됐어요.", null);
+                checkConsecutiveAbsences(application);
+            } catch (Exception e) {
+                System.err.println("[AttendanceService] 결석 알림 처리 중 오류 (출석 기록 저장에는 영향 없음): " + e);
+            }
         }
     }
 
@@ -365,9 +374,24 @@ public class AttendanceService {
                 .map(a -> new TodayAttendanceEntryResponse(a.getId(), null, a.getCourseName(), a.getClassTime(), null, null, false))
                 .toList();
 
-        // 체크 가능 시간이 아니어도 "오늘 이 수업이 있어요" 정보는 항상 보여줄 수 있게 따로 만들어둠
+        // 체크 가능 시간이 아니어도 "오늘 이 수업이 있어요" 정보는 항상 보여줄 수 있게 따로 만들어둠.
+        // (버그 수정) 예전에는 여기서 status를 무조건 null로 넣고 있었음 — 그래서 선생님이
+        // 출석/지각/결석/보강 중 뭘 눌러서 기록해도, 학생 화면에는 그 결과가 절대 반영되지
+        // 않고 "결석 처리 구간이에요"라는 고정 문구만 계속 보였음. 오늘 날짜의 실제 출석
+        // 기록을 찾아서 status를 제대로 채워줌.
+        Map<Long, AttendanceRecord> todayRecordByApplicationId = attendanceRecordRepository
+                .findByApplicationIdInAndClassDate(scheduledToday.stream().map(Application::getId).toList(), today)
+                .stream()
+                .collect(Collectors.toMap(AttendanceRecord::getApplicationId, r -> r));
+
         List<TodayAttendanceEntryResponse> scheduledTodayResponses = scheduledToday.stream()
-                .map(a -> new TodayAttendanceEntryResponse(a.getId(), null, a.getCourseName(), a.getClassTime(), null, null, false))
+                .map(a -> {
+                    AttendanceRecord record = todayRecordByApplicationId.get(a.getId());
+                    return new TodayAttendanceEntryResponse(a.getId(), null, a.getCourseName(), a.getClassTime(),
+                            record != null ? record.getStatus() : null,
+                            record != null ? record.getId() : null,
+                            record != null && record.isCheckedInByStudent());
+                })
                 .toList();
 
         return new CheckinStatusResponse(hasClassToday, checkableNow, scheduledTodayResponses);

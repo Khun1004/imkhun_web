@@ -344,38 +344,6 @@
     border-top: 1px solid var(--line);
 }
 
-/* 항상 눈에 보이도록, 창 오른쪽 아래에도 큼직한 닫기 버튼을 하나 더 둠 */
-.material-modal-close-bottom {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 40px;
-    padding: 0 18px 0 14px;
-    border: none;
-    border-radius: 999px;
-    background: #17140f;
-    color: #f7f3e9;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 10px 24px -8px rgba(23, 20, 15, 0.5);
-    transition: background 0.15s, transform 0.15s;
-}
-
-.material-modal-close-bottom:hover {
-    background: #29231a;
-    transform: translateY(-2px);
-}
-
-.material-modal-close-bottom svg {
-    width: 16px;
-    height: 16px;
-}
-
 /* 하단 전체 폭 안내 배너 (오른쪽→왼쪽 흐르는 문구) */
 
 .material-notice {

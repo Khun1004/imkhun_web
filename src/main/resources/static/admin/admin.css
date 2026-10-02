@@ -1336,6 +1336,34 @@ body.admin-standalone-body {
     margin: 0;
 }
 
+/* 강의 자료 안에서 "언어" / "컴퓨터" 탭으로 나눈 부분 */
+
+.admin-materials-subheading {
+    font-family: "Noto Serif KR", serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+}
+
+.admin-material-scope-panel[hidden] {
+    display: none;
+}
+
+.admin-material-lang-panel[hidden] {
+    display: none;
+}
+
+.admin-inline-tabs--sub {
+    margin: 2px 0 16px;
+    border-bottom-color: var(--line);
+}
+
+.admin-inline-tabs--sub .admin-inline-tab {
+    padding: 7px 14px;
+    font-size: 12.5px;
+}
+
 /* 대시보드 */
 
 .admin-dashboard-heading {
@@ -2717,6 +2745,17 @@ textarea.admin-note-textarea.admin-register-text {
 .admin-attendance-today-btn--late:hover { background: rgba(168, 124, 34, 0.14); color: #a87c22; border-color: #a87c22; box-shadow: 0 6px 14px -8px rgba(168, 124, 34, 0.5); }
 .admin-attendance-today-btn--absent:hover { background: rgba(184, 68, 106, 0.12); color: #b8446a; border-color: #b8446a; box-shadow: 0 6px 14px -8px rgba(184, 68, 106, 0.5); }
 .admin-attendance-today-btn--makeup:hover { background: rgba(107, 91, 149, 0.14); color: #6b5b95; border-color: #6b5b95; box-shadow: 0 6px 14px -8px rgba(107, 91, 149, 0.5); }
+
+/* 지금 선택되어 있는 출결 상태는 버튼 자체가 눌려있는 것처럼 계속 색이 남아있게 함.
+   (이전에는 버튼에 상태가 전혀 표시되지 않아서, 눌러도 바뀐 게 안 보인다는 문제가 있었음) */
+.admin-attendance-today-btn.active {
+    font-weight: 800;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.admin-attendance-today-btn--present.active { background: var(--teal-soft); color: var(--teal-deep); border-color: var(--teal); }
+.admin-attendance-today-btn--late.active { background: rgba(168, 124, 34, 0.14); color: #a87c22; border-color: #a87c22; }
+.admin-attendance-today-btn--absent.active { background: rgba(184, 68, 106, 0.12); color: #b8446a; border-color: #b8446a; }
+.admin-attendance-today-btn--makeup.active { background: rgba(107, 91, 149, 0.14); color: #6b5b95; border-color: #6b5b95; }
 
 @media (max-width: 640px) {
     .admin-attendance-today-head {

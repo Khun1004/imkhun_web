@@ -190,8 +190,8 @@ function renderWatermark(label) {
 // 옵션을 주소에 붙여줌 (크롬·엣지 등 대부분의 브라우저가 지원, 100% 보장은 아님)
 function withViewerProtectionParams(url) {
     if (!url) return url;
-    const isLikelyPdf = /\.pdf(\?|#|$)/i.test(url) || url.startsWith("blob:") || url.startsWith("data:application/pdf");
-    if (!isLikelyPdf) return url;
+    // 확장자로 PDF인지 구분하지 않고 항상 붙임 — 확장자가 없는 파일(예: 서버에 .pdf 없이 저장된 경우)도
+    // 놓치지 않기 위해서. PDF가 아닌 파일에는 이 옵션이 그냥 무시되니 문제 없음
     const hashParams = "toolbar=0&navpanes=0&statusbar=0&scrollbar=0";
     return url.includes("#") ? `${url}&${hashParams}` : `${url}#${hashParams}`;
 }
@@ -205,6 +205,14 @@ async function openMaterialModal(fileUrl, title) {
     if (!fileUrl) {
         alert("아직 등록된 파일이 없어요. 선생님께 문의해주세요.");
         return;
+    }
+
+    // 모달이 헤더와 같은 화면 안쪽 깊숙이(섹션 안)에 들어있으면, 헤더가 z-index와
+    // 상관없이 모달 위에 그대로 그려지는 렌더링 버그가 있었음(실제로 확인됨).
+    // 그래서 열 때마다 모달을 body 바로 아래로 옮겨서, 어떤 화면(탭)에서 열리든
+    // 항상 맨 위에 제대로 뜨게 함.
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
     }
 
     frame.src = withViewerProtectionParams(fileUrl);

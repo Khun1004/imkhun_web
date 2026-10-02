@@ -142,61 +142,73 @@
     }
 }
 
-/* 마이페이지 메뉴 — 왼쪽 사이드 메뉴 + 오른쪽 내용 2단 구조 (좁은 화면에서는 위쪽 가로 탭으로 바뀜) */
+/* 마이페이지 메뉴 — 왼쪽은 "메뉴판"처럼 독립된 패널로, 오른쪽은 "내용 카드"로 서로 다르게
+   보이게 함. 전에는 메뉴 버튼과 내용이 같은 배경 위에 떠 있어서 어디까지가 메뉴고 어디부터가
+   내용인지 구분이 잘 안 됐음. (좁은 화면에서는 위쪽 가로로 넘기는 메뉴 띠로 바뀜) */
 
 .mypage-layout {
     display: flex;
     align-items: flex-start;
-    gap: 28px;
+    gap: 18px;
 }
 
 .mypage-tabs {
-    flex: 0 0 168px;
+    flex: 0 0 172px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
     position: sticky;
     top: 16px;
+    padding: 10px;
+    background: var(--kwzm-bg-2);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
 }
 
 .mypage-content {
     flex: 1;
     min-width: 0;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+:root[data-theme="dark"] .mypage-content {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
 }
 
 .mypage-tab {
     flex-shrink: 0;
     text-align: left;
     border: none;
-    border-left: 2.5px solid transparent;
-    border-radius: 0 10px 10px 0;
+    border-radius: 10px;
     padding: 10px 14px;
     background: none;
-    color: var(--kwzm-ink-faint);
+    color: var(--kwzm-ink-soft);
     font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s, background 0.15s, transform 0.15s;
+    transition: color 0.15s, background 0.15s;
 }
 
 .mypage-tab:hover {
     color: var(--kwzm-ink);
     background: var(--kwzm-bg-3);
-    transform: translateX(1px);
 }
 
 .mypage-tab.active {
-    position: relative;
-    color: var(--kwzm-primary-2);
-    font-weight: 800;
-    border-color: var(--kwzm-gold-soft);
-    background: linear-gradient(90deg, var(--kwzm-bg-2) 0%, rgba(224, 167, 44, 0.1) 100%);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+    color: #fff;
+    font-weight: 700;
+    background: var(--kwzm-primary);
+    box-shadow: 0 6px 16px -8px rgba(15, 37, 71, 0.45);
 }
 
 :root[data-theme="dark"] .mypage-tab.active {
-    color: #f3ce7a;
-    background: linear-gradient(90deg, var(--kwzm-bg-2) 0%, rgba(224, 167, 44, 0.14) 100%);
+    color: var(--kwzm-ink);
+    background: var(--kwzm-gold-gradient);
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.5);
 }
 
 .mypage-tab-panel[hidden] {
@@ -206,7 +218,7 @@
 @media (max-width: 880px) {
     .mypage-layout {
         flex-direction: column;
-        gap: 0;
+        gap: 14px;
     }
 
     .mypage-tabs {
@@ -215,24 +227,18 @@
         flex: none;
         width: 100%;
         row-gap: 4px;
-        gap: 4px;
-        margin-bottom: 20px;
-        border-bottom: 1.5px solid var(--kwzm-line);
         position: static;
         top: auto;
     }
 
-    .mypage-tab {
-        border-left: none;
-        border-bottom: 2.5px solid transparent;
-        border-radius: 0;
-        margin-bottom: -1.5px;
+    .mypage-content {
+        padding: 18px 16px;
     }
+}
 
-    .mypage-tab.active {
-        background: none;
-        border-left-color: transparent;
-        border-color: var(--kwzm-gold-soft);
+@media (max-width: 520px) {
+    .mypage-content {
+        border-radius: 14px;
     }
 }
 
@@ -513,6 +519,46 @@
 
 /* "바로가기" 탭 — 관리자가 보내준 파일(자격증/시험 자료) 목록 */
 
+.mypage-filetabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 5px;
+    margin: 14px 0 6px;
+    background: var(--kwzm-bg-2);
+    border-radius: 14px;
+    width: fit-content;
+}
+
+.mypage-filetab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    font-family: "Noto Serif KR", serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink-faint);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.mypage-filetab:hover {
+    color: var(--kwzm-ink);
+}
+
+.mypage-filetab.active {
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-primary);
+    box-shadow: 0 6px 16px -8px rgba(15, 37, 71, 0.35);
+}
+
+.mypage-file-scope-panel[hidden] {
+    display: none;
+}
+
 .mypage-files-list {
     display: flex;
     flex-direction: column;
@@ -524,6 +570,7 @@
     display: flex;
     align-items: center;
     gap: 14px;
+    cursor: pointer;
     padding: 16px 18px;
     border: 1px solid var(--kwzm-line);
     border-radius: 14px;
@@ -583,7 +630,7 @@
     color: var(--kwzm-ink-faint);
 }
 
-.mypage-file-download {
+.mypage-file-view {
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -595,7 +642,7 @@
     color: #fff;
 }
 
-.mypage-file-download svg {
+.mypage-file-view svg {
     width: 15px;
     height: 15px;
 }

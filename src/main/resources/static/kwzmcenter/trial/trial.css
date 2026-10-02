@@ -159,38 +159,6 @@
     border-top: 1px solid var(--kwzm-line);
 }
 
-/* 항상 눈에 보이도록, 창 오른쪽 아래에도 큼직한 닫기 버튼을 하나 더 둠 */
-.trial-material-modal-close-bottom {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 40px;
-    padding: 0 18px 0 14px;
-    border: none;
-    border-radius: 999px;
-    background: var(--kwzm-primary);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 10px 24px -8px rgba(15, 37, 71, 0.5);
-    transition: background 0.15s, transform 0.15s;
-}
-
-.trial-material-modal-close-bottom:hover {
-    background: var(--kwzm-primary-2);
-    transform: translateY(-2px);
-}
-
-.trial-material-modal-close-bottom svg {
-    width: 16px;
-    height: 16px;
-}
-
 /* ---------- 워터마크 (보는 학생 + 경고문, 자료 위에 옅게 겹쳐 보임) ---------- */
 
 .trial-material-watermark {

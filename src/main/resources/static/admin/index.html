@@ -553,15 +553,89 @@
             </div>
 
             <div class="admin-inline-panel" data-notice-panel="materials" hidden>
-                <div class="admin-materials-head-row">
-                    <p class="admin-materials-heading">강의 자료</p>
-                    <button type="button" class="admin-register-btn" id="languageMaterialNewBtn">
-                        <span aria-hidden="true">+</span> 새 자료 등록
-                    </button>
-                </div>
+                <p class="admin-materials-heading">강의 자료</p>
                 <p class="admin-note-hint">imkhun 공개 사이트의 "강의 자료" 탭에 나와요. 로그인 안 해도 누구나 볼 수 있고, 왼쪽/오른쪽으로 천천히 자동으로 넘어가요. 순서 번호가 작을수록 먼저 나와요.</p>
-                <p class="admin-empty-text" id="languageMaterialsEmpty" hidden>아직 등록된 자료가 없어요.</p>
-                <div class="admin-notice-list" id="languageMaterialList"></div>
+
+                <div class="admin-inline-tabs">
+                    <button type="button" class="admin-inline-tab active" data-material-scope-tab="language">언어 (한국어·일본어·태국어·영어)</button>
+                    <button type="button" class="admin-inline-tab" data-material-scope-tab="computer">컴퓨터</button>
+                </div>
+
+                <div class="admin-material-scope-panel" data-material-scope-panel="language">
+                    <div class="admin-inline-tabs admin-inline-tabs--sub">
+                        <button type="button" class="admin-inline-tab active" data-material-lang-tab="korean">한국어</button>
+                        <button type="button" class="admin-inline-tab" data-material-lang-tab="japanese">일본어</button>
+                        <button type="button" class="admin-inline-tab" data-material-lang-tab="thai">태국어</button>
+                        <button type="button" class="admin-inline-tab" data-material-lang-tab="english">영어</button>
+                        <button type="button" class="admin-inline-tab" data-material-lang-tab="other">기타</button>
+                    </div>
+
+                    <div class="admin-material-lang-panel" data-material-lang-panel="korean">
+                        <div class="admin-materials-head-row">
+                            <p class="admin-materials-subheading">한국어 자료</p>
+                            <button type="button" class="admin-register-btn" data-material-new-btn="korean">
+                                <span aria-hidden="true">+</span> 새 자료 등록
+                            </button>
+                        </div>
+                        <p class="admin-empty-text" data-material-empty="korean" hidden>아직 등록된 자료가 없어요.</p>
+                        <div class="admin-notice-list" data-material-list="korean"></div>
+                    </div>
+
+                    <div class="admin-material-lang-panel" data-material-lang-panel="japanese" hidden>
+                        <div class="admin-materials-head-row">
+                            <p class="admin-materials-subheading">일본어 자료</p>
+                            <button type="button" class="admin-register-btn" data-material-new-btn="japanese">
+                                <span aria-hidden="true">+</span> 새 자료 등록
+                            </button>
+                        </div>
+                        <p class="admin-empty-text" data-material-empty="japanese" hidden>아직 등록된 자료가 없어요.</p>
+                        <div class="admin-notice-list" data-material-list="japanese"></div>
+                    </div>
+
+                    <div class="admin-material-lang-panel" data-material-lang-panel="thai" hidden>
+                        <div class="admin-materials-head-row">
+                            <p class="admin-materials-subheading">태국어 자료</p>
+                            <button type="button" class="admin-register-btn" data-material-new-btn="thai">
+                                <span aria-hidden="true">+</span> 새 자료 등록
+                            </button>
+                        </div>
+                        <p class="admin-empty-text" data-material-empty="thai" hidden>아직 등록된 자료가 없어요.</p>
+                        <div class="admin-notice-list" data-material-list="thai"></div>
+                    </div>
+
+                    <div class="admin-material-lang-panel" data-material-lang-panel="english" hidden>
+                        <div class="admin-materials-head-row">
+                            <p class="admin-materials-subheading">영어 자료</p>
+                            <button type="button" class="admin-register-btn" data-material-new-btn="english">
+                                <span aria-hidden="true">+</span> 새 자료 등록
+                            </button>
+                        </div>
+                        <p class="admin-empty-text" data-material-empty="english" hidden>아직 등록된 자료가 없어요.</p>
+                        <div class="admin-notice-list" data-material-list="english"></div>
+                    </div>
+
+                    <div class="admin-material-lang-panel" data-material-lang-panel="other" hidden>
+                        <div class="admin-materials-head-row">
+                            <p class="admin-materials-subheading">기타 자료</p>
+                            <button type="button" class="admin-register-btn" data-material-new-btn="other">
+                                <span aria-hidden="true">+</span> 새 자료 등록
+                            </button>
+                        </div>
+                        <p class="admin-empty-text" data-material-empty="other" hidden>아직 등록된 자료가 없어요.</p>
+                        <div class="admin-notice-list" data-material-list="other"></div>
+                    </div>
+                </div>
+
+                <div class="admin-material-scope-panel" data-material-scope-panel="computer" hidden>
+                    <div class="admin-materials-head-row">
+                        <p class="admin-materials-subheading">컴퓨터 자료</p>
+                        <button type="button" class="admin-register-btn" id="computerMaterialNewBtn">
+                            <span aria-hidden="true">+</span> 새 자료 등록
+                        </button>
+                    </div>
+                    <p class="admin-empty-text" id="languageMaterialsEmptyComputer" hidden>아직 등록된 자료가 없어요.</p>
+                    <div class="admin-notice-list" id="languageMaterialListComputer"></div>
+                </div>
             </div>
 
             <div class="admin-inline-panel" data-notice-panel="events" hidden>
