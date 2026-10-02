@@ -53,9 +53,13 @@
             </button>
         </div>
         <p class="student-vocab-quiz-hint" id="vocabQuizHint">단어를 전부 눌러서 확인하면 퀴즈를 볼 수 있어요 (0/0)</p>
+        <p class="student-vocab-last-score" id="vocabLastScoreInfo" hidden></p>
 
         <p class="admin-empty-text" id="vocabWordsEmpty" hidden>이 Part에 등록된 단어가 아직 없어요.</p>
         <div class="student-vocab-word-grid" id="vocabWordGrid"></div>
+
+        <!-- 이번 퀴즈 결과 — 지난 점수와 비교해서 보여줌 (퀴즈를 막 완료했을 때만 보임) -->
+        <div class="vocab-result-card" id="vocabResultCard" hidden></div>
 
         <!-- 단어 퀴즈 대결 — 친구와 이 Part 점수 비교 -->
         <div class="vocab-friend-compare" id="vocabFriendCompareSection" hidden>

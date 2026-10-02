@@ -283,6 +283,13 @@
     margin: -14px 0 22px;
 }
 
+.student-vocab-last-score {
+    text-align: right;
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    margin: -18px 0 22px;
+}
+
 .student-vocab-quiz-btn svg {
     width: 17px;
     height: 17px;
@@ -566,6 +573,48 @@
 
 .vocab-quiz-word-row .vocab-quiz-word {
     margin: 0;
+}
+
+/* 퀴즈 결과 카드 — 이번 점수를 지난 점수와 비교해서 보여줌 */
+
+.vocab-result-card {
+    margin-top: 22px;
+    padding: 18px 20px;
+    background: var(--kwzm-bg-2);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 14px;
+}
+
+.vocab-result-headline {
+    margin: 0 0 6px;
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.vocab-result-headline strong {
+    color: var(--kwzm-primary);
+    font-size: 17px;
+}
+
+.vocab-result-compare {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.vocab-result-compare--up {
+    color: var(--kwzm-accent-2);
+}
+
+.vocab-result-compare--down {
+    color: #b8566a;
+}
+
+.vocab-result-compare--same,
+.vocab-result-compare--first {
+    color: var(--kwzm-ink-faint);
 }
 
 /* 단어 퀴즈 대결 — 친구와 이 Part 점수 비교 */

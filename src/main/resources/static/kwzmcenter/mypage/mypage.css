@@ -259,6 +259,20 @@
 .mypage-summary-total-chip--absent .mypage-summary-total-num { color: #b8566a; }
 .mypage-summary-total-chip--makeup .mypage-summary-total-num { color: var(--kwzm-accent-2); }
 
+.mypage-summary-total-chip--badge {
+    cursor: pointer;
+    border-color: rgba(201, 138, 47, 0.4);
+    background: rgba(201, 138, 47, 0.1);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mypage-summary-total-chip--badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -8px rgba(201, 138, 47, 0.5);
+}
+
+.mypage-summary-total-chip--badge .mypage-summary-total-num { color: #a06f24; }
+
 .mypage-summary-courses {
     display: flex;
     flex-direction: column;
@@ -1213,6 +1227,66 @@
     font-weight: 600;
     color: var(--kwzm-ink-faint);
     margin: 0;
+}
+
+.growth-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.growth-progress-row {
+    padding: 14px 16px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.growth-progress-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.growth-progress-lang {
+    font-family: "Noto Serif KR", serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.growth-progress-percent {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kwzm-primary);
+    flex-shrink: 0;
+}
+
+.growth-progress-bar-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--kwzm-bg-2);
+    overflow: hidden;
+}
+
+.growth-progress-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--kwzm-primary);
+    transition: width 0.4s ease;
+}
+
+.growth-progress-bar-fill--korean { background: var(--kwzm-primary); }
+.growth-progress-bar-fill--japanese { background: var(--kwzm-accent); }
+.growth-progress-bar-fill--thai { background: #5c8f4f; }
+.growth-progress-bar-fill--english { background: #c98a2f; }
+
+.growth-progress-note {
+    margin: 8px 0 0;
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
 }
 
 .growth-report-timeline {

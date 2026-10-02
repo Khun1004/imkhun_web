@@ -15,6 +15,7 @@ import com.imkhun.imkhun.service.EventService;
 import com.imkhun.imkhun.service.StudentQuestionService;
 import com.imkhun.imkhun.service.MaterialQuestionService;
 import com.imkhun.imkhun.service.MypageSummaryService;
+import com.imkhun.imkhun.service.ProgressService;
 import com.imkhun.imkhun.service.LeaderboardService;
 import com.imkhun.imkhun.service.ParentReportService;
 import com.imkhun.imkhun.service.SharedGoalService;
@@ -79,6 +80,7 @@ public class StudentPortalController {
     private final StudyGroupService studyGroupService;
     private final MaterialQuestionService materialQuestionService;
     private final MypageSummaryService mypageSummaryService;
+    private final ProgressService progressService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -94,7 +96,8 @@ public class StudentPortalController {
                                    LeaderboardService leaderboardService, ParentReportService parentReportService,
                                    ClassNoteService classNoteService, BadgeService badgeService, FriendService friendService,
                                    SharedGoalService sharedGoalService, StudyGroupService studyGroupService,
-                                   MaterialQuestionService materialQuestionService, MypageSummaryService mypageSummaryService) {
+                                   MaterialQuestionService materialQuestionService, MypageSummaryService mypageSummaryService,
+                                   ProgressService progressService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -123,6 +126,7 @@ public class StudentPortalController {
         this.studyGroupService = studyGroupService;
         this.materialQuestionService = materialQuestionService;
         this.mypageSummaryService = mypageSummaryService;
+        this.progressService = progressService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -180,6 +184,14 @@ public class StudentPortalController {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         return ResponseEntity.ok(mypageSummaryService.getSummaryForStudent(userOpt.get().getUsername()));
+    }
+
+    // 마이페이지 "나의 성장" 탭 — 언어별 현재 레벨 + 단어장 진도율(%)
+    @GetMapping("/progress")
+    public ResponseEntity<?> getProgress(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(progressService.getProgressForStudent(userOpt.get().getUsername()));
     }
 
     // 이 학생이 승인받은 언어이면서, 그 언어의 KWZM 자료를 볼 수 있게 "초대"까지 받은 경우에만 자료가 보임

@@ -922,6 +922,7 @@ async function loadMypageSummary() {
         <span class="mypage-summary-total-num">${data.totalMakeupCount ?? 0}</span><span>보강</span>
       </div>
     `;
+        loadMypageBadgeTeaser();
 
         coursesEl.innerHTML = "";
         data.courses.forEach((c) => {
@@ -964,6 +965,28 @@ async function loadMypageSummary() {
       `;
             coursesEl.appendChild(row);
         });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// 요약 카드에 "배지 N개 획득" 칩을 하나 더 붙여줌 — 누르면 배지 탭으로 바로 이동함
+async function loadMypageBadgeTeaser() {
+    const totalsEl = document.getElementById("mypageSummaryTotals");
+    if (!totalsEl) return;
+
+    try {
+        const res = await fetch("/api/student/badges");
+        if (!res.ok) return;
+        const badges = await res.json();
+        const earnedCount = badges.filter((b) => b.earned).length;
+
+        const chip = document.createElement("div");
+        chip.className = "mypage-summary-total-chip mypage-summary-total-chip--badge";
+        chip.dataset.mypageTab = "badges";
+        chip.setAttribute("role", "button");
+        chip.innerHTML = `<span class="mypage-summary-total-num">🏅 ${earnedCount}</span><span>배지 획득</span>`;
+        totalsEl.appendChild(chip);
     } catch (err) {
         console.error(err);
     }
@@ -1312,6 +1335,7 @@ async function loadRecentMaterials() {
 let vocabSelectedLanguage = null;
 let vocabSets = [];
 let vocabSelectedSetId = null;
+let vocabLastResultBeforeThisAttempt = null; // 이번에 퀴즈를 풀기 전의 "지난 점수" — 완료 후 비교용으로 기억해둠
 let vocabWords = [];
 let vocabRevealedWordIds = new Set();
 
@@ -1546,9 +1570,37 @@ async function openVocabSet(set) {
 
         updateVocabQuizGate();
         loadVocabFriendCompare(set.id);
+        loadVocabLastScore(set.id);
+        document.getElementById("vocabResultCard").hidden = true;
     } catch (err) {
         console.error(err);
         gridEl.innerHTML = `<p class="admin-note-hint">불러오지 못했어요.</p>`;
+    }
+}
+
+// 이 Part를 전에 풀어본 적 있으면 "지난 점수"를 보여주고, 퀴즈 완료 후 비교에 쓸 수 있게 기억해둠
+async function loadVocabLastScore(setId) {
+    const infoEl = document.getElementById("vocabLastScoreInfo");
+    vocabLastResultBeforeThisAttempt = null;
+    if (!infoEl) return;
+
+    try {
+        const res = await fetch(`/api/student/vocabulary/sets/${setId}/quiz-result`);
+        if (!res.ok) {
+            infoEl.hidden = true;
+            return;
+        }
+        const result = await res.json();
+        if (result.score === null || result.score === undefined) {
+            infoEl.hidden = true;
+            return;
+        }
+        vocabLastResultBeforeThisAttempt = result;
+        infoEl.hidden = false;
+        infoEl.textContent = `지난 점수: ${result.totalQuestions}문제 중 ${result.score}개 (${result.completedAt})`;
+    } catch (err) {
+        console.error(err);
+        infoEl.hidden = true;
     }
 }
 
@@ -1758,9 +1810,43 @@ async function completeVocabQuiz(timedOut) {
     if (saveFailed) {
         alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈는 끝났지만 결과 저장에 실패했어요 (${total}문제 중 ${score}개 맞힘). 인터넷 연결을 확인하고 다시 시도해주세요.`);
     } else {
-        alert(`${timedOut ? "시간이 다 됐어요!\n" : ""}퀴즈 완료! ${total}문제 중 ${score}개 맞혔어요.`);
-        if (!saveFailed && vocabSelectedSetId) loadVocabFriendCompare(vocabSelectedSetId);
+        renderVocabResultCard(score, total, timedOut);
+        if (vocabSelectedSetId) {
+            loadVocabFriendCompare(vocabSelectedSetId);
+            loadVocabLastScore(vocabSelectedSetId); // 이번 결과가 이제 "지난 점수"가 되도록 새로고침
+        }
     }
+}
+
+// 퀴즈를 막 끝낸 직후 — 이번 점수를 지난 점수와 비교해서 카드로 보여줌 (alert 대신)
+function renderVocabResultCard(score, total, timedOut) {
+    const cardEl = document.getElementById("vocabResultCard");
+    if (!cardEl) return;
+
+    const prev = vocabLastResultBeforeThisAttempt;
+    let compareHtml;
+    if (prev && prev.score !== null && prev.score !== undefined) {
+        const diff = score - prev.score;
+        let compareClass = "vocab-result-compare--same";
+        let compareText = "지난번이랑 똑같아요";
+        if (diff > 0) {
+            compareClass = "vocab-result-compare--up";
+            compareText = `지난번(${prev.score}개)보다 ${diff}개 늘었어요! 🎉`;
+        } else if (diff < 0) {
+            compareClass = "vocab-result-compare--down";
+            compareText = `지난번(${prev.score}개)보다 ${Math.abs(diff)}개 아쉬웠어요. 다시 도전해봐요!`;
+        }
+        compareHtml = `<p class="vocab-result-compare ${compareClass}">${compareText}</p>`;
+    } else {
+        compareHtml = `<p class="vocab-result-compare vocab-result-compare--first">이 Part 첫 도전이에요! 다음엔 이 점수와 비교해볼게요.</p>`;
+    }
+
+    cardEl.hidden = false;
+    cardEl.innerHTML = `
+    <p class="vocab-result-headline">${timedOut ? "시간 종료! " : ""}${total}문제 중 <strong>${score}개</strong> 맞혔어요</p>
+    ${compareHtml}
+  `;
+    cardEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function renderStudentLanguagePills() {
@@ -4458,9 +4544,56 @@ async function loadGrowthReport() {
                 timelineEl.appendChild(item);
             });
         }
+
+        loadStudentProgressBars();
     } catch (err) {
         console.error(err);
         statsEl.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+// "나의 성장" 탭 — 언어별 "현재 레벨 + 단어장 진도율" 진행바
+async function loadStudentProgressBars() {
+    const listEl = document.getElementById("growthProgressList");
+    const emptyEl = document.getElementById("growthProgressEmpty");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+
+    try {
+        const res = await fetch("/api/student/progress");
+        if (!res.ok) return;
+        const rows = await res.json();
+
+        if (emptyEl) emptyEl.hidden = rows.length > 0;
+
+        rows.forEach((r) => {
+            const label = STUDENT_LANGUAGE_LABEL[r.language] || r.language;
+            const row = document.createElement("div");
+            row.className = "growth-progress-row";
+
+            if (r.percent === null || r.percent === undefined) {
+                row.innerHTML = `
+          <div class="growth-progress-head">
+            <span class="growth-progress-lang">${escapeHtmlForStudent(label)}${r.currentLevel ? ` · ${escapeHtmlForStudent(r.currentLevel)}` : ""}</span>
+          </div>
+          <p class="growth-progress-note">${escapeHtmlForStudent(r.courseNames)}</p>
+        `;
+            } else {
+                row.innerHTML = `
+          <div class="growth-progress-head">
+            <span class="growth-progress-lang">${escapeHtmlForStudent(label)}${r.currentLevel ? ` · ${escapeHtmlForStudent(r.currentLevel)}` : ""}</span>
+            <span class="growth-progress-percent">${r.percent}% 완료</span>
+          </div>
+          <div class="growth-progress-bar-track">
+            <div class="growth-progress-bar-fill growth-progress-bar-fill--${r.language}" style="width:${r.percent}%"></div>
+          </div>
+          <p class="growth-progress-note">단어 ${r.learnedWords}/${r.totalWords}개 외움 · ${escapeHtmlForStudent(r.courseNames)}</p>
+        `;
+            }
+            listEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
     }
 }
 
