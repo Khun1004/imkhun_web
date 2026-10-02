@@ -455,6 +455,162 @@
     white-space: nowrap;
 }
 
+/* ---------- 자료별 질문/답변 쓰레드 ---------- */
+
+.student-material-qna-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--kwzm-line);
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-primary);
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.student-material-qna-btn:hover {
+    background: var(--kwzm-primary);
+    border-color: var(--kwzm-primary);
+    color: #fff;
+}
+
+.student-material-qna-panel {
+    padding: 16px 18px;
+    background: var(--kwzm-bg-2);
+    border-bottom: 1px solid var(--kwzm-line);
+}
+
+.student-material-qna-panel[hidden] {
+    display: none;
+}
+
+.student-material-qna-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.student-material-qna-empty {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--kwzm-ink-faint);
+    font-style: italic;
+}
+
+.student-material-qna-item {
+    padding: 12px 14px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 12px;
+}
+
+.student-material-qna-item.is-mine {
+    border-color: var(--kwzm-primary);
+    box-shadow: 0 0 0 1px var(--kwzm-primary) inset;
+}
+
+.student-material-qna-question {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.student-material-qna-nickname {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.student-material-qna-date {
+    font-size: 10.5px;
+    color: var(--kwzm-ink-faint);
+    white-space: nowrap;
+}
+
+.student-material-qna-text {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--kwzm-ink-soft);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.student-material-qna-answer {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--kwzm-bg-2);
+    border-left: 3px solid var(--kwzm-primary);
+    border-radius: 0 8px 8px 0;
+}
+
+.student-material-qna-answer-badge {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--kwzm-primary);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.student-material-qna-waiting {
+    margin: 8px 0 0;
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    font-style: italic;
+}
+
+.student-material-qna-form {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.student-material-qna-input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 10px;
+    background: var(--kwzm-bg-3);
+    color: var(--kwzm-ink);
+    font-size: 12.5px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.student-material-qna-input:focus {
+    outline: none;
+    border-color: var(--kwzm-primary);
+}
+
+.student-material-qna-submit {
+    flex-shrink: 0;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 10px;
+    background: var(--kwzm-primary);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.student-material-qna-submit:hover {
+    opacity: 0.88;
+}
+
 /* ---------- 반응형 ---------- */
 
 @media (max-width: 700px) {

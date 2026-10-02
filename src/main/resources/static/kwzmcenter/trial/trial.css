@@ -18,7 +18,8 @@
 }
 
 .trial-tab {
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    min-width: 0;
     white-space: nowrap;
     text-align: center;
     padding: 12px 18px;
@@ -40,7 +41,9 @@
 .trial-tab.active {
     background: var(--kwzm-bg-3);
     color: var(--kwzm-primary);
-    box-shadow: 0 6px 16px -8px rgba(15, 37, 71, 0.35);
+    box-shadow: 0 6px 16px -8px rgba(15, 37, 71, 0.35),
+    inset 3px 0 0 0 var(--kwzm-primary),
+    inset -3px 0 0 0 var(--kwzm-primary);
 }
 
 @media (max-width: 640px) {

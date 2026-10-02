@@ -13,6 +13,7 @@ import com.imkhun.imkhun.service.FileStorageService;
 import com.imkhun.imkhun.service.CompanyInfoService;
 import com.imkhun.imkhun.service.FuturePlanService;
 import com.imkhun.imkhun.service.StudentQuestionService;
+import com.imkhun.imkhun.service.MaterialQuestionService;
 import com.imkhun.imkhun.service.AttendanceService;
 import com.imkhun.imkhun.service.ClassChangeRequestService;
 import com.imkhun.imkhun.service.DashboardService;
@@ -40,6 +41,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -78,6 +80,7 @@ public class AdminController {
     private final FuturePlanService futurePlanService;
     private final StudentQuestionService studentQuestionService;
     private final LanguageMaterialService languageMaterialService;
+    private final MaterialQuestionService materialQuestionService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -93,7 +96,8 @@ public class AdminController {
                            VoiceSubmissionService voiceSubmissionService, AssignmentSubmissionService assignmentSubmissionService,
                            EventService eventService, FileStorageService fileStorageService,
                            CompanyInfoService companyInfoService, FuturePlanService futurePlanService,
-                           StudentQuestionService studentQuestionService, LanguageMaterialService languageMaterialService) {
+                           StudentQuestionService studentQuestionService, LanguageMaterialService languageMaterialService,
+                           MaterialQuestionService materialQuestionService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -125,6 +129,7 @@ public class AdminController {
         this.futurePlanService = futurePlanService;
         this.studentQuestionService = studentQuestionService;
         this.languageMaterialService = languageMaterialService;
+        this.materialQuestionService = materialQuestionService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -726,6 +731,37 @@ public class AdminController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // ---------- 강의 자료별 질문 (관리자) ----------
+
+    @GetMapping("/materials/{materialId}/questions")
+    public ResponseEntity<?> getMaterialQuestionsForAdmin(HttpServletRequest request, @PathVariable Long materialId) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(materialQuestionService.getQuestionsForMaterialForAdmin(materialId));
+    }
+
+    @PostMapping("/material-questions/{id}/answer")
+    public ResponseEntity<?> answerMaterialQuestion(HttpServletRequest request, @PathVariable Long id,
+                                                    @RequestBody AnswerStudentQuestionRequest answerRequest) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            return ResponseEntity.ok(materialQuestionService.answerQuestion(id, answerRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 자료 목록 화면에서 자료마다 "답변 안 한 질문 N개" 배지를 보여주기 위한 일괄 조회.
+    // materialIds는 쉼표로 구분된 숫자들 (예: "1,2,3")
+    @GetMapping("/material-questions/unanswered-counts")
+    public ResponseEntity<?> getMaterialQuestionUnansweredCounts(HttpServletRequest request, @RequestParam String materialIds) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        List<Long> ids = java.util.Arrays.stream(materialIds.split(","))
+                .filter(s -> !s.isBlank())
+                .map(Long::parseLong)
+                .toList();
+        return ResponseEntity.ok(materialQuestionService.getUnansweredCounts(ids));
     }
 
     // ---------- 이벤트 & 행사 관리 (KWZM Center 학생 전용) ----------

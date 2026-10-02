@@ -719,29 +719,42 @@ html[data-kwzm-font-size="large"] .kwzm-standalone-body {
 }
 
 .student-subnav-link {
+    position: relative;
     flex: 1 1 0;
     min-width: 0;
     border: none;
-    border-bottom: 3px solid transparent;
+    border-radius: 8px;
     background: transparent;
-    padding: 14px 12px;
+    margin: 6px 2px;
+    padding: 10px 12px;
     color: var(--kwzm-ink-faint);
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out;
+    transition: background 0.2s ease-out, color 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
+/* 마우스를 올렸을 때는 선택(active)과 색깔도 다르게 구분함 — hover는 남색(primary),
+   실제로 선택된 탭은 민트색(accent) 그대로. 모양도 hover는 양옆 괄호, 선택은 위아래 바 */
 .student-subnav-link:hover {
     background: var(--kwzm-bg-2);
-    color: var(--kwzm-ink);
+    color: var(--kwzm-primary);
+    box-shadow: inset 3px 0 0 0 var(--kwzm-primary), inset -3px 0 0 0 var(--kwzm-primary);
 }
 
+.student-subnav-link.active:hover {
+    color: var(--kwzm-accent-2);
+    box-shadow: inset 0 3px 0 0 var(--kwzm-accent), inset 0 -3px 0 0 var(--kwzm-accent);
+}
+
+/* 선택된 탭 — 게시판 사이드바의 "배경은 약하게, 왼쪽 강조 선은 또렷하게" 디자인을
+   그대로 가져옴. 버튼 자체에 border-radius를 줬기 때문에, inset box-shadow로 그린
+   왼쪽 띠도 그 모서리를 따라 양 끝이 둥글게 보임 (사이드바 "한국어" 탭과 동일 원리) */
 .student-subnav-link.active {
     background: var(--kwzm-bg-2);
     color: var(--kwzm-accent-2);
-    border-bottom-color: var(--kwzm-accent);
+    box-shadow: inset 0 3px 0 0 var(--kwzm-accent), inset 0 -3px 0 0 var(--kwzm-accent);
 }
 
 /* 본문 영역 */

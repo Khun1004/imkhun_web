@@ -65,19 +65,18 @@
     color: var(--kwzm-ink);
 }
 
+/* 선택된 주제는 그 주제 색을 옅게 깐 배경 + 왼쪽 굵은 색 띠로 표시(단색 채우기 대신,
+   카드/배지 등 다른 곳에서도 쓰는 같은 주제색과 톤을 맞춰서 화면 전체가 하나로 묶여 보이게 함) */
 .board-sidebar-item.active {
-    color: #fff;
+    font-weight: 700;
+    box-shadow: inset 3px 0 0 0 var(--kwzm-tag-other, var(--kwzm-ink-faint));
 }
 
-.board-sidebar-item.active::before {
-    background: rgba(255, 255, 255, 0.85);
-}
-
-.board-sidebar-item[data-board-topic="korean"].active { background: var(--kwzm-primary); }
-.board-sidebar-item[data-board-topic="japanese"].active { background: var(--kwzm-accent); }
-.board-sidebar-item[data-board-topic="thai"].active { background: #5c8f4f; }
-.board-sidebar-item[data-board-topic="english"].active { background: #c98a2f; }
-.board-sidebar-item[data-board-topic="computer"].active { background: var(--kwzm-tag-computer); }
+.board-sidebar-item[data-board-topic="korean"].active { background: rgba(22, 56, 107, 0.1); color: var(--kwzm-primary); box-shadow: inset 3px 0 0 0 var(--kwzm-primary); }
+.board-sidebar-item[data-board-topic="japanese"].active { background: rgba(47, 154, 160, 0.14); color: var(--kwzm-accent-2); box-shadow: inset 3px 0 0 0 var(--kwzm-accent); }
+.board-sidebar-item[data-board-topic="thai"].active { background: rgba(92, 143, 79, 0.14); color: #5c8f4f; box-shadow: inset 3px 0 0 0 #5c8f4f; }
+.board-sidebar-item[data-board-topic="english"].active { background: rgba(201, 138, 47, 0.14); color: #c98a2f; box-shadow: inset 3px 0 0 0 #c98a2f; }
+.board-sidebar-item[data-board-topic="computer"].active { background: rgba(107, 91, 149, 0.14); color: var(--kwzm-tag-computer); box-shadow: inset 3px 0 0 0 var(--kwzm-tag-computer); }
 
 /* ---------- 오른쪽: 도구줄 + 목록 ---------- */
 
@@ -139,25 +138,34 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     border: none;
     border-radius: 999px;
-    padding: 10px 18px;
+    padding: 10px 18px 10px 14px;
     background: var(--kwzm-primary);
     color: #fff;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.15s, box-shadow 0.15s;
     margin-bottom: 10px;
+    box-shadow: 0 8px 18px -10px rgba(22, 56, 107, 0.6);
 }
 
 .board-write-btn:hover {
     background: var(--kwzm-primary-2);
+    box-shadow: 0 10px 22px -8px rgba(22, 56, 107, 0.7);
 }
 
 .board-write-btn span {
-    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    font-size: 14px;
     line-height: 1;
 }
 
@@ -169,6 +177,34 @@
     margin: 20px 0 10px;
 }
 
+/* 글이 하나도 없을 때 — 그냥 작은 안내 문구 하나로 끝내지 않고, 점선 박스 + 아이콘으로
+   "여기에 글을 쓸 수 있어요"라는 행동 유도가 느껴지게 함 */
+#boardEmpty.admin-empty-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 44px 20px;
+    border: 1.5px dashed var(--kwzm-line);
+    border-radius: 12px;
+    background: var(--kwzm-bg-2);
+    font-size: 13.5px;
+    color: var(--kwzm-ink-faint);
+}
+
+#boardEmpty.admin-empty-text::before {
+    content: "";
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--kwzm-bg-3);
+    border: 1.5px solid var(--kwzm-line);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f9aa0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16M4 10h16M4 15h10'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 18px 18px;
+}
+
 /* ---------- 글 목록 ---------- */
 
 .board-list {
@@ -178,17 +214,35 @@
 }
 
 .board-item {
+    position: relative;
     background: var(--kwzm-bg-3);
     border: 1px solid var(--kwzm-line);
-    border-radius: 12px;
+    border-left: 3px solid var(--kwzm-tag-other, var(--kwzm-ink-faint));
+    border-radius: 10px;
     padding: 16px 18px;
     cursor: pointer;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.2s, transform 0.2s;
 }
 
+/* 카드 왼쪽 띠 색 = 사이드바에서 고른 주제 색. 게시판 전체를 훑어볼 때도 어떤 주제 글인지
+   왼쪽 띠 색만 보고 바로 구분할 수 있게 함 */
+.board-item[data-board-item-topic="korean"] { border-left-color: var(--kwzm-primary); }
+.board-item[data-board-item-topic="japanese"] { border-left-color: var(--kwzm-accent); }
+.board-item[data-board-item-topic="thai"] { border-left-color: #5c8f4f; }
+.board-item[data-board-item-topic="english"] { border-left-color: #c98a2f; }
+.board-item[data-board-item-topic="computer"] { border-left-color: var(--kwzm-tag-computer); }
+
 .board-item:hover {
-    border-color: var(--kwzm-accent);
+    border-color: var(--kwzm-line);
+    box-shadow: 0 10px 24px -16px rgba(15, 37, 71, 0.35);
+    transform: translateY(-1px);
 }
+
+.board-item[data-board-item-topic="korean"]:hover { border-left-color: var(--kwzm-primary); }
+.board-item[data-board-item-topic="japanese"]:hover { border-left-color: var(--kwzm-accent); }
+.board-item[data-board-item-topic="thai"]:hover { border-left-color: #5c8f4f; }
+.board-item[data-board-item-topic="english"]:hover { border-left-color: #c98a2f; }
+.board-item[data-board-item-topic="computer"]:hover { border-left-color: var(--kwzm-tag-computer); }
 
 .board-item-header {
     display: flex;
@@ -199,18 +253,24 @@
 
 .board-item-avatar {
     flex-shrink: 0;
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: var(--kwzm-bg-2);
     color: var(--kwzm-primary);
     font-family: "Noto Serif KR", serif;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 12.5px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
+.board-item[data-board-item-topic="korean"] .board-item-avatar { background: rgba(22, 56, 107, 0.12); color: var(--kwzm-primary); }
+.board-item[data-board-item-topic="japanese"] .board-item-avatar { background: rgba(47, 154, 160, 0.14); color: var(--kwzm-accent-2); }
+.board-item[data-board-item-topic="thai"] .board-item-avatar { background: rgba(92, 143, 79, 0.14); color: #4a7540; }
+.board-item[data-board-item-topic="english"] .board-item-avatar { background: rgba(201, 138, 47, 0.16); color: #a06f24; }
+.board-item[data-board-item-topic="computer"] .board-item-avatar { background: rgba(107, 91, 149, 0.16); color: var(--kwzm-tag-computer); }
 
 .board-item-name {
     font-size: 12.5px;

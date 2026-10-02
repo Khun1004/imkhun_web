@@ -1979,6 +1979,105 @@ body.admin-standalone-body {
     color: var(--coral);
 }
 
+.admin-material-action-btn[data-question-btn] {
+    position: relative;
+}
+
+.admin-material-question-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--coral, #d6577a);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* ---------- 자료별 질문/답변 모달 (관리자) ---------- */
+
+.admin-material-question-item {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.admin-material-question-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.admin-material-question-nickname {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-material-question-date {
+    font-size: 11px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+}
+
+.admin-material-question-text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.admin-material-question-answer {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--teal-soft);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+}
+
+.admin-material-question-answer-badge {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.admin-material-question-reply-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.admin-material-question-reply-btn {
+    align-self: flex-end;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-material-question-reply-btn:hover {
+    opacity: 0.88;
+}
+
 @media (max-width: 860px) {
     .admin-materials-columns {
         display: none;

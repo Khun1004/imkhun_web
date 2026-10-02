@@ -13,6 +13,7 @@ import com.imkhun.imkhun.service.FriendService;
 import com.imkhun.imkhun.service.LearningGoalService;
 import com.imkhun.imkhun.service.EventService;
 import com.imkhun.imkhun.service.StudentQuestionService;
+import com.imkhun.imkhun.service.MaterialQuestionService;
 import com.imkhun.imkhun.service.LeaderboardService;
 import com.imkhun.imkhun.service.ParentReportService;
 import com.imkhun.imkhun.service.SharedGoalService;
@@ -75,6 +76,7 @@ public class StudentPortalController {
     private final FriendService friendService;
     private final SharedGoalService sharedGoalService;
     private final StudyGroupService studyGroupService;
+    private final MaterialQuestionService materialQuestionService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -89,7 +91,8 @@ public class StudentPortalController {
                                    EventService eventService, StudentQuestionService studentQuestionService,
                                    LeaderboardService leaderboardService, ParentReportService parentReportService,
                                    ClassNoteService classNoteService, BadgeService badgeService, FriendService friendService,
-                                   SharedGoalService sharedGoalService, StudyGroupService studyGroupService) {
+                                   SharedGoalService sharedGoalService, StudyGroupService studyGroupService,
+                                   MaterialQuestionService materialQuestionService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -116,6 +119,7 @@ public class StudentPortalController {
         this.friendService = friendService;
         this.sharedGoalService = sharedGoalService;
         this.studyGroupService = studyGroupService;
+        this.materialQuestionService = materialQuestionService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -1138,6 +1142,28 @@ public class StudentPortalController {
         Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
         if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
         return ResponseEntity.ok(studentQuestionService.getMyQuestions(userOpt.get().getUsername()));
+    }
+
+    // ---------- 강의 자료별 질문하기 (익명 아님 — 같은 자료 보는 학생들끼리 닉네임이 보임) ----------
+
+    @PostMapping("/materials/{materialId}/questions")
+    public ResponseEntity<?> askMaterialQuestion(HttpServletRequest request, @PathVariable Long materialId,
+                                                 @RequestBody CreateMaterialQuestionRequest questionRequest) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        User user = userOpt.get();
+        try {
+            return ResponseEntity.ok(materialQuestionService.askQuestion(materialId, user.getUsername(), user.getNickname(), questionRequest));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/materials/{materialId}/questions")
+    public ResponseEntity<?> getMaterialQuestions(HttpServletRequest request, @PathVariable Long materialId) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(materialQuestionService.getQuestionsForMaterial(materialId, userOpt.get().getUsername()));
     }
 
     // ---------- 랭킹보드 (익명) ----------

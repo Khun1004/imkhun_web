@@ -446,6 +446,7 @@ async function loadMaterials(language, category, scope, level) {
         <p class="admin-material-date">${m.createdAt}</p>
         <div class="admin-material-actions">
           ${files.length ? `<button type="button" class="admin-material-action-btn" data-view-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>보기</button>` : ""}
+          <button type="button" class="admin-material-action-btn" data-question-btn="${m.id}"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>질문<span class="admin-material-question-badge" data-question-badge="${m.id}" hidden></span></button>
           <button type="button" class="admin-material-action-btn" data-edit-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>수정</button>
           <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>삭제</button>
         </div>
@@ -453,8 +454,106 @@ async function loadMaterials(language, category, scope, level) {
             item._materialData = m;
             list.appendChild(item);
         });
+
+        loadMaterialQuestionBadges(materials.map((m) => m.id));
     } catch (err) {
         console.error(err);
+    }
+}
+
+// 자료 목록에 보이는 자료들마다 "답변 안 한 질문이 몇 개 있는지" 배지로 표시해줌
+async function loadMaterialQuestionBadges(materialIds) {
+    if (!materialIds.length) return;
+    try {
+        const res = await fetch(`/api/admin/material-questions/unanswered-counts?materialIds=${materialIds.join(",")}`);
+        if (!res.ok) return;
+        const counts = await res.json();
+        materialIds.forEach((materialId) => {
+            const badge = document.querySelector(`[data-question-badge="${materialId}"]`);
+            if (!badge) return;
+            const count = counts[materialId] || 0;
+            badge.textContent = count;
+            badge.hidden = count === 0;
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function openMaterialQuestionModal(materialId) {
+    const modal = document.getElementById("materialQuestionModal");
+    if (!modal) return;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    loadMaterialQuestionsForAdmin(materialId);
+}
+
+function closeMaterialQuestionModal() {
+    const modal = document.getElementById("materialQuestionModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function loadMaterialQuestionsForAdmin(materialId) {
+    const list = document.getElementById("materialQuestionList");
+    const emptyText = document.getElementById("materialQuestionEmpty");
+    if (!list) return;
+    list.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/materials/${materialId}/questions`);
+        if (!res.ok) {
+            list.innerHTML = `<p class="admin-note-hint">질문을 불러오지 못했어요.</p>`;
+            return;
+        }
+        const questions = await res.json();
+        if (emptyText) emptyText.hidden = questions.length > 0;
+        list.innerHTML = "";
+
+        questions.forEach((q) => {
+            const item = document.createElement("div");
+            item.className = "admin-material-question-item";
+            item.innerHTML = `
+        <div class="admin-material-question-head">
+          <span class="admin-material-question-nickname">${escapeHtmlForAdminMaterial(q.nickname)}</span>
+          <span class="admin-material-question-date">${q.createdAt}</span>
+        </div>
+        <p class="admin-material-question-text">${escapeHtmlForAdminMaterial(q.questionText)}</p>
+        ${q.answerText
+                ? `<div class="admin-material-question-answer">
+             <span class="admin-material-question-answer-badge">내 답변</span>
+             <p class="admin-material-question-text">${escapeHtmlForAdminMaterial(q.answerText)}</p>
+           </div>`
+                : `<div class="admin-material-question-reply-form">
+             <textarea class="admin-note-textarea admin-material-question-reply-input" rows="2" placeholder="답변을 입력해주세요"></textarea>
+             <button type="button" class="admin-material-question-reply-btn" data-answer-question-id="${q.id}" data-answer-material-id="${materialId}">답변 등록</button>
+           </div>`}
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+async function answerMaterialQuestion(questionId, materialId, answerText) {
+    try {
+        const res = await fetch(`/api/admin/material-questions/${questionId}/answer`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ answerText }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "답변 등록에 실패했어요.");
+            return;
+        }
+        await loadMaterialQuestionsForAdmin(materialId);
+        loadMaterialQuestionBadges([materialId]);
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
     }
 }
 
@@ -5639,6 +5738,23 @@ document.addEventListener("fragments:loaded", () => {
             deleteMaterial(material.id, material.language, material.category, material.scope);
             return;
         }
+        if (e.target.closest("[data-question-btn]")) {
+            openMaterialQuestionModal(material.id);
+            return;
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        if (e.target.closest("[data-material-question-modal-close]")) closeMaterialQuestionModal();
+    });
+
+    document.getElementById("materialQuestionList")?.addEventListener("click", (e) => {
+        const replyBtn = e.target.closest("[data-answer-question-id]");
+        if (!replyBtn) return;
+        const textarea = replyBtn.previousElementSibling;
+        const answerText = textarea && textarea.value.trim();
+        if (!answerText) return;
+        answerMaterialQuestion(replyBtn.dataset.answerQuestionId, replyBtn.dataset.answerMaterialId, answerText);
     });
 
     document.addEventListener("click", async (e) => {

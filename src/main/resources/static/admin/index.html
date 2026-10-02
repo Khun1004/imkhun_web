@@ -1074,6 +1074,23 @@
     </div>
 </div>
 
+<!-- ===================== 자료별 질문/답변 (관리자) ===================== -->
+<div class="admin-invite-modal" id="materialQuestionModal" aria-hidden="true">
+    <div class="admin-register-backdrop" data-material-question-modal-close></div>
+    <div class="admin-register-panel" role="dialog" aria-modal="true">
+        <div class="admin-register-head">
+            <h3 id="materialQuestionModalTitle">자료 질문</h3>
+            <button type="button" class="auth-modal-close admin-register-close" data-material-question-modal-close aria-label="닫기">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="admin-register-body">
+            <div id="materialQuestionList"></div>
+            <p class="admin-empty-text" id="materialQuestionEmpty" hidden>아직 질문이 없어요.</p>
+        </div>
+    </div>
+</div>
+
 <!-- ===================== 이벤트 & 행사 등록 (관리자 전용) ===================== -->
 <div class="admin-invite-modal" id="eventModal" aria-hidden="true">
     <div class="admin-register-backdrop" data-event-modal-close></div>

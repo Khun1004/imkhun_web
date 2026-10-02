@@ -1821,10 +1821,113 @@ async function loadStudentMaterials(language, category) {
       `;
             item.addEventListener("click", () => handleStudentViewMaterial(m));
             list.appendChild(item);
+            attachMaterialQnaToggle(item, m.id, list);
         });
     } catch (err) {
         console.error(err);
     }
+}
+
+// 자료 목록 행 하나에 "질문하기" 버튼과 그 밑에 펼쳐지는 질문/답변 쓰레드 패널을 붙여줌.
+// 여러 자료 화면(언어 자료/컴퓨터 자료)에서 공통으로 재사용함. item은 이미 list에 append된 상태여야 함
+// (그래야 질문 패널을 바로 다음 형제로 끼워넣어서 자료 행 바로 밑에 자연스럽게 펼쳐짐).
+function attachMaterialQnaToggle(item, materialId, list) {
+    const typesEl = item.querySelector(".student-material-types");
+    if (!typesEl) return;
+
+    const qnaBtn = document.createElement("button");
+    qnaBtn.type = "button";
+    qnaBtn.className = "student-material-qna-btn";
+    qnaBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>질문하기`;
+    typesEl.appendChild(qnaBtn);
+
+    const qnaPanel = document.createElement("div");
+    qnaPanel.className = "student-material-qna-panel";
+    qnaPanel.hidden = true;
+    list.insertBefore(qnaPanel, item.nextSibling);
+
+    qnaBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMaterialQnaPanel(materialId, qnaPanel);
+    });
+}
+
+// ---------- 강의 자료별 질문/답변 쓰레드 ----------
+
+const materialQnaLoadedIds = new Set();
+
+async function toggleMaterialQnaPanel(materialId, panel) {
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    if (willOpen && !materialQnaLoadedIds.has(`${materialId}`)) {
+        materialQnaLoadedIds.add(`${materialId}`);
+        await loadMaterialQna(materialId, panel);
+    }
+}
+
+async function loadMaterialQna(materialId, panel) {
+    panel.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+    try {
+        const res = await fetch(`/api/student/materials/${materialId}/questions`);
+        if (!res.ok) {
+            panel.innerHTML = `<p class="admin-note-hint">질문을 불러오지 못했어요.</p>`;
+            return;
+        }
+        const questions = await res.json();
+        renderMaterialQnaPanel(materialId, panel, questions);
+    } catch (err) {
+        console.error(err);
+        panel.innerHTML = `<p class="admin-note-hint">서버에 연결할 수 없어요.</p>`;
+    }
+}
+
+function renderMaterialQnaPanel(materialId, panel, questions) {
+    const threadHtml = questions.length === 0
+        ? `<p class="student-material-qna-empty">아직 질문이 없어요. 궁금한 점을 남겨보세요!</p>`
+        : questions.map((q) => `
+      <div class="student-material-qna-item${q.mine ? " is-mine" : ""}">
+        <div class="student-material-qna-question">
+          <span class="student-material-qna-nickname">${escapeHtmlForStudent(q.nickname)}${q.mine ? " (나)" : ""}</span>
+          <span class="student-material-qna-date">${q.createdAt}</span>
+        </div>
+        <p class="student-material-qna-text">${escapeHtmlForStudent(q.questionText)}</p>
+        ${q.answerText ? `
+        <div class="student-material-qna-answer">
+          <span class="student-material-qna-answer-badge">선생님 답변</span>
+          <p class="student-material-qna-text">${escapeHtmlForStudent(q.answerText)}</p>
+        </div>` : `<p class="student-material-qna-waiting">아직 답변 대기중이에요.</p>`}
+      </div>
+    `).join("");
+
+    panel.innerHTML = `
+      <div class="student-material-qna-thread">${threadHtml}</div>
+      <div class="student-material-qna-form">
+        <textarea class="student-material-qna-input" placeholder="이 자료에 대해 궁금한 점을 남겨보세요" rows="2"></textarea>
+        <button type="button" class="student-material-qna-submit">질문 남기기</button>
+      </div>
+    `;
+
+    const textarea = panel.querySelector(".student-material-qna-input");
+    panel.querySelector(".student-material-qna-submit").addEventListener("click", async () => {
+        const text = textarea.value.trim();
+        if (!text) return;
+        try {
+            const res = await fetch(`/api/student/materials/${materialId}/questions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ questionText: text }),
+            });
+            if (!res.ok) {
+                alert((await res.text()) || "질문을 남기지 못했어요.");
+                return;
+            }
+            textarea.value = "";
+            await loadMaterialQna(materialId, panel);
+        } catch (err) {
+            console.error(err);
+            alert("서버에 연결할 수 없어요.");
+        }
+    });
 }
 
 const VIDEO_TOPIC_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터" };
@@ -2070,6 +2173,7 @@ async function loadComputerMaterials(category) {
       `;
             item.addEventListener("click", () => handleStudentViewMaterial(m));
             list.appendChild(item);
+            attachMaterialQnaToggle(item, m.id, list);
         });
     } catch (err) {
         console.error(err);
@@ -2416,6 +2520,7 @@ async function loadBoardPosts(topic, category) {
         posts.forEach((p) => {
             const item = document.createElement("div");
             item.className = "board-item";
+            item.dataset.boardItemTopic = topic;
             const initial = (p.nickname || "?").charAt(0);
             const badgeHtml = p.category
                 ? `<span class="board-item-badge">${escapeHtmlForStudent(BOARD_CATEGORY_LABEL[p.category] || p.category)}</span>`
