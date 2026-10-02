@@ -106,6 +106,11 @@ public class Application {
     @Column(name = "renewal_reminder_sent_at")
     private LocalDateTime renewalReminderSentAt;
 
+    // ---- 수업 하루 전 알림 ----
+    // 이 날짜 기준으로 "내일 수업 있어요" 알림을 이미 보냈는지 확인 (하루에 한 번만 보내기 위함)
+    @Column(name = "class_reminder_sent_date")
+    private java.time.LocalDate classReminderSentDate;
+
     protected Application() {
         // JPA 기본 생성자
     }
@@ -189,6 +194,10 @@ public class Application {
 
     public void markRenewalReminderSent() {
         this.renewalReminderSentAt = LocalDateTime.now();
+    }
+
+    public void markClassReminderSent(java.time.LocalDate forDate) {
+        this.classReminderSentDate = forDate;
     }
 
     public Long getId() {
@@ -289,5 +298,9 @@ public class Application {
 
     public LocalDateTime getRenewalReminderSentAt() {
         return renewalReminderSentAt;
+    }
+
+    public java.time.LocalDate getClassReminderSentDate() {
+        return classReminderSentDate;
     }
 }

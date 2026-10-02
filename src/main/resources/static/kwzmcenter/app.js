@@ -105,6 +105,7 @@ const NOTIF_TYPE_ICON = {
     CHECKIN_AVAILABLE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     NEW_NOTICE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v10H9l-4 4V5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     RENEWAL_REMINDER: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 17v-5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    CLASS_REMINDER_TOMORROW: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8.5 14.5h3M8.5 17h5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     VOICE_COMMENT_ADDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.6"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     CLASS_CHANGE_RESPONDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 15l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     FRIEND_NOTE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
@@ -155,6 +156,7 @@ async function loadStudentPortalData() {
         loadKwzmFuturePlan();
         renderTodaysTip();
         loadRecentMaterials();
+        loadMypageSummary();
         loadStudentNotifUnreadCount();
         if (!studentNotifPollTimer) {
             studentNotifPollTimer = setInterval(loadStudentNotifUnreadCount, 30000);
@@ -886,6 +888,85 @@ function renderStudentHome(nickname) {
         li.addEventListener("click", () => openCourseMaterialsModal(c.language, c.courseName));
         listEl.appendChild(li);
     });
+}
+
+// 마이페이지 "내 수강 정보" 탭 맨 위 요약 카드 — 강의별 출석 집계 + 다음 납부일까지 남은 일수를 한눈에 보여줌
+async function loadMypageSummary() {
+    const cardEl = document.getElementById("mypageSummaryCard");
+    const totalsEl = document.getElementById("mypageSummaryTotals");
+    const coursesEl = document.getElementById("mypageSummaryCourses");
+    if (!cardEl || !totalsEl || !coursesEl) return;
+
+    try {
+        const res = await fetch("/api/student/mypage-summary");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (!data.courses || data.courses.length === 0) {
+            cardEl.hidden = true;
+            return;
+        }
+        cardEl.hidden = false;
+
+        totalsEl.innerHTML = `
+      <div class="mypage-summary-total-chip mypage-summary-total-chip--present">
+        <span class="mypage-summary-total-num">${data.totalPresentCount ?? 0}</span><span>출석</span>
+      </div>
+      <div class="mypage-summary-total-chip mypage-summary-total-chip--late">
+        <span class="mypage-summary-total-num">${data.totalLateCount ?? 0}</span><span>지각</span>
+      </div>
+      <div class="mypage-summary-total-chip mypage-summary-total-chip--absent">
+        <span class="mypage-summary-total-num">${data.totalAbsentCount ?? 0}</span><span>결석</span>
+      </div>
+      <div class="mypage-summary-total-chip mypage-summary-total-chip--makeup">
+        <span class="mypage-summary-total-num">${data.totalMakeupCount ?? 0}</span><span>보강</span>
+      </div>
+    `;
+
+        coursesEl.innerHTML = "";
+        data.courses.forEach((c) => {
+            let dueHtml = "";
+            if (c.enrollmentEndDate) {
+                const days = c.daysUntilDue;
+                let dueClass = "mypage-summary-due-badge--normal";
+                let dueLabel = `D-${days}`;
+                if (days < 0) {
+                    dueClass = "mypage-summary-due-badge--overdue";
+                    dueLabel = `${Math.abs(days)}일 지남`;
+                } else if (days === 0) {
+                    dueClass = "mypage-summary-due-badge--urgent";
+                    dueLabel = "오늘까지";
+                } else if (days <= 7) {
+                    dueClass = "mypage-summary-due-badge--urgent";
+                }
+                dueHtml = `
+          <div class="mypage-summary-due">
+            <span class="mypage-summary-due-label">다음 납부일 ${escapeHtmlForStudent(c.enrollmentEndDate)}</span>
+            <span class="mypage-summary-due-badge ${dueClass}">${dueLabel}</span>
+          </div>
+        `;
+            }
+
+            const row = document.createElement("div");
+            row.className = "mypage-summary-course-row";
+            row.innerHTML = `
+        <div class="mypage-summary-course-head">
+          <span class="mypage-summary-course-name">${escapeHtmlForStudent(c.courseName)}</span>
+          <span class="mypage-summary-course-number">${escapeHtmlForStudent(c.studentNumber || "")}</span>
+        </div>
+        <div class="mypage-summary-course-stats">
+          <span>출석 ${c.presentCount ?? 0}</span>
+          <span>지각 ${c.lateCount ?? 0}</span>
+          <span>결석 ${c.absentCount ?? 0}</span>
+          <span>보강 ${c.makeupCount ?? 0}</span>
+        </div>
+        ${dueHtml}
+      `;
+            coursesEl.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 const COURSE_MATERIAL_ICON_LINK = `<svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5l5-5M8 10l-1.5 1.5a3.5 3.5 0 0 0 5 5L13 15M16 14l1.5-1.5a3.5 3.5 0 0 0-5-5L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;

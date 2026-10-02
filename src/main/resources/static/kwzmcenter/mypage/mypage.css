@@ -215,6 +215,151 @@
     display: none;
 }
 
+/* ---------- 마이페이지 요약 카드 (수강/출석 한눈에 보기) ---------- */
+
+.mypage-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    background: var(--kwzm-bg-2);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 14px;
+}
+
+.mypage-summary-totals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.mypage-summary-total-chip {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--kwzm-ink-faint);
+}
+
+.mypage-summary-total-num {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+}
+
+.mypage-summary-total-chip--present .mypage-summary-total-num { color: var(--kwzm-primary); }
+.mypage-summary-total-chip--late .mypage-summary-total-num { color: #c98a2f; }
+.mypage-summary-total-chip--absent .mypage-summary-total-num { color: #b8566a; }
+.mypage-summary-total-chip--makeup .mypage-summary-total-num { color: var(--kwzm-accent-2); }
+
+.mypage-summary-courses {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mypage-summary-course-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+    padding: 12px 14px;
+    background: var(--kwzm-bg-3);
+    border: 1px solid var(--kwzm-line);
+    border-radius: 10px;
+}
+
+.mypage-summary-course-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex: 1 1 160px;
+    min-width: 0;
+}
+
+.mypage-summary-course-name {
+    font-family: "Noto Serif KR", serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--kwzm-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mypage-summary-course-number {
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    white-space: nowrap;
+}
+
+.mypage-summary-course-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--kwzm-ink-faint);
+    flex: 0 0 auto;
+}
+
+.mypage-summary-due {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.mypage-summary-due-label {
+    font-size: 11.5px;
+    color: var(--kwzm-ink-faint);
+    white-space: nowrap;
+}
+
+.mypage-summary-due-badge {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mypage-summary-due-badge--normal {
+    background: var(--kwzm-bg-2);
+    color: var(--kwzm-ink-faint);
+}
+
+.mypage-summary-due-badge--urgent {
+    background: rgba(201, 138, 47, 0.14);
+    color: #a06f24;
+}
+
+.mypage-summary-due-badge--overdue {
+    background: rgba(184, 86, 106, 0.14);
+    color: #b8566a;
+}
+
+@media (max-width: 640px) {
+    .mypage-summary-course-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mypage-summary-course-head {
+        flex-basis: auto;
+    }
+
+    .mypage-summary-due {
+        margin-left: 0;
+    }
+}
+
 @media (max-width: 880px) {
     .mypage-layout {
         flex-direction: column;

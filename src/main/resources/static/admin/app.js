@@ -4148,6 +4148,30 @@ async function sendPaymentRemindersNow() {
     }
 }
 
+async function sendClassRemindersNow() {
+    const btn = document.getElementById("sendClassReminderBtn");
+    if (!btn) return;
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "보내는 중...";
+
+    try {
+        const res = await fetch("/api/admin/class-reminders/send-now", { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "실패했어요.");
+            return;
+        }
+        const count = await res.json();
+        alert(count > 0 ? `${count}명에게 내일 수업 알림을 보냈어요.` : "지금 보낼 대상이 없어요. (내일 수업 있는 학생이 없거나, 오늘 이미 보냈어요)");
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
 let vocabAdminSelectedLanguage = "korean";
 let vocabAdminSelectedSetId = null;
 let vocabAdminSetsData = [];
@@ -5551,6 +5575,7 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("scheduleVideoLevelSelect")?.addEventListener("change", recalcVideoEndMonth);
     document.getElementById("enrollmentStartMonthInput")?.addEventListener("change", recalcVideoEndMonth);
     document.getElementById("sendPaymentReminderBtn")?.addEventListener("click", sendPaymentRemindersNow);
+    document.getElementById("sendClassReminderBtn")?.addEventListener("click", sendClassRemindersNow);
 
     document.querySelectorAll("[data-timetable-view]").forEach((btn) => {
         btn.addEventListener("click", () => {

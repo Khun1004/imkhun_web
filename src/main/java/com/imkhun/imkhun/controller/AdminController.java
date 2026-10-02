@@ -24,6 +24,7 @@ import com.imkhun.imkhun.service.LessonNoteService;
 import com.imkhun.imkhun.service.NoticeService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.PaymentReminderService;
+import com.imkhun.imkhun.service.ClassReminderService;
 import com.imkhun.imkhun.service.ReceiptService;
 import com.imkhun.imkhun.service.ReviewService;
 import com.imkhun.imkhun.service.StudyMaterialService;
@@ -81,6 +82,7 @@ public class AdminController {
     private final StudentQuestionService studentQuestionService;
     private final LanguageMaterialService languageMaterialService;
     private final MaterialQuestionService materialQuestionService;
+    private final ClassReminderService classReminderService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -97,7 +99,7 @@ public class AdminController {
                            EventService eventService, FileStorageService fileStorageService,
                            CompanyInfoService companyInfoService, FuturePlanService futurePlanService,
                            StudentQuestionService studentQuestionService, LanguageMaterialService languageMaterialService,
-                           MaterialQuestionService materialQuestionService) {
+                           MaterialQuestionService materialQuestionService, ClassReminderService classReminderService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -130,6 +132,7 @@ public class AdminController {
         this.studentQuestionService = studentQuestionService;
         this.languageMaterialService = languageMaterialService;
         this.materialQuestionService = materialQuestionService;
+        this.classReminderService = classReminderService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -1349,6 +1352,14 @@ public class AdminController {
     public ResponseEntity<?> sendPaymentRemindersNow(HttpServletRequest request) {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         int sentCount = paymentReminderService.sendRemindersNow();
+        return ResponseEntity.ok(sentCount);
+    }
+
+    // 수업 하루 전 알림 — 원래 매일 저녁 8시에 자동으로 도는데, 관리자가 지금 바로 보내보고 싶을 때 씀
+    @PostMapping("/class-reminders/send-now")
+    public ResponseEntity<?> sendClassRemindersNow(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        int sentCount = classReminderService.sendRemindersNow();
         return ResponseEntity.ok(sentCount);
     }
 

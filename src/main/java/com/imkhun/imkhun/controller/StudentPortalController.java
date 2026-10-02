@@ -14,6 +14,7 @@ import com.imkhun.imkhun.service.LearningGoalService;
 import com.imkhun.imkhun.service.EventService;
 import com.imkhun.imkhun.service.StudentQuestionService;
 import com.imkhun.imkhun.service.MaterialQuestionService;
+import com.imkhun.imkhun.service.MypageSummaryService;
 import com.imkhun.imkhun.service.LeaderboardService;
 import com.imkhun.imkhun.service.ParentReportService;
 import com.imkhun.imkhun.service.SharedGoalService;
@@ -77,6 +78,7 @@ public class StudentPortalController {
     private final SharedGoalService sharedGoalService;
     private final StudyGroupService studyGroupService;
     private final MaterialQuestionService materialQuestionService;
+    private final MypageSummaryService mypageSummaryService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -92,7 +94,7 @@ public class StudentPortalController {
                                    LeaderboardService leaderboardService, ParentReportService parentReportService,
                                    ClassNoteService classNoteService, BadgeService badgeService, FriendService friendService,
                                    SharedGoalService sharedGoalService, StudyGroupService studyGroupService,
-                                   MaterialQuestionService materialQuestionService) {
+                                   MaterialQuestionService materialQuestionService, MypageSummaryService mypageSummaryService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -120,6 +122,7 @@ public class StudentPortalController {
         this.sharedGoalService = sharedGoalService;
         this.studyGroupService = studyGroupService;
         this.materialQuestionService = materialQuestionService;
+        this.mypageSummaryService = mypageSummaryService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -169,6 +172,14 @@ public class StudentPortalController {
                 .toList();
 
         return ResponseEntity.ok(new StudentMeResponse(user.getNickname(), courses));
+    }
+
+    // 마이페이지 "내 수강 정보" 탭 요약 카드 — 강의별 출석 집계 + 다음 납부(수강 종료)일까지 남은 일수
+    @GetMapping("/mypage-summary")
+    public ResponseEntity<?> getMypageSummary(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(mypageSummaryService.getSummaryForStudent(userOpt.get().getUsername()));
     }
 
     // 이 학생이 승인받은 언어이면서, 그 언어의 KWZM 자료를 볼 수 있게 "초대"까지 받은 경우에만 자료가 보임
