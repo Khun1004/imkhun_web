@@ -9,12 +9,15 @@ import com.imkhun.imkhun.service.AssignmentService;
 import com.imkhun.imkhun.service.AssignmentSubmissionService;
 import com.imkhun.imkhun.service.BadgeService;
 import com.imkhun.imkhun.service.ClassNoteService;
+import com.imkhun.imkhun.service.DirectMessageService;
+import com.imkhun.imkhun.service.MaterialViewService;
 import com.imkhun.imkhun.service.FriendService;
 import com.imkhun.imkhun.service.LearningGoalService;
 import com.imkhun.imkhun.service.EventService;
 import com.imkhun.imkhun.service.StudentQuestionService;
 import com.imkhun.imkhun.service.MaterialQuestionService;
 import com.imkhun.imkhun.service.MypageSummaryService;
+import com.imkhun.imkhun.service.ReceiptService;
 import com.imkhun.imkhun.service.ProgressService;
 import com.imkhun.imkhun.service.LeaderboardService;
 import com.imkhun.imkhun.service.ParentReportService;
@@ -81,6 +84,9 @@ public class StudentPortalController {
     private final MaterialQuestionService materialQuestionService;
     private final MypageSummaryService mypageSummaryService;
     private final ProgressService progressService;
+    private final ReceiptService receiptService;
+    private final DirectMessageService directMessageService;
+    private final MaterialViewService materialViewService;
 
     public StudentPortalController(StudentAuthService studentAuthService, ApplicationService applicationService,
                                    StudyMaterialService studyMaterialService, KwzmInviteService kwzmInviteService,
@@ -97,7 +103,8 @@ public class StudentPortalController {
                                    ClassNoteService classNoteService, BadgeService badgeService, FriendService friendService,
                                    SharedGoalService sharedGoalService, StudyGroupService studyGroupService,
                                    MaterialQuestionService materialQuestionService, MypageSummaryService mypageSummaryService,
-                                   ProgressService progressService) {
+                                   ProgressService progressService, ReceiptService receiptService,
+                                   DirectMessageService directMessageService, MaterialViewService materialViewService) {
         this.studentAuthService = studentAuthService;
         this.applicationService = applicationService;
         this.notificationService = notificationService;
@@ -127,6 +134,9 @@ public class StudentPortalController {
         this.materialQuestionService = materialQuestionService;
         this.mypageSummaryService = mypageSummaryService;
         this.progressService = progressService;
+        this.receiptService = receiptService;
+        this.directMessageService = directMessageService;
+        this.materialViewService = materialViewService;
         this.studyMaterialService = studyMaterialService;
         this.kwzmInviteService = kwzmInviteService;
         this.studyPostService = studyPostService;
@@ -194,6 +204,76 @@ public class StudentPortalController {
         return ResponseEntity.ok(progressService.getProgressForStudent(userOpt.get().getUsername()));
     }
 
+    // 결제 영수증 — 학생 본인 것만 볼 수 있고, 관리자가 결제 확인을 끝낸 신청만 발급됨.
+    // 화면에 있는 "인쇄 / PDF로 저장" 버튼으로 바로 PDF 파일로 저장할 수 있어요.
+    @GetMapping(value = "/applications/{id}/receipt", produces = org.springframework.http.MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> getMyReceipt(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            return ResponseEntity.ok(receiptService.buildReceiptHtmlForStudent(id, userOpt.get().getUsername()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
+    // 생일 조회/등록 — 등록해두면 생일 당일 아침에 사이트 알림으로 자동 축하 메시지를 보내줘요
+    @GetMapping("/birthday")
+    public ResponseEntity<?> getMyBirthday(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        User user = userOpt.get();
+        return ResponseEntity.ok(new BirthdayResponse(user.getBirthMonth(), user.getBirthDay()));
+    }
+
+    @PostMapping("/birthday")
+    public ResponseEntity<?> updateMyBirthday(HttpServletRequest request, @RequestBody UpdateBirthdayRequest payload) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+
+        Integer month = payload.birthMonth();
+        Integer day = payload.birthDay();
+        if ((month == null) != (day == null)) {
+            return ResponseEntity.badRequest().body("월, 일을 모두 입력해주세요.");
+        }
+        if (month != null && (month < 1 || month > 12)) {
+            return ResponseEntity.badRequest().body("월은 1~12 사이로 입력해주세요.");
+        }
+        if (day != null && (day < 1 || day > 31)) {
+            return ResponseEntity.badRequest().body("일은 1~31 사이로 입력해주세요.");
+        }
+
+        studentAuthService.updateBirthday(userOpt.get(), month, day);
+        return ResponseEntity.ok().build();
+    }
+
+    // 선생님께 1:1 메시지 — 대화방은 학생 한 명당 하나
+    @GetMapping("/messages")
+    public ResponseEntity<?> getMyMessages(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(directMessageService.getThreadForStudent(userOpt.get().getUsername()));
+    }
+
+    @PostMapping("/messages")
+    public ResponseEntity<?> sendMyMessage(HttpServletRequest request, @RequestBody SendDirectMessageRequest payload) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        try {
+            directMessageService.sendFromStudent(userOpt.get().getUsername(), payload.content());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/messages/unread-count")
+    public ResponseEntity<?> getMyMessageUnreadCount(HttpServletRequest request) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        return ResponseEntity.ok(directMessageService.getUnreadCountForStudent(userOpt.get().getUsername()));
+    }
+
     // 이 학생이 승인받은 언어이면서, 그 언어의 KWZM 자료를 볼 수 있게 "초대"까지 받은 경우에만 자료가 보임
     @GetMapping("/materials")
     public ResponseEntity<?> getMaterials(HttpServletRequest request,
@@ -253,6 +333,15 @@ public class StudentPortalController {
 
         Set<String> levels = materialLevelsForVideo(user.getUsername(), topic);
         return ResponseEntity.ok(studyMaterialService.getMaterialsForLevels(topic, "VIDEO", "VIDEO", levels));
+    }
+
+    // 학생이 영상 자료를 열어볼 때 "봤다"고 기록함 — 선생님이 누가 봤는지 확인할 수 있어요
+    @PostMapping("/materials/{id}/view")
+    public ResponseEntity<?> recordMaterialView(HttpServletRequest request, @PathVariable Long id) {
+        Optional<User> userOpt = studentAuthService.getLoggedInUser(request);
+        if (userOpt.isEmpty()) return ResponseEntity.status(403).body("로그인이 필요해요.");
+        materialViewService.recordView(id, userOpt.get().getUsername());
+        return ResponseEntity.ok().build();
     }
 
     // 컴퓨터/기타를 뺀 온라인 영상 언어에서 등급을 구분함 — 학생이 승인받은 "영상으로" 듣는 해당 언어 신청서들에서 등급 코드를 모음

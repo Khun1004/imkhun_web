@@ -25,6 +25,9 @@ import com.imkhun.imkhun.service.NoticeService;
 import com.imkhun.imkhun.service.NotificationService;
 import com.imkhun.imkhun.service.PaymentReminderService;
 import com.imkhun.imkhun.service.ClassReminderService;
+import com.imkhun.imkhun.service.BirthdayReminderService;
+import com.imkhun.imkhun.service.DirectMessageService;
+import com.imkhun.imkhun.service.MaterialViewService;
 import com.imkhun.imkhun.service.ReceiptService;
 import com.imkhun.imkhun.service.ReviewService;
 import com.imkhun.imkhun.service.StudyMaterialService;
@@ -83,6 +86,9 @@ public class AdminController {
     private final LanguageMaterialService languageMaterialService;
     private final MaterialQuestionService materialQuestionService;
     private final ClassReminderService classReminderService;
+    private final BirthdayReminderService birthdayReminderService;
+    private final DirectMessageService directMessageService;
+    private final MaterialViewService materialViewService;
 
     public AdminController(AdminAuthService adminAuthService, AdminRepository adminRepository,
                            StudyNoteService studyNoteService, ApplicationService applicationService,
@@ -99,7 +105,9 @@ public class AdminController {
                            EventService eventService, FileStorageService fileStorageService,
                            CompanyInfoService companyInfoService, FuturePlanService futurePlanService,
                            StudentQuestionService studentQuestionService, LanguageMaterialService languageMaterialService,
-                           MaterialQuestionService materialQuestionService, ClassReminderService classReminderService) {
+                           MaterialQuestionService materialQuestionService, ClassReminderService classReminderService,
+                           BirthdayReminderService birthdayReminderService, DirectMessageService directMessageService,
+                           MaterialViewService materialViewService) {
         this.adminAuthService = adminAuthService;
         this.adminRepository = adminRepository;
         this.studyNoteService = studyNoteService;
@@ -133,6 +141,9 @@ public class AdminController {
         this.languageMaterialService = languageMaterialService;
         this.materialQuestionService = materialQuestionService;
         this.classReminderService = classReminderService;
+        this.birthdayReminderService = birthdayReminderService;
+        this.directMessageService = directMessageService;
+        this.materialViewService = materialViewService;
     }
 
     // 최초 관리자 계정 등록 (딱 한 번만 성공함 — 이미 관리자가 있으면 실패)
@@ -1361,6 +1372,63 @@ public class AdminController {
         if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
         int sentCount = classReminderService.sendRemindersNow();
         return ResponseEntity.ok(sentCount);
+    }
+
+    // 생일 축하 알림 — 원래 매일 아침 9시에 자동으로 도는데, 관리자가 지금 바로 보내보고 싶을 때 씀
+    @PostMapping("/birthday-reminders/send-now")
+    public ResponseEntity<?> sendBirthdayRemindersNow(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        int sentCount = birthdayReminderService.sendRemindersNow();
+        return ResponseEntity.ok(sentCount);
+    }
+
+    // 학생 메시지 — 대화방 목록 (최근 메시지 온 순서, 안 읽은 메시지 있는 학생이 한눈에 보임)
+    @GetMapping("/messages/threads")
+    public ResponseEntity<?> getMessageThreads(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(directMessageService.getThreadsForAdmin());
+    }
+
+    @GetMapping("/messages/{username}")
+    public ResponseEntity<?> getMessageThread(HttpServletRequest request, @PathVariable String username) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(directMessageService.getThreadForAdmin(username));
+    }
+
+    @PostMapping("/messages/{username}")
+    public ResponseEntity<?> sendMessageToStudent(HttpServletRequest request, @PathVariable String username,
+                                                  @RequestBody SendDirectMessageRequest payload) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        try {
+            directMessageService.sendFromAdmin(username, payload.content());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/messages/unread-count")
+    public ResponseEntity<?> getMessageUnreadCount(HttpServletRequest request) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(directMessageService.getUnreadCountForAdmin());
+    }
+
+    // 영상 자료 시청 여부 — 이 영상을 열어본 학생 목록 (마지막으로 연 시간 순)
+    @GetMapping("/materials/{id}/viewers")
+    public ResponseEntity<?> getMaterialViewers(HttpServletRequest request, @PathVariable Long id) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        return ResponseEntity.ok(materialViewService.getViewers(id));
+    }
+
+    // 영상 목록 화면에서 각 영상을 몇 명이 봤는지 한 번에 보여줄 때 씀
+    @GetMapping("/materials/view-counts")
+    public ResponseEntity<?> getMaterialViewCounts(HttpServletRequest request, @RequestParam String materialIds) {
+        if (notAdmin(request)) return ResponseEntity.status(403).body("관리자만 접근할 수 있어요.");
+        List<Long> ids = java.util.Arrays.stream(materialIds.split(","))
+                .filter(s -> !s.isBlank())
+                .map(Long::valueOf)
+                .toList();
+        return ResponseEntity.ok(materialViewService.getViewCounts(ids));
     }
 
     // 결제 영수증 — 관리자는 결제 확인된 신청이면 누구 것이든 볼 수 있음

@@ -56,7 +56,8 @@ public class MypageSummaryService {
 
             courses.add(new MypageCourseSummaryResponse(
                     a.getId(), a.getCourseName(), a.getStudentNumber(),
-                    present, late, absent, makeup, endDateStr, daysUntilDue
+                    present, late, absent, makeup, endDateStr, daysUntilDue,
+                    a.getPaymentConfirmedByAdminAt() != null
             ));
         }
 

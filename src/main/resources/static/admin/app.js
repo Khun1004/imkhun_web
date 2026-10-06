@@ -201,9 +201,13 @@ async function checkAdminSessionOnLoad() {
         if (data.isAdmin) {
             showAdminScreen();
             loadAdminNotifUnreadCount();
+            loadAdminMessageUnreadBadge();
             loadAdminMe();
             if (!adminNotifPollTimer) {
-                adminNotifPollTimer = setInterval(loadAdminNotifUnreadCount, 30000);
+                adminNotifPollTimer = setInterval(() => {
+                    loadAdminNotifUnreadCount();
+                    loadAdminMessageUnreadBadge();
+                }, 30000);
             }
         } else {
             showAdminLoginPage();
@@ -446,6 +450,7 @@ async function loadMaterials(language, category, scope, level) {
         <p class="admin-material-date">${m.createdAt}</p>
         <div class="admin-material-actions">
           ${files.length ? `<button type="button" class="admin-material-action-btn" data-view-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>보기</button>` : ""}
+          ${currentMaterialScope === "VIDEO" ? `<button type="button" class="admin-material-action-btn" data-viewers-btn="${m.id}"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 19c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>시청 현황<span class="admin-material-question-badge" data-viewer-count-badge="${m.id}" hidden></span></button>` : ""}
           <button type="button" class="admin-material-action-btn" data-question-btn="${m.id}"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>질문<span class="admin-material-question-badge" data-question-badge="${m.id}" hidden></span></button>
           <button type="button" class="admin-material-action-btn" data-edit-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>수정</button>
           <button type="button" class="admin-material-action-btn admin-material-action-btn--danger" data-delete-btn><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>삭제</button>
@@ -456,9 +461,69 @@ async function loadMaterials(language, category, scope, level) {
         });
 
         loadMaterialQuestionBadges(materials.map((m) => m.id));
+        if (currentMaterialScope === "VIDEO") loadMaterialViewCounts(materials.map((m) => m.id));
     } catch (err) {
         console.error(err);
     }
+}
+
+// 영상 자료 목록에 보이는 영상들마다 "몇 명이 봤는지" 배지로 표시해줌
+async function loadMaterialViewCounts(materialIds) {
+    if (!materialIds.length) return;
+    try {
+        const res = await fetch(`/api/admin/materials/view-counts?materialIds=${materialIds.join(",")}`);
+        if (!res.ok) return;
+        const counts = await res.json();
+        materialIds.forEach((materialId) => {
+            const badge = document.querySelector(`[data-viewer-count-badge="${materialId}"]`);
+            if (!badge) return;
+            const count = counts[materialId] || 0;
+            badge.textContent = count;
+            badge.hidden = count === 0;
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function openMaterialViewersModal(materialId) {
+    const modal = document.getElementById("materialViewersModal");
+    const list = document.getElementById("materialViewersList");
+    const emptyText = document.getElementById("materialViewersEmpty");
+    if (!modal || !list) return;
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    list.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+    if (emptyText) emptyText.hidden = true;
+
+    try {
+        const res = await fetch(`/api/admin/materials/${materialId}/viewers`);
+        if (!res.ok) return;
+        const viewers = await res.json();
+
+        list.innerHTML = "";
+        if (emptyText) emptyText.hidden = viewers.length > 0;
+
+        viewers.forEach((v) => {
+            const row = document.createElement("div");
+            row.className = "admin-material-viewer-row";
+            row.innerHTML = `
+        <span class="admin-material-viewer-name">${escapeHtmlForAdmin(v.nickname)}</span>
+        <span class="admin-material-viewer-time">${v.viewedAt}</span>
+      `;
+            list.appendChild(row);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function closeMaterialViewersModal() {
+    const modal = document.getElementById("materialViewersModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
 }
 
 // 자료 목록에 보이는 자료들마다 "답변 안 한 질문이 몇 개 있는지" 배지로 표시해줌
@@ -3925,6 +3990,131 @@ async function loadSurveyData() {
     }
 }
 
+// ---- 학생 메시지 (1:1) ----
+let adminMessageCurrentUsername = null;
+
+async function loadAdminMessageUnreadBadge() {
+    const badge = document.getElementById("adminMessageUnreadBadge");
+    if (!badge) return;
+    try {
+        const res = await fetch("/api/admin/messages/unread-count");
+        if (!res.ok) return;
+        const count = await res.json();
+        badge.hidden = count <= 0;
+        badge.textContent = count > 99 ? "99+" : String(count);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadAdminMessageThreads() {
+    const list = document.getElementById("adminMessageThreadsList");
+    const emptyText = document.getElementById("adminMessageThreadsEmpty");
+    if (!list) return;
+
+    try {
+        const res = await fetch("/api/admin/messages/threads");
+        if (!res.ok) return;
+        const threads = await res.json();
+
+        list.innerHTML = "";
+        emptyText.hidden = threads.length > 0;
+
+        threads.forEach((t) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = "admin-messages-thread-item" + (t.username === adminMessageCurrentUsername ? " active" : "");
+            item.dataset.messageThreadUsername = t.username;
+            item.dataset.messageThreadNickname = t.nickname;
+            item.innerHTML = `
+        <span class="admin-messages-thread-name">${escapeHtmlForAdmin(t.nickname)}</span>
+        <span class="admin-messages-thread-preview">${escapeHtmlForAdmin(t.lastMessage)}</span>
+        <span class="admin-messages-thread-time">${t.lastMessageAt}</span>
+        ${t.unreadCount > 0 ? `<span class="admin-messages-thread-badge">${t.unreadCount}</span>` : ""}
+      `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function openAdminMessageThread(username, nickname) {
+    adminMessageCurrentUsername = username;
+
+    document.querySelectorAll("[data-message-thread-username]").forEach((el) => {
+        el.classList.toggle("active", el.dataset.messageThreadUsername === username);
+    });
+
+    const noneEl = document.getElementById("adminMessageNoThreadSelected");
+    const activeEl = document.getElementById("adminMessageConversationActive");
+    const titleEl = document.getElementById("adminMessageConversationTitle");
+    const bubbleList = document.getElementById("adminMessageBubbleList");
+    if (!noneEl || !activeEl || !titleEl || !bubbleList) return;
+
+    noneEl.hidden = true;
+    activeEl.hidden = false;
+    titleEl.textContent = nickname;
+    bubbleList.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch(`/api/admin/messages/${encodeURIComponent(username)}`);
+        if (!res.ok) return;
+        const messages = await res.json();
+        renderAdminMessageBubbles(messages);
+        loadAdminMessageThreads();
+        loadAdminMessageUnreadBadge();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderAdminMessageBubbles(messages) {
+    const bubbleList = document.getElementById("adminMessageBubbleList");
+    if (!bubbleList) return;
+    bubbleList.innerHTML = "";
+    messages.forEach((m) => {
+        const bubble = document.createElement("div");
+        bubble.className = "admin-messages-bubble" + (m.senderType === "ADMIN" ? " admin-messages-bubble--mine" : "");
+        bubble.innerHTML = `
+      <p class="admin-messages-bubble-text">${escapeHtmlForAdmin(m.content)}</p>
+      <p class="admin-messages-bubble-time">${m.createdAt}</p>
+    `;
+        bubbleList.appendChild(bubble);
+    });
+    bubbleList.scrollTop = bubbleList.scrollHeight;
+}
+
+async function sendAdminMessage() {
+    const input = document.getElementById("adminMessageInput");
+    const btn = document.getElementById("adminMessageSendBtn");
+    if (!input || !btn || !adminMessageCurrentUsername) return;
+    const content = input.value.trim();
+    if (!content) return;
+
+    btn.disabled = true;
+    try {
+        const res = await fetch(`/api/admin/messages/${encodeURIComponent(adminMessageCurrentUsername)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "전송에 실패했어요.");
+            return;
+        }
+        input.value = "";
+        const res2 = await fetch(`/api/admin/messages/${encodeURIComponent(adminMessageCurrentUsername)}`);
+        if (res2.ok) renderAdminMessageBubbles(await res2.json());
+        loadAdminMessageThreads();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
 async function loadAdminQuestions() {
     const list = document.getElementById("adminQuestionsList");
     const emptyText = document.getElementById("adminQuestionsEmpty");
@@ -4169,6 +4359,86 @@ async function sendClassRemindersNow() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+    }
+}
+
+async function sendBirthdayRemindersNow() {
+    const btn = document.getElementById("sendBirthdayReminderBtn");
+    if (!btn) return;
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "보내는 중...";
+
+    try {
+        const res = await fetch("/api/admin/birthday-reminders/send-now", { method: "POST" });
+        if (!res.ok) {
+            alert((await res.text()) || "실패했어요.");
+            return;
+        }
+        const count = await res.json();
+        alert(count > 0 ? `${count}명에게 생일 축하 알림을 보냈어요.` : "오늘 생일인 학생이 없거나, 이미 다 보냈어요.");
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+// ---- 출석 QR코드 ----
+// 학생이 스캔하면 "출석 체크" 화면이 자동으로 열리도록 ?checkin=1을 붙인 주소로 QR코드를 만들어줌
+function openAttendanceQrModal() {
+    const modal = document.getElementById("attendanceQrModal");
+    const urlInput = document.getElementById("attendanceQrUrlInput");
+    if (!modal || !urlInput) return;
+
+    if (!urlInput.value) {
+        // 관리자 화면(/admin)과 같은 도메인에서 학생 화면(/kwzmcenter)이 서비스된다고 가정하고 추측해서 채워줌 —
+        // 실제 주소가 다르면 선생님이 직접 고칠 수 있음
+        urlInput.value = `${window.location.origin}/kwzmcenter/?checkin=1`;
+    }
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    renderAttendanceQr();
+}
+
+function closeAttendanceQrModal() {
+    const modal = document.getElementById("attendanceQrModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+function renderAttendanceQr() {
+    const urlInput = document.getElementById("attendanceQrUrlInput");
+    const canvas = document.getElementById("attendanceQrCanvas");
+    if (!urlInput || !canvas) return;
+    const value = urlInput.value.trim();
+    const ctx = canvas.getContext("2d");
+    if (!value || typeof qrcode === "undefined") {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+
+    const qr = qrcode(0, "M");
+    qr.addData(value);
+    qr.make();
+
+    const count = qr.getModuleCount();
+    const quiet = 2;
+    const cell = Math.floor(240 / (count + quiet * 2));
+    const size = cell * (count + quiet * 2);
+    canvas.width = size;
+    canvas.height = size;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = "#000000";
+    for (let r = 0; r < count; r++) {
+        for (let c = 0; c < count; c++) {
+            if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * cell, (r + quiet) * cell, cell, cell);
+        }
     }
 }
 
@@ -5237,6 +5507,7 @@ document.addEventListener("fragments:loaded", () => {
             document.querySelector("#vocabAdminLanguagePills .admin-pill")?.click();
         }
         if (key === "questions") loadAdminQuestions();
+        if (key === "messages") loadAdminMessageThreads();
     }
 
     document.querySelectorAll(".admin-maintab[data-main-tab]").forEach((tab) => {
@@ -5576,6 +5847,23 @@ document.addEventListener("fragments:loaded", () => {
     document.getElementById("enrollmentStartMonthInput")?.addEventListener("change", recalcVideoEndMonth);
     document.getElementById("sendPaymentReminderBtn")?.addEventListener("click", sendPaymentRemindersNow);
     document.getElementById("sendClassReminderBtn")?.addEventListener("click", sendClassRemindersNow);
+    document.getElementById("sendBirthdayReminderBtn")?.addEventListener("click", sendBirthdayRemindersNow);
+    document.getElementById("adminMessageSendBtn")?.addEventListener("click", sendAdminMessage);
+    document.getElementById("adminMessageInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendAdminMessage();
+        }
+    });
+    document.addEventListener("click", (e) => {
+        const threadBtn = e.target.closest("[data-message-thread-username]");
+        if (!threadBtn) return;
+        openAdminMessageThread(threadBtn.dataset.messageThreadUsername, threadBtn.dataset.messageThreadNickname);
+    });
+    document.getElementById("openAttendanceQrBtn")?.addEventListener("click", openAttendanceQrModal);
+    document.getElementById("printAttendanceQrBtn")?.addEventListener("click", () => window.print());
+    document.getElementById("attendanceQrUrlInput")?.addEventListener("input", renderAttendanceQr);
+    document.querySelectorAll("[data-attendance-qr-close]").forEach((el) => el.addEventListener("click", closeAttendanceQrModal));
 
     document.querySelectorAll("[data-timetable-view]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -5767,10 +6055,15 @@ document.addEventListener("fragments:loaded", () => {
             openMaterialQuestionModal(material.id);
             return;
         }
+        if (e.target.closest("[data-viewers-btn]")) {
+            openMaterialViewersModal(material.id);
+            return;
+        }
     });
 
     document.addEventListener("click", (e) => {
         if (e.target.closest("[data-material-question-modal-close]")) closeMaterialQuestionModal();
+        if (e.target.closest("[data-material-viewers-close]")) closeMaterialViewersModal();
     });
 
     document.getElementById("materialQuestionList")?.addEventListener("click", (e) => {

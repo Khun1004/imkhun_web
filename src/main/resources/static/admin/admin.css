@@ -5643,3 +5643,285 @@ textarea.admin-note-textarea.admin-register-text {
         max-height: calc(100vh - 60px);
     }
 }
+
+/* 출석 QR코드 */
+
+.admin-attendance-qr-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper-2);
+}
+
+.admin-attendance-qr-box canvas {
+    display: block;
+    border-radius: 8px;
+}
+
+.admin-attendance-qr-caption {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    text-align: center;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #attendanceQrBox,
+    #attendanceQrBox * {
+        visibility: visible;
+    }
+
+    #attendanceQrBox {
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        border: none;
+        background: #fff;
+    }
+}
+
+/* 학생 메시지 */
+
+.admin-subtabs .admin-maintab {
+    position: relative;
+}
+
+.admin-maintab-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--coral);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+.admin-messages-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 18px;
+    margin-top: 16px;
+    min-height: 480px;
+}
+
+.admin-messages-threads {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--card);
+    padding: 10px;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.admin-messages-thread-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.admin-messages-thread-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 34px 10px 12px;
+    background: none;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.admin-messages-thread-item:hover {
+    background: var(--paper-2);
+}
+
+.admin-messages-thread-item.active {
+    background: var(--teal-soft);
+}
+
+.admin-messages-thread-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-messages-thread-preview {
+    font-size: 12px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.admin-messages-thread-time {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+}
+
+.admin-messages-thread-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--coral);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+.admin-messages-conversation {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--card);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-messages-conversation-active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.admin-messages-conversation-title {
+    font-family: "Noto Serif KR", serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+}
+
+.admin-messages-bubble-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-height: 320px;
+    max-height: 440px;
+    overflow-y: auto;
+    padding: 4px 2px;
+    margin-bottom: 12px;
+}
+
+.admin-messages-bubble {
+    max-width: 70%;
+    align-self: flex-start;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+}
+
+.admin-messages-bubble--mine {
+    align-self: flex-end;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 4px;
+    background: var(--teal);
+    border-color: var(--teal);
+}
+
+.admin-messages-bubble-text {
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.admin-messages-bubble--mine .admin-messages-bubble-text {
+    color: #fff;
+}
+
+.admin-messages-bubble-time {
+    margin-top: 4px;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+}
+
+.admin-messages-bubble--mine .admin-messages-bubble-time {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.admin-messages-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.admin-messages-input-row textarea {
+    flex: 1;
+    min-width: 0;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+}
+
+.admin-messages-input-row textarea:focus {
+    outline: none;
+    border-color: var(--teal);
+}
+
+@media (max-width: 760px) {
+    .admin-messages-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-messages-threads {
+        max-height: 240px;
+    }
+}
+
+/* 영상 시청 현황 */
+
+.admin-material-viewer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+}
+
+.admin-material-viewer-row:last-child {
+    border-bottom: none;
+}
+
+.admin-material-viewer-name {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.admin-material-viewer-time {
+    font-size: 12px;
+    color: var(--ink-faint);
+}

@@ -28,6 +28,7 @@
                     <button type="button" class="mypage-tab" data-mypage-tab="badges" role="tab" aria-selected="false">배지</button>
                     <button type="button" class="mypage-tab" data-mypage-tab="friends" role="tab" aria-selected="false">친구</button>
                     <button type="button" class="mypage-tab" data-mypage-tab="questions" role="tab" aria-selected="false">질문하기</button>
+                    <button type="button" class="mypage-tab" data-mypage-tab="messages" role="tab" aria-selected="false">선생님께 메시지<span class="mypage-tab-badge" id="mypageMessageUnreadBadge" hidden></span></button>
                     <button type="button" class="mypage-tab" data-mypage-tab="leaderboard" role="tab" aria-selected="false">랭킹</button>
                     <button type="button" class="mypage-tab" data-mypage-tab="parentreport" role="tab" aria-selected="false">부모님 리포트</button>
                     <button type="button" class="mypage-tab" data-mypage-tab="assignments" role="tab" aria-selected="false">숙제</button>
@@ -135,6 +136,16 @@
 
                         <p class="admin-empty-text" id="questionsEmpty" hidden>아직 보낸 질문이 없어요.</p>
                         <div class="mypage-classchange-list" id="questionsList"></div>
+                    </div>
+
+                    <div class="mypage-tab-panel" data-mypage-panel="messages" hidden>
+                        <p class="admin-note-hint">선생님과 1:1로 메시지를 주고받을 수 있어요.</p>
+                        <div class="mypage-messages-bubble-list" id="mypageMessageBubbleList"></div>
+                        <p class="admin-empty-text" id="mypageMessagesEmpty" hidden>아직 메시지가 없어요. 먼저 말을 걸어보세요!</p>
+                        <div class="mypage-messages-input-row">
+                            <textarea id="mypageMessageInput" placeholder="메시지를 입력하세요" rows="2"></textarea>
+                            <button type="button" class="mypage-classchange-submit-btn" id="mypageMessageSendBtn">보내기</button>
+                        </div>
                     </div>
 
                     <div class="mypage-tab-panel" data-mypage-panel="leaderboard" hidden>

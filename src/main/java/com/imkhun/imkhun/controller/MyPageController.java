@@ -1,7 +1,9 @@
 package com.imkhun.imkhun.controller;
 
+import com.imkhun.imkhun.dto.BirthdayResponse;
 import com.imkhun.imkhun.dto.ChangePasswordRequest;
 import com.imkhun.imkhun.dto.MyPageResponse;
+import com.imkhun.imkhun.dto.UpdateBirthdayRequest;
 import com.imkhun.imkhun.dto.UpdateNicknameRequest;
 import com.imkhun.imkhun.dto.UpdatePhoneRequest;
 import com.imkhun.imkhun.dto.UpdatePhotoRequest;
@@ -100,6 +102,43 @@ public class MyPageController {
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // 생일 조회/등록 — 등록해두면 생일 당일 아침에 사이트 알림으로 자동 축하 메시지를 보내줘요
+    @GetMapping("/birthday")
+    public ResponseEntity<?> getBirthday(Authentication authentication) {
+        if (notLoggedIn(authentication)) return ResponseEntity.status(401).build();
+
+        return userRepository.findByUsername(authentication.getName())
+                .map(u -> ResponseEntity.ok(new BirthdayResponse(u.getBirthMonth(), u.getBirthDay())))
+                .orElseGet(() -> ResponseEntity.status(401).build());
+    }
+
+    @PostMapping("/birthday")
+    public ResponseEntity<?> updateBirthday(Authentication authentication,
+                                            @RequestBody UpdateBirthdayRequest request) {
+        if (notLoggedIn(authentication)) return ResponseEntity.status(401).build();
+
+        Integer month = request.birthMonth();
+        Integer day = request.birthDay();
+        // 둘 다 비어있으면 "생일 등록 해제"로 처리. 하나만 비어있으면 입력 오류.
+        if ((month == null) != (day == null)) {
+            return ResponseEntity.badRequest().body("월, 일을 모두 입력해주세요.");
+        }
+        if (month != null && (month < 1 || month > 12)) {
+            return ResponseEntity.badRequest().body("월은 1~12 사이로 입력해주세요.");
+        }
+        if (day != null && (day < 1 || day > 31)) {
+            return ResponseEntity.badRequest().body("일은 1~31 사이로 입력해주세요.");
+        }
+
+        return userRepository.findByUsername(authentication.getName())
+                .map(u -> {
+                    u.changeBirthday(month, day);
+                    userRepository.save(u);
+                    return ResponseEntity.ok().build();
+                })
+                .orElseGet(() -> ResponseEntity.status(401).build());
     }
 
     @PostMapping("/password")

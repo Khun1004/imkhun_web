@@ -215,6 +215,94 @@
     display: none;
 }
 
+.mypage-tab-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #b8566a;
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+/* 선생님께 메시지 */
+
+.mypage-messages-bubble-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 420px;
+    overflow-y: auto;
+    margin: 14px 0;
+    padding: 4px 2px;
+}
+
+.mypage-messages-bubble {
+    max-width: 78%;
+    align-self: flex-start;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    background: var(--kwzm-bg-2);
+    border: 1px solid var(--kwzm-line);
+}
+
+.mypage-messages-bubble--mine {
+    align-self: flex-end;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 4px;
+    background: var(--kwzm-primary);
+    border-color: var(--kwzm-primary);
+}
+
+.mypage-messages-bubble-text {
+    font-size: 13.5px;
+    color: var(--kwzm-ink);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.mypage-messages-bubble--mine .mypage-messages-bubble-text {
+    color: #fff;
+}
+
+.mypage-messages-bubble-time {
+    margin-top: 4px;
+    font-size: 10.5px;
+    color: var(--kwzm-ink-faint);
+}
+
+.mypage-messages-bubble--mine .mypage-messages-bubble-time {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.mypage-messages-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.mypage-messages-input-row textarea {
+    flex: 1;
+    min-width: 0;
+    resize: vertical;
+    border: 1px solid var(--kwzm-line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: "Noto Sans KR", sans-serif;
+    color: var(--kwzm-ink);
+    background: var(--kwzm-bg);
+}
+
+.mypage-messages-input-row textarea:focus {
+    outline: none;
+    border-color: var(--kwzm-primary);
+}
+
 /* ---------- 마이페이지 요약 카드 (수강/출석 한눈에 보기) ---------- */
 
 .mypage-summary-card {
@@ -357,6 +445,25 @@
 .mypage-summary-due-badge--overdue {
     background: rgba(184, 86, 106, 0.14);
     color: #b8566a;
+}
+
+.mypage-summary-receipt-btn {
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    border: 1px solid var(--kwzm-primary);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--kwzm-primary);
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+
+.mypage-summary-receipt-btn:hover {
+    background: var(--kwzm-primary);
+    color: #fff;
 }
 
 @media (max-width: 640px) {

@@ -51,6 +51,18 @@ public class User {
     @Column
     private String studentSessionToken;
 
+    // ---- 생일 자동 축하 알림 ----
+    // 연도는 안 받고 월/일만 저장함 (나이 계산 용도가 아니라 "오늘이 생일인가"만 확인하면 되니까)
+    @Column(name = "birth_month")
+    private Integer birthMonth;
+
+    @Column(name = "birth_day")
+    private Integer birthDay;
+
+    // 올해 생일 축하 알림을 이미 보냈는지 확인용 (해가 바뀌면 다시 보낼 수 있도록 연도로 구분)
+    @Column(name = "birthday_notified_year")
+    private Integer birthdayNotifiedYear;
+
     protected User() {
         // JPA가 사용하는 기본 생성자
     }
@@ -83,6 +95,15 @@ public class User {
 
     public void updateStudentSessionToken(String token) {
         this.studentSessionToken = token;
+    }
+
+    public void changeBirthday(Integer birthMonth, Integer birthDay) {
+        this.birthMonth = birthMonth;
+        this.birthDay = birthDay;
+    }
+
+    public void markBirthdayNotified(int year) {
+        this.birthdayNotifiedYear = year;
     }
 
     public Long getId() {
@@ -123,5 +144,17 @@ public class User {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Integer getBirthMonth() {
+        return birthMonth;
+    }
+
+    public Integer getBirthDay() {
+        return birthDay;
+    }
+
+    public Integer getBirthdayNotifiedYear() {
+        return birthdayNotifiedYear;
     }
 }

@@ -302,6 +302,41 @@ async function loadMypageInfo() {
     } catch (err) {
         console.error(err);
     }
+
+    loadMypageBirthday();
+}
+
+// 생일(월/일) select 옵션 채우기 — 한 번만 만들면 되니까 비어있을 때만 채움
+function fillBirthdaySelectOptions() {
+    const monthSelect = document.getElementById("mypageBirthMonthSelect");
+    const daySelect = document.getElementById("mypageBirthDaySelect");
+    if (monthSelect && monthSelect.options.length <= 1) {
+        for (let m = 1; m <= 12; m++) {
+            monthSelect.insertAdjacentHTML("beforeend", `<option value="${m}">${m}월</option>`);
+        }
+    }
+    if (daySelect && daySelect.options.length <= 1) {
+        for (let d = 1; d <= 31; d++) {
+            daySelect.insertAdjacentHTML("beforeend", `<option value="${d}">${d}일</option>`);
+        }
+    }
+}
+
+async function loadMypageBirthday() {
+    fillBirthdaySelectOptions();
+    const monthSelect = document.getElementById("mypageBirthMonthSelect");
+    const daySelect = document.getElementById("mypageBirthDaySelect");
+    if (!monthSelect || !daySelect) return;
+
+    try {
+        const res = await fetch("/api/mypage/birthday");
+        if (!res.ok) return;
+        const data = await res.json();
+        monthSelect.value = data.birthMonth || "";
+        daySelect.value = data.birthDay || "";
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 // 사용자가 입력한 텍스트에 혹시 있을 수 있는 HTML 태그를 무력화 (안전하게 표시)
@@ -360,6 +395,18 @@ async function loadMyApplications() {
     const statusLabel = { PENDING: "승인대기", APPROVED: "승인완료", WITHDRAWN: "퇴원", SUSPENDED: "휴면" };
     const statusClass = { PENDING: "mypage-badge--pending", APPROVED: "mypage-badge--approved", WITHDRAWN: "mypage-badge--withdrawn", SUSPENDED: "mypage-badge--suspended" };
 
+    // 결제 상태를 한눈에 보여주는 작은 배지 — 모달을 열지 않아도 지금 뭘 해야 하는지 알 수 있게
+    function paymentStatusBadge(app) {
+        if (!app.hasPaymentInfo) return "";
+        if (app.paymentConfirmedByAdmin) {
+            return `<span class="mypage-payment-status mypage-payment-status--done">결제 완료</span>`;
+        }
+        if (app.paymentConfirmedByStudent) {
+            return `<span class="mypage-payment-status mypage-payment-status--waiting">확인 요청 중</span>`;
+        }
+        return `<span class="mypage-payment-status mypage-payment-status--pending">입금 전 · 안내 확인 필요</span>`;
+    }
+
     try {
         const res = await fetch("/api/applications/mine");
         if (!res.ok) {
@@ -396,6 +443,7 @@ async function loadMyApplications() {
               ${app.hasPaymentInfo ? `<button type="button" class="mypage-payment-confirm-btn" data-payment-confirm-id="${app.id}">결제 확인</button>` : ""}
               ${app.status === "APPROVED" ? `<button type="button" class="mypage-attendance-btn" data-attendance-id="${app.id}" data-attendance-course="${escapeHtmlForMypage(app.courseName)}">출석 현황</button>` : ""}
               ${app.paymentConfirmedByAdmin ? `<a class="mypage-attendance-btn" href="/api/applications/${app.id}/receipt" target="_blank" rel="noopener">영수증 보기</a>` : ""}
+              ${paymentStatusBadge(app)}
             </div>
           ` : ""}
         </div>
@@ -421,6 +469,18 @@ function openPaymentConfirmModal(applicationId) {
 
     document.getElementById("paymentConfirmCourse").textContent = app.courseName;
     document.getElementById("paymentConfirmMethod").textContent = app.paymentMethod || "-";
+
+    // 계좌번호 등을 직접 입력하지 않고 복사할 수 있게 — 결제 수단에 글자가 있을 때만 버튼 표시
+    const methodCopyBtn = document.getElementById("paymentConfirmMethodCopyBtn");
+    if (methodCopyBtn) {
+        if (app.paymentMethod) {
+            methodCopyBtn.hidden = false;
+            methodCopyBtn.dataset.copyText = app.paymentMethod;
+        } else {
+            methodCopyBtn.hidden = true;
+        }
+    }
+
     document.getElementById("paymentConfirmAmount").textContent = app.amount || "-";
     document.getElementById("paymentConfirmReason").textContent = app.amountReason || "-";
     document.getElementById("paymentConfirmMaterial").textContent = app.materialGuide || "-";
@@ -909,6 +969,43 @@ document.addEventListener("fragments:loaded", () => {
             }
 
             hint.textContent = "전화번호가 저장됐어요.";
+            hint.classList.add("is-ok");
+        } catch (err) {
+            hint.textContent = "서버에 연결할 수 없어요.";
+            console.error(err);
+        }
+    });
+
+    // ---- 마이페이지: 생일 저장 ----
+    document.getElementById("mypageSaveBirthdayBtn")?.addEventListener("click", async () => {
+        const monthSelect = document.getElementById("mypageBirthMonthSelect");
+        const daySelect = document.getElementById("mypageBirthDaySelect");
+        const hint = document.getElementById("mypageBirthdayHint");
+        if (!monthSelect || !daySelect || !hint) return;
+
+        const birthMonth = monthSelect.value ? Number(monthSelect.value) : null;
+        const birthDay = daySelect.value ? Number(daySelect.value) : null;
+
+        hint.className = "auth-field-hint";
+
+        if ((birthMonth === null) !== (birthDay === null)) {
+            hint.textContent = "월, 일을 모두 선택해주세요.";
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/mypage/birthday", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ birthMonth, birthDay }),
+            });
+
+            if (!res.ok) {
+                hint.textContent = (await res.text()) || "저장에 실패했어요.";
+                return;
+            }
+
+            hint.textContent = birthMonth ? "생일이 저장됐어요. 생일 당일 아침에 축하 알림을 보내드려요!" : "생일 등록을 해제했어요.";
             hint.classList.add("is-ok");
         } catch (err) {
             hint.textContent = "서버에 연결할 수 없어요.";

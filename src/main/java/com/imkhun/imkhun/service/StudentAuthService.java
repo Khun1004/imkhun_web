@@ -81,6 +81,12 @@ public class StudentAuthService {
         return userRepository.findByStudentSessionToken(token);
     }
 
+    // 생일(월/일) 등록 — 생일 당일 아침 자동 축하 알림을 보내는 데 씀
+    public void updateBirthday(User user, Integer birthMonth, Integer birthDay) {
+        user.changeBirthday(birthMonth, birthDay);
+        userRepository.save(user);
+    }
+
     // 로그인된 학생이 승인받은 강의(들) — 접근 가능한 자료 범위를 정할 때 씀
     public java.util.List<Application> getApprovedApplications(String username) {
         return applicationRepository.findByUsernameOrderByCreatedAtDesc(username).stream()

@@ -379,6 +379,30 @@
     color: #b8446a;
 }
 
+.mypage-payment-status {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.mypage-payment-status--pending {
+    background: rgba(184, 68, 106, 0.12);
+    color: #b8446a;
+}
+
+.mypage-payment-status--waiting {
+    background: rgba(168, 124, 34, 0.14);
+    color: var(--accent-2);
+}
+
+.mypage-payment-status--done {
+    background: rgba(14, 46, 35, 0.12);
+    color: var(--accent-3);
+}
+
 .mypage-history-item--review {
     align-items: center;
 }
@@ -432,6 +456,27 @@
     margin-bottom: 4px;
     padding-bottom: 0;
     border-bottom: none;
+}
+
+.mypage-birthday-row {
+    align-items: center;
+}
+
+.mypage-birthday-select {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: "Noto Sans KR", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+}
+
+.mypage-birthday-select:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 
 .mypage-section h3 {
@@ -634,6 +679,21 @@
     color: var(--ink-soft);
     line-height: 1.7;
     white-space: pre-wrap;
+}
+
+.payment-confirm-value-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.payment-confirm-value-row .payment-confirm-value {
+    flex: 1 1 auto;
+}
+
+.payment-confirm-value-row .mypage-copy-btn {
+    margin-top: 1px;
 }
 
 .payment-confirm-amount {

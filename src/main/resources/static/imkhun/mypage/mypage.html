@@ -74,6 +74,17 @@
                 </section>
 
                 <section class="mypage-section">
+                    <h3>생일</h3>
+                    <p class="auth-field-hint" style="margin-bottom: 8px;">등록해두면 생일 당일 아침에 사이트 알림으로 축하 메시지를 보내드려요. (연도는 안 받아요)</p>
+                    <div class="auth-input-row mypage-birthday-row">
+                        <select id="mypageBirthMonthSelect" class="mypage-birthday-select"><option value="">월</option></select>
+                        <select id="mypageBirthDaySelect" class="mypage-birthday-select"><option value="">일</option></select>
+                        <button type="button" class="auth-inline-btn" id="mypageSaveBirthdayBtn">저장</button>
+                    </div>
+                    <p class="auth-field-hint" id="mypageBirthdayHint"></p>
+                </section>
+
+                <section class="mypage-section">
                     <h3>비밀번호 변경</h3>
                     <div class="auth-form-field">
                         <label for="mypageCurrentPassword">현재 비밀번호</label>
@@ -143,7 +154,13 @@
 
             <div class="payment-confirm-section">
                 <p class="payment-confirm-label">결제 수단</p>
-                <p class="payment-confirm-value" id="paymentConfirmMethod"></p>
+                <div class="payment-confirm-value-row">
+                    <p class="payment-confirm-value" id="paymentConfirmMethod"></p>
+                    <button type="button" class="mypage-copy-btn" id="paymentConfirmMethodCopyBtn" aria-label="결제 수단 복사" hidden>
+                        <svg viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                        복사
+                    </button>
+                </div>
             </div>
 
             <div class="payment-confirm-section">

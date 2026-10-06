@@ -106,6 +106,8 @@ const NOTIF_TYPE_ICON = {
     NEW_NOTICE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v10H9l-4 4V5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     RENEWAL_REMINDER: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 17v-5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     CLASS_REMINDER_TOMORROW: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8.5 14.5h3M8.5 17h5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+    BIRTHDAY: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 21h16v-7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 16l2.5-2 2.5 2 2.5-2 2.5 2 2.5-2L19 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 12V7M9 7a1.5 1.5 0 1 1 3 0 1.5 1.5 0 1 1 3 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    TEACHER_MESSAGE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
     VOICE_COMMENT_ADDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a4 4 0 0 1 4 4v4a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="1.6"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     CLASS_CHANGE_RESPONDED: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 15l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     FRIEND_NOTE: `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4.5 3.5a.5.5 0 0 1-.8-.4V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
@@ -158,8 +160,12 @@ async function loadStudentPortalData() {
         loadRecentMaterials();
         loadMypageSummary();
         loadStudentNotifUnreadCount();
+        loadMyMessageUnreadBadge();
         if (!studentNotifPollTimer) {
-            studentNotifPollTimer = setInterval(loadStudentNotifUnreadCount, 30000);
+            studentNotifPollTimer = setInterval(() => {
+                loadStudentNotifUnreadCount();
+                loadMyMessageUnreadBadge();
+            }, 30000);
         }
         loadCheckinOptions();
         if (!checkinPollTimer) {
@@ -172,6 +178,16 @@ async function loadStudentPortalData() {
 
 let checkinPollTimer = null;
 let studentNicknameForCheckin = "";
+
+// QR코드로 들어온 경우("...?checkin=1") 출석 체크 패널을 자동으로 펼쳐서 보여줌 —
+// 교실에 붙여둔 QR코드를 스캔하면 학생이 메뉴를 찾아다닐 필요 없이 바로 체크 버튼이 보임
+let autoOpenCheckinFromQr = new URLSearchParams(window.location.search).get("checkin") === "1";
+if (autoOpenCheckinFromQr) {
+    // 주소창에 파라미터가 계속 남아있지 않도록 정리 (새로고침해도 다시 자동으로 안 열리게)
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("checkin");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+}
 
 const TODAY_SUMMARY_STATUS_LABEL = { PRESENT: "출석 완료", LATE: "지각 처리됨", ABSENT: "결석 처리됨", MAKEUP: "보강 처리됨" };
 
@@ -421,6 +437,13 @@ async function loadCheckinOptions() {
         });
         panel.insertAdjacentHTML("beforeend", scheduleHtml);
         if (scheduleHtml) renderStudentCalendarGrid();
+
+        if (autoOpenCheckinFromQr) {
+            autoOpenCheckinFromQr = false;
+            const dockEl = document.getElementById("studentCheckinDock");
+            if (dockEl && !dockEl.classList.contains("is-open")) toggleCheckinDock();
+            dockEl?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     } catch (err) {
         console.error(err);
     }
@@ -960,6 +983,7 @@ async function loadMypageSummary() {
           <span>지각 ${c.lateCount ?? 0}</span>
           <span>결석 ${c.absentCount ?? 0}</span>
           <span>보강 ${c.makeupCount ?? 0}</span>
+          ${c.receiptAvailable ? `<button type="button" class="mypage-summary-receipt-btn" data-receipt-application-id="${c.applicationId}">영수증 보기</button>` : ""}
         </div>
         ${dueHtml}
       `;
@@ -2177,12 +2201,20 @@ async function loadVideoMaterials(topic) {
         <div class="student-material-types">${typeBadgeHtml}</div>
         <p class="student-material-date">${m.createdAt}</p>
       `;
-            item.addEventListener("click", () => handleStudentViewMaterial(m));
+            item.addEventListener("click", () => handleStudentViewVideoMaterial(m));
             list.appendChild(item);
         });
     } catch (err) {
         console.error(err);
     }
+}
+
+// 영상 자료는 열어볼 때 "봤다"고 기록해서, 선생님이 누가 봤는지 확인할 수 있게 함
+function handleStudentViewVideoMaterial(material) {
+    if (material.id) {
+        fetch(`/api/student/materials/${material.id}/view`, { method: "POST" }).catch((err) => console.error(err));
+    }
+    handleStudentViewMaterial(material);
 }
 
 const TRIAL_TOPIC_LABEL = { korean: "한국어", japanese: "일본어", thai: "태국어", english: "영어", computer: "컴퓨터", video: "영상" };
@@ -4284,6 +4316,84 @@ async function deleteSharedGoal(id) {
 
 // ---------- 선생님에게 조용히 질문하기 (익명) ----------
 
+// ---- 선생님께 메시지 (1:1) ----
+async function loadMyMessageUnreadBadge() {
+    const badge = document.getElementById("mypageMessageUnreadBadge");
+    if (!badge) return;
+    try {
+        const res = await fetch("/api/student/messages/unread-count");
+        if (!res.ok) return;
+        const count = await res.json();
+        badge.hidden = count <= 0;
+        badge.textContent = count > 99 ? "99+" : String(count);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadMyMessages() {
+    const list = document.getElementById("mypageMessageBubbleList");
+    const emptyText = document.getElementById("mypageMessagesEmpty");
+    if (!list) return;
+    list.innerHTML = `<p class="admin-note-hint">불러오는 중...</p>`;
+
+    try {
+        const res = await fetch("/api/student/messages");
+        if (!res.ok) return;
+        const messages = await res.json();
+        renderMyMessageBubbles(messages);
+        if (emptyText) emptyText.hidden = messages.length > 0;
+        loadMyMessageUnreadBadge();
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = "";
+    }
+}
+
+function renderMyMessageBubbles(messages) {
+    const list = document.getElementById("mypageMessageBubbleList");
+    if (!list) return;
+    list.innerHTML = "";
+    messages.forEach((m) => {
+        const bubble = document.createElement("div");
+        bubble.className = "mypage-messages-bubble" + (m.senderType === "STUDENT" ? " mypage-messages-bubble--mine" : "");
+        bubble.innerHTML = `
+      <p class="mypage-messages-bubble-text">${escapeHtmlForStudent(m.content)}</p>
+      <p class="mypage-messages-bubble-time">${m.createdAt}</p>
+    `;
+        list.appendChild(bubble);
+    });
+    list.scrollTop = list.scrollHeight;
+}
+
+async function sendMyMessage() {
+    const input = document.getElementById("mypageMessageInput");
+    const btn = document.getElementById("mypageMessageSendBtn");
+    if (!input || !btn) return;
+    const content = input.value.trim();
+    if (!content) return;
+
+    btn.disabled = true;
+    try {
+        const res = await fetch("/api/student/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+        });
+        if (!res.ok) {
+            alert((await res.text()) || "전송에 실패했어요.");
+            return;
+        }
+        input.value = "";
+        loadMyMessages();
+    } catch (err) {
+        console.error(err);
+        alert("서버에 연결할 수 없어요.");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
 async function loadMyQuestions() {
     const listEl = document.getElementById("questionsList");
     const emptyEl = document.getElementById("questionsEmpty");
@@ -6038,6 +6148,22 @@ document.addEventListener("fragments:loaded", () => {
         loadComputerMaterials(key);
     });
 
+    // 마이페이지 요약 카드의 "영수증 보기" 버튼 — 결제 확인 끝난 강의만 보임
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-receipt-application-id]");
+        if (!btn) return;
+        window.open(`/api/student/applications/${btn.dataset.receiptApplicationId}/receipt`, "_blank");
+    });
+
+    // 선생님께 메시지 보내기
+    document.getElementById("mypageMessageSendBtn")?.addEventListener("click", sendMyMessage);
+    document.getElementById("mypageMessageInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMyMessage();
+        }
+    });
+
     // "마이페이지"의 내 수강 정보/바로가기 탭 전환
     document.addEventListener("click", (e) => {
         const tab = e.target.closest("[data-mypage-tab]");
@@ -6077,6 +6203,9 @@ document.addEventListener("fragments:loaded", () => {
         }
         if (key === "questions") {
             loadMyQuestions();
+        }
+        if (key === "messages") {
+            loadMyMessages();
         }
         if (key === "leaderboard") {
             loadLeaderboard(leaderboardCurrentType);
